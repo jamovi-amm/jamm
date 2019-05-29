@@ -1,0 +1,33 @@
+---
+title: Advanced Mediation Models
+name: jamm
+version: 1.0.0
+jms: '1.0'
+authors:
+  - Marcello Gallucci
+maintainer: Marcello Gallucci <mcfanda@gmail.com>
+date: 2019-1-1
+type: R
+description: >-
+  A suite for the estimation of mediational models, including multiple
+  mediators, and conditional mediation
+analyses:
+  - title: GLM Mediation Model
+    name: jammGLM
+    ns: jamm
+    menuGroup: Linear Models
+    menuSubgroup: jAMM
+    menuTitle: GLM Mediation Model
+    description: GLM mediation model
+datasets:
+  - name: coopmedmod
+    path: coopmedmod.csv
+    description: >-
+      Cooperative behavior experiment from Muller D, Judd CM, Yzerbyt VY (2005).
+      When moderation is mediated and mediation is moderated. JPSP, 89(6),852-63
+    tags:
+      - Mediation
+      - Conditional mediation
+      - Moderation
+
+...

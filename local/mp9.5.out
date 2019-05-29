@@ -1,0 +1,63 @@
+Mplus VERSION 8.2 DEMO (Linux)
+MUTHEN & MUTHEN
+01/25/2019   5:31 AM
+
+INPUT INSTRUCTIONS
+
+  TITLE:	this is an example of two-level path
+  analysis with continuous dependent
+  variables and random slopes
+  DATA:	FILE IS mp9.5.dat;
+  VARIABLE:	NAMES ARE y1 y2 x1 clus;
+  WITHIN = x1 ;
+  CLUSTER IS clus;
+  ANALYSIS:	TYPE = TWOLEVEL RANDOM;
+  ALGORITHM = INTEGRATION;
+  MODEL:
+    %WITHIN%
+    s2 | y2 ON y1 x1;
+         y1 ON x1;
+  %BETWEEN%
+    y2 ON y1 x1;
+    y1 ON x1;
+
+  OUTPUT:	TECH1 TECH8;
+
+*** WARNING in MODEL command
+  In the MODEL command, the predictor variable on the WITHIN level refers to the whole
+  observed variable in the statement:  S2 | Y2 ON Y1
+  To use the latent within-level part, use ESTIMATOR=BAYES in the ANALYSIS command.
+*** ERROR in MODEL command
+  Observed variable on the right-hand side of a between-level ON statement must be a BETWEEN
+  variable when using ML estimators.  The BAYES estimator may resolve this problem.
+  Problem with:  Y1
+*** ERROR in MODEL command
+  Within-level variables cannot be used on the between level.
+  Within-level variable used:  X1
+*** ERROR in MODEL command
+  Within-level variables cannot be used on the between level.
+  Within-level variable used:  X1
+*** ERROR
+  The following MODEL statements are ignored:
+  * Statements in the BETWEEN level:
+    Y2 ON Y1
+    Y2 ON X1
+    Y1 ON X1
+
+Mplus VERSION 8.2 DEMO (Linux) has the following limitations:
+  Maximum number of dependent variables: 6
+  Maximum number of independent variables: 2
+  Maximum number of between variables: 2
+  Maximum number of continuous latent variables in time series analysis: 2
+
+
+MUTHEN & MUTHEN
+3463 Stoner Ave.
+Los Angeles, CA  90066
+
+Tel: (310) 391-9971
+Fax: (310) 391-8971
+Web: www.StatModel.com
+Support: Support@StatModel.com
+
+Copyright (c) 1998-2018 Muthen & Muthen
