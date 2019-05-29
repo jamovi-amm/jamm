@@ -25,7 +25,8 @@ jammGLMOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
             scaling = NULL,
             tableOptions = list(
                 "beta",
-                "component"),
+                "component",
+                "regression"),
             pathOptions = list(
                 "suggested"),
             mediatorsTerms = list(
@@ -192,7 +193,8 @@ jammGLMOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
                     "regression"),
                 default=list(
                     "beta",
-                    "component"))
+                    "component",
+                    "regression"))
             private$..pathOptions <- jmvcore::OptionNMXList$new(
                 "pathOptions",
                 pathOptions,
@@ -532,7 +534,11 @@ jammGLMResults <- if (requireNamespace('jmvcore')) R6::R6Class(
                         super$initialize(
                             options=options,
                             name="regressions",
-                            title="")
+                            title="",
+                            clearWith=list(
+                    "dep",
+                    "contrasts",
+                    "scaling"))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="overall",
@@ -710,7 +716,7 @@ jammGLMBase <- if (requireNamespace('jmvcore')) R6::R6Class(
             super$initialize(
                 package = 'jamm',
                 name = 'jammGLM',
-                version = c(0,0,7),
+                version = c(1,0,0),
                 options = options,
                 results = jammGLMResults$new(options=options),
                 data = data,
@@ -802,7 +808,8 @@ jammGLM <- function(
     scaling = NULL,
     tableOptions = list(
                 "beta",
-                "component"),
+                "component",
+                "regression"),
     pathOptions = list(
                 "suggested"),
     mediatorsTerms = list(
@@ -813,17 +820,10 @@ jammGLM <- function(
     if ( ! requireNamespace('jmvcore'))
         stop('jammGLM requires jmvcore to be installed (restart may be required)')
 
-<<<<<<< HEAD
     if ( ! missing(dep)) dep <- jmvcore::resolveQuo(jmvcore::enquo(dep))
     if ( ! missing(mediators)) mediators <- jmvcore::resolveQuo(jmvcore::enquo(mediators))
     if ( ! missing(factors)) factors <- jmvcore::resolveQuo(jmvcore::enquo(factors))
     if ( ! missing(covs)) covs <- jmvcore::resolveQuo(jmvcore::enquo(covs))
-=======
-    if ( ! missing(dep)) dep <- jmvcore:::resolveQuo(jmvcore:::enquo(dep))
-    if ( ! missing(mediators)) mediators <- jmvcore:::resolveQuo(jmvcore:::enquo(mediators))
-    if ( ! missing(factors)) factors <- jmvcore:::resolveQuo(jmvcore:::enquo(factors))
-    if ( ! missing(covs)) covs <- jmvcore:::resolveQuo(jmvcore:::enquo(covs))
->>>>>>> f8ea672f6132c5c10185a4b1cbd73a31479e1893
     if (missing(data))
         data <- jmvcore::marshalData(
             parent.frame(),
@@ -833,11 +833,7 @@ jammGLM <- function(
             `if`( ! missing(covs), covs, NULL))
 
     for (v in factors) if (v %in% names(data)) data[[v]] <- as.factor(data[[v]])
-<<<<<<< HEAD
     if (inherits(modelTerms, 'formula')) modelTerms <- jmvcore::decomposeFormula(modelTerms)
-=======
-    if (inherits(modelTerms, 'formula')) modelTerms <- jmvcore:::decomposeFormula(modelTerms)
->>>>>>> f8ea672f6132c5c10185a4b1cbd73a31479e1893
 
     options <- jammGLMOptions$new(
         dep = dep,

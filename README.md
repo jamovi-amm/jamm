@@ -5,7 +5,7 @@ version 1.*
 
 # Docs and help
 
-Please visit the [jAMM docs page](https://mcfanda.github.io/jamm_docs/index.html)
+Please visit the [jAMM docs page](https://jamovi-amm.github.io/)
 
 # State of the art
 
