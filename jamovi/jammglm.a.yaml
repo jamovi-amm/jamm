@@ -1,8 +1,8 @@
 ---
 name: jammGLM
 title: GLM Mediation Model
-menuGroup: Linear Models
-version: '0.0.7'
+menuGroup: medmod
+version: '1.0.0'
 jas: '1.2'
 completeWhenFilled: false
 description:
@@ -265,6 +265,7 @@ options:
       default:
           - beta
           - component
+          - regression
 
     - name: pathOptions
       type: NMXList

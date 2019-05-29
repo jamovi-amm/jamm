@@ -8,8 +8,5 @@ jmvtools::check()
 #install.packages(what,"/home/marcello/Skinner/Forge/jamovi/gamlj/build/R",repos='http://cran.rstudio.com/')
 
 
-
-
-
 jmvtools::install(home = "flatpak")
 

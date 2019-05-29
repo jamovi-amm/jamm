@@ -184,33 +184,6 @@ children:
           - type: CheckBox
             name: bogus
   - type: CollapseBox
-    label: Full Model
-    collapsed: true
-    stretchFactor: 1
-    children:
-      - type: Supplier
-        name: modelSupplier
-        label: Components
-        persistentItems: true
-        stretchFactor: 1
-        format: term
-        events:
-          update: './jamm.events::onUpdate_modelSupplier'
-          change: './jamm.events::onChange_modelSupplier'
-        children:
-          - type: TargetLayoutBox
-            transferAction: interactions
-            children:
-              - type: ListBox
-                name: modelTerms
-                valueFilter: unique
-                isTarget: true
-                itemDropBehaviour: emptyspace
-                events:
-                  change: './jamm.events::onChange_modelTerms'
-                template:
-                  type: TermLabel
-  - type: CollapseBox
     label: Factors Coding
     collapsed: true
     stretchFactor: 1

@@ -25,7 +25,8 @@ jammGLMOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
             scaling = NULL,
             tableOptions = list(
                 "beta",
-                "component"),
+                "component",
+                "regression"),
             pathOptions = list(
                 "suggested"),
             mediatorsTerms = list(
@@ -192,7 +193,8 @@ jammGLMOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
                     "regression"),
                 default=list(
                     "beta",
-                    "component"))
+                    "component",
+                    "regression"))
             private$..pathOptions <- jmvcore::OptionNMXList$new(
                 "pathOptions",
                 pathOptions,
@@ -714,7 +716,7 @@ jammGLMBase <- if (requireNamespace('jmvcore')) R6::R6Class(
             super$initialize(
                 package = 'jamm',
                 name = 'jammGLM',
-                version = c(0,0,7),
+                version = c(1,0,0),
                 options = options,
                 results = jammGLMResults$new(options=options),
                 data = data,
@@ -806,7 +808,8 @@ jammGLM <- function(
     scaling = NULL,
     tableOptions = list(
                 "beta",
-                "component"),
+                "component",
+                "regression"),
     pathOptions = list(
                 "suggested"),
     mediatorsTerms = list(
