@@ -532,7 +532,11 @@ jammGLMResults <- if (requireNamespace('jmvcore')) R6::R6Class(
                         super$initialize(
                             options=options,
                             name="regressions",
-                            title="")
+                            title="",
+                            clearWith=list(
+                    "dep",
+                    "contrasts",
+                    "scaling"))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="overall",
@@ -813,17 +817,10 @@ jammGLM <- function(
     if ( ! requireNamespace('jmvcore'))
         stop('jammGLM requires jmvcore to be installed (restart may be required)')
 
-<<<<<<< HEAD
     if ( ! missing(dep)) dep <- jmvcore::resolveQuo(jmvcore::enquo(dep))
     if ( ! missing(mediators)) mediators <- jmvcore::resolveQuo(jmvcore::enquo(mediators))
     if ( ! missing(factors)) factors <- jmvcore::resolveQuo(jmvcore::enquo(factors))
     if ( ! missing(covs)) covs <- jmvcore::resolveQuo(jmvcore::enquo(covs))
-=======
-    if ( ! missing(dep)) dep <- jmvcore:::resolveQuo(jmvcore:::enquo(dep))
-    if ( ! missing(mediators)) mediators <- jmvcore:::resolveQuo(jmvcore:::enquo(mediators))
-    if ( ! missing(factors)) factors <- jmvcore:::resolveQuo(jmvcore:::enquo(factors))
-    if ( ! missing(covs)) covs <- jmvcore:::resolveQuo(jmvcore:::enquo(covs))
->>>>>>> f8ea672f6132c5c10185a4b1cbd73a31479e1893
     if (missing(data))
         data <- jmvcore::marshalData(
             parent.frame(),
@@ -833,11 +830,7 @@ jammGLM <- function(
             `if`( ! missing(covs), covs, NULL))
 
     for (v in factors) if (v %in% names(data)) data[[v]] <- as.factor(data[[v]])
-<<<<<<< HEAD
     if (inherits(modelTerms, 'formula')) modelTerms <- jmvcore::decomposeFormula(modelTerms)
-=======
-    if (inherits(modelTerms, 'formula')) modelTerms <- jmvcore:::decomposeFormula(modelTerms)
->>>>>>> f8ea672f6132c5c10185a4b1cbd73a31479e1893
 
     options <- jammGLMOptions$new(
         dep = dep,

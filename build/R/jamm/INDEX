@@ -1,11 +1,1 @@
-exercise                Endurance on a threadmill.
-gamlj_drop              Update a GAMLj results by removing a block or
-                        results
-gamlj_options           GAMLj models options
-gamlj_plot              Update a GAMLj model plots by passing new plots
-                        directives
-gamlj_simpleEffects     Update a GAMLj results by passing new simple
-                        effects directives
-gamlj_update            Update a GAMLj model by passing only the new
-                        options
 jammGLM                 GLM Mediation Model

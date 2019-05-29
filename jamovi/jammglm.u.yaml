@@ -108,6 +108,7 @@ children:
         stretchFactor: 1
         format: term
         events:
+          update: './jamm.events::onUpdate_modelSupplier'
           change: './jamm.events::onChange_modelSupplier'
         children:
           - type: TargetLayoutBox
@@ -183,7 +184,6 @@ children:
           - type: CheckBox
             name: bogus
   - type: CollapseBox
-<<<<<<< HEAD
     label: Full Model
     collapsed: true
     stretchFactor: 1
@@ -211,8 +211,6 @@ children:
                 template:
                   type: TermLabel
   - type: CollapseBox
-=======
->>>>>>> f8ea672f6132c5c10185a4b1cbd73a31479e1893
     label: Factors Coding
     collapsed: true
     stretchFactor: 1
@@ -353,8 +351,6 @@ children:
               - type: TextBox
                 name: bootN
                 format: number
-<<<<<<< HEAD
-=======
           - type: Label
             label: Display in tables
             margin: large
@@ -382,4 +378,3 @@ children:
                 type: CheckBox
                 optionPart: suggested
                 optionName: pathOptions
->>>>>>> f8ea672f6132c5c10185a4b1cbd73a31479e1893
