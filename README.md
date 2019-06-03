@@ -41,7 +41,7 @@ install.packages('jmvtools', repos=c('https://repo.jamovi.org', 'https://cran.r-
 Then you download jAMM module from this repository and install it
 
 ```r
-devtools::install_github("mcfanda/jamm")
+devtools::install_github("jamovi-amm/jamm")
 pkg<-paste0(.libPaths()[[1]],"jamm")
 jmvtools::install(pkg=pkg)
 
