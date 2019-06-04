@@ -132,8 +132,8 @@ options:
               - name: type
                 type: List
                 options:
-                  - deviation
                   - simple
+                  - deviation
                   - dummy
                   - difference
                   - helmert

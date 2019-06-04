@@ -15,7 +15,7 @@ jammGLMClass <- R6::R6Class(
       mediators<-self$options$mediators
       ciWidth<-self$options$ciWidth
       ciType<-self$options$ciType
-      
+      mark(self$options$contrasts)
       ### here we initialize things ####
       data<-private$.cleandata()
       infos<-private$.prepareDiagram() 
@@ -68,7 +68,6 @@ jammGLMClass <- R6::R6Class(
       ciWidth<-self$options$ciWidth/100
       ciType<-self$options$ciType
       bootN<-self$options$bootN
-      
       if (is.null(dep))
         return()
       if (is.null(mediators))
@@ -206,10 +205,10 @@ jammGLMClass <- R6::R6Class(
         factor64<-jmvcore::toB64(factor)
         data[[factor64]] <- dataRaw[[factor]]
         levels <- base::levels(data[[factor64]])
-        stats::contrasts(data[[factor64]]) <- lf.createContrasts(levels,"deviation")
+        stats::contrasts(data[[factor64]]) <- lf.createContrasts(levels,"simple")
         n64$addFactor(factor,levels)
-        n64$addLabel(factor,lf.contrastLabels(levels, "deviation")) 
-        attr(data[[factor64]],"jcontrast")<-"deviation"
+        n64$addLabel(factor,lf.contrastLabels(levels, "simple")) 
+        attr(data[[factor64]],"jcontrast")<-"simple"
         private$.cov_condition$addFactor(factor64,levels)
       }
       

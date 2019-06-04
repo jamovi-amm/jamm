@@ -118,14 +118,14 @@ jammGLMOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
                             "type",
                             NULL,
                             options=list(
-                                "deviation",
                                 "simple",
+                                "deviation",
                                 "dummy",
                                 "difference",
                                 "helmert",
                                 "repeated",
                                 "polynomial"),
-                            default="deviation"))))
+                            default="simple"))))
             private$..showRealNames <- jmvcore::OptionBool$new(
                 "showRealNames",
                 showRealNames,
