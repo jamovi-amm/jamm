@@ -9,7 +9,19 @@ description:
     main: GLM mediation model
     R:
         dontrun: true
-
+formula:
+   dep:
+     custom: true
+   factors: 
+     custom: true
+   covs: 
+     custom: true
+   mediators: 
+     custom: true
+   mediatorsTerms: 
+     custom: true
+   modelTerms:
+     custom: true
 
 options:
     - name: data

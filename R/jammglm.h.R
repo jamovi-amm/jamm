@@ -767,6 +767,7 @@ jammGLMBase <- if (requireNamespace('jmvcore')) R6::R6Class(
 #'   mediators as dependent variables.
 #' @param moderatorsTerms a list of lists specifying the the IV which
 #'   moderatorate each mediated effect.
+#' @param formula (optional) the formula to use, see the examples
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$info} \tab \tab \tab \tab \tab a table \cr
@@ -815,10 +816,44 @@ jammGLM <- function(
     mediatorsTerms = list(
                 list()),
     moderatorsTerms = list(
-                list())) {
+                list()),
+    formula) {
 
     if ( ! requireNamespace('jmvcore'))
         stop('jammGLM requires jmvcore to be installed (restart may be required)')
+
+    if ( ! missing(formula)) {
+        if (missing(dep))
+            dep <- jammGLMClass$private_methods$.marshalFormula(
+                formula=formula,
+                data=`if`( ! missing(data), data, NULL),
+                name="dep")
+        if (missing(factors))
+            factors <- jammGLMClass$private_methods$.marshalFormula(
+                formula=formula,
+                data=`if`( ! missing(data), data, NULL),
+                name="factors")
+        if (missing(covs))
+            covs <- jammGLMClass$private_methods$.marshalFormula(
+                formula=formula,
+                data=`if`( ! missing(data), data, NULL),
+                name="covs")
+        if (missing(mediators))
+            mediators <- jammGLMClass$private_methods$.marshalFormula(
+                formula=formula,
+                data=`if`( ! missing(data), data, NULL),
+                name="mediators")
+        if (missing(mediatorsTerms))
+            mediatorsTerms <- jammGLMClass$private_methods$.marshalFormula(
+                formula=formula,
+                data=`if`( ! missing(data), data, NULL),
+                name="mediatorsTerms")
+        if (missing(modelTerms))
+            modelTerms <- jammGLMClass$private_methods$.marshalFormula(
+                formula=formula,
+                data=`if`( ! missing(data), data, NULL),
+                name="modelTerms")
+    }
 
     if ( ! missing(dep)) dep <- jmvcore::resolveQuo(jmvcore::enquo(dep))
     if ( ! missing(mediators)) mediators <- jmvcore::resolveQuo(jmvcore::enquo(mediators))
