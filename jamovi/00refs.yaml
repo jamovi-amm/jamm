@@ -1,0 +1,8 @@
+refs:
+   jamm:
+      type: 'software'
+      author: Gallucci, M.
+      year: 2019
+      title: "jAMM: jamovi Advanced Mediation Models"
+      publisher: '[jamovi module]. Retrieved from https://jamovi-amm.github.io/'
+      url: https://jamovi-amm.github.io/

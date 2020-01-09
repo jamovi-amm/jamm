@@ -29,6 +29,7 @@ items:
         - modelTerms
         - fixedIntercept
         - moderatorsTerms
+    refs: jamm
 
 
   - name: pathmodelgroup

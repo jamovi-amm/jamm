@@ -326,7 +326,8 @@ jammGLMResults <- if (requireNamespace('jmvcore')) R6::R6Class(
                     "covs",
                     "modelTerms",
                     "fixedIntercept",
-                    "moderatorsTerms")))
+                    "moderatorsTerms"),
+                refs="jamm"))
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(
@@ -892,9 +893,6 @@ jammGLM <- function(
         pathOptions = pathOptions,
         mediatorsTerms = mediatorsTerms,
         moderatorsTerms = moderatorsTerms)
-
-    results <- jammGLMResults$new(
-        options = options)
 
     analysis <- jammGLMClass$new(
         options = options,
