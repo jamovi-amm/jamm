@@ -11,4 +11,4 @@ LazyData: true
 Imports: jmvcore (>= 0.8.0), diagram, gridExtra, lavaan, diagram
 Depends: jmvcore
 Exports: jammGLM
-RoxygenNote: 6.1.1
+RoxygenNote: 7.0.2

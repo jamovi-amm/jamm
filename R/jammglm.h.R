@@ -731,6 +731,7 @@ jammGLMBase <- if (requireNamespace('jmvcore')) R6::R6Class(
 #' GLM Mediation Model
 #'
 #' GLM mediation model
+#' @param formula (optional) the formula to use, see the examples
 #' @param data the data as a data frame
 #' @param dep a string naming the dependent variable from \code{data},
 #'   variable must be numeric
@@ -768,7 +769,6 @@ jammGLMBase <- if (requireNamespace('jmvcore')) R6::R6Class(
 #'   mediators as dependent variables.
 #' @param moderatorsTerms a list of lists specifying the the IV which
 #'   moderatorate each mediated effect.
-#' @param formula (optional) the formula to use, see the examples
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$info} \tab \tab \tab \tab \tab a table \cr
@@ -790,6 +790,7 @@ jammGLMBase <- if (requireNamespace('jmvcore')) R6::R6Class(
 #'
 #' @export
 jammGLM <- function(
+    formula,
     data,
     dep = NULL,
     mediators = NULL,
@@ -817,8 +818,8 @@ jammGLM <- function(
     mediatorsTerms = list(
                 list()),
     moderatorsTerms = list(
-                list()),
-    formula) {
+                list())
+    ) {
 
     if ( ! requireNamespace('jmvcore'))
         stop('jammGLM requires jmvcore to be installed (restart may be required)')

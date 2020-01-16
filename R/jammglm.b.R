@@ -326,7 +326,7 @@ jammGLMClass <- R6::R6Class(
   TRUE
 },
 .marshalFormula= function(formula, data, name) {
- mark("formula",formula)
+# mark("formula",formula)
   mark("name",name)
 },
 .formula=function(){

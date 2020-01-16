@@ -4,17 +4,35 @@
 \alias{jammGLM}
 \title{GLM Mediation Model}
 \usage{
-jammGLM(data, dep = NULL, mediators = NULL, factors = NULL,
-  covs = NULL, modelTerms = NULL, ciType = "standard",
-  ciWidth = 95, bootN = 1000, contrasts = NULL,
-  showRealNames = TRUE, showContrastCode = FALSE, bogus = FALSE,
-  simpleScale = "mean_sd", cvalue = 1, percvalue = 25,
-  simpleScaleLabels = "labels", scaling = NULL,
+jammGLM(
+  formula,
+  data,
+  dep = NULL,
+  mediators = NULL,
+  factors = NULL,
+  covs = NULL,
+  modelTerms = NULL,
+  ciType = "standard",
+  ciWidth = 95,
+  bootN = 1000,
+  contrasts = NULL,
+  showRealNames = TRUE,
+  showContrastCode = FALSE,
+  bogus = FALSE,
+  simpleScale = "mean_sd",
+  cvalue = 1,
+  percvalue = 25,
+  simpleScaleLabels = "labels",
+  scaling = NULL,
   tableOptions = list("beta", "component", "regression"),
-  pathOptions = list("suggested"), mediatorsTerms = list(list()),
-  moderatorsTerms = list(list()), formula)
+  pathOptions = list("suggested"),
+  mediatorsTerms = list(list()),
+  moderatorsTerms = list(list())
+)
 }
 \arguments{
+\item{formula}{(optional) the formula to use, see the examples}
+
 \item{data}{the data as a data frame}
 
 \item{dep}{a string naming the dependent variable from \code{data},
@@ -73,8 +91,6 @@ mediators as dependent variables.}
 
 \item{moderatorsTerms}{a list of lists specifying the the IV which
 moderatorate each mediated effect.}
-
-\item{formula}{(optional) the formula to use, see the examples}
 }
 \value{
 A results object containing:

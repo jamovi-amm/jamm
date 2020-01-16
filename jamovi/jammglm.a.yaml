@@ -22,7 +22,8 @@ formula:
      custom: true
    modelTerms:
      custom: true
-
+   moderatorsTerms:
+     custom: true
 options:
     - name: data
       type: Data
