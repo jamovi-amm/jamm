@@ -25,8 +25,7 @@ jammGLMOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
             scaling = NULL,
             tableOptions = list(
                 "beta",
-                "component",
-                "regression"),
+                "component"),
             pathOptions = list(
                 "suggested"),
             mediatorsTerms = list(
@@ -193,8 +192,7 @@ jammGLMOptions <- if (requireNamespace('jmvcore')) R6::R6Class(
                     "regression"),
                 default=list(
                     "beta",
-                    "component",
-                    "regression"))
+                    "component"))
             private$..pathOptions <- jmvcore::OptionNMXList$new(
                 "pathOptions",
                 pathOptions,
@@ -448,6 +446,7 @@ jammGLMResults <- if (requireNamespace('jmvcore')) R6::R6Class(
                             options=options,
                             name="main",
                             title="Indirect and Total Effects",
+                            refs="lavaan",
                             clearWith=list(
                                 "dep",
                                 "modelTerms",
@@ -731,7 +730,6 @@ jammGLMBase <- if (requireNamespace('jmvcore')) R6::R6Class(
 #' GLM Mediation Model
 #'
 #' GLM mediation model
-#' @param formula (optional) the formula to use, see the examples
 #' @param data the data as a data frame
 #' @param dep a string naming the dependent variable from \code{data},
 #'   variable must be numeric
@@ -769,6 +767,7 @@ jammGLMBase <- if (requireNamespace('jmvcore')) R6::R6Class(
 #'   mediators as dependent variables.
 #' @param moderatorsTerms a list of lists specifying the the IV which
 #'   moderatorate each mediated effect.
+#' @param formula (optional) the formula to use, see the examples
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$info} \tab \tab \tab \tab \tab a table \cr
@@ -790,7 +789,6 @@ jammGLMBase <- if (requireNamespace('jmvcore')) R6::R6Class(
 #'
 #' @export
 jammGLM <- function(
-    formula,
     data,
     dep = NULL,
     mediators = NULL,
@@ -811,15 +809,14 @@ jammGLM <- function(
     scaling = NULL,
     tableOptions = list(
                 "beta",
-                "component",
-                "regression"),
+                "component"),
     pathOptions = list(
                 "suggested"),
     mediatorsTerms = list(
                 list()),
     moderatorsTerms = list(
-                list())
-    ) {
+                list()),
+    formula) {
 
     if ( ! requireNamespace('jmvcore'))
         stop('jammGLM requires jmvcore to be installed (restart may be required)')
@@ -855,6 +852,11 @@ jammGLM <- function(
                 formula=formula,
                 data=`if`( ! missing(data), data, NULL),
                 name="modelTerms")
+        if (missing(moderatorsTerms))
+            moderatorsTerms <- jammGLMClass$private_methods$.marshalFormula(
+                formula=formula,
+                data=`if`( ! missing(data), data, NULL),
+                name="moderatorsTerms")
     }
 
     if ( ! missing(dep)) dep <- jmvcore::resolveQuo(jmvcore::enquo(dep))

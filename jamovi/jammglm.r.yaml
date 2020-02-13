@@ -127,6 +127,7 @@ items:
           - name: main
             title: Indirect and Total Effects
             type: Table
+            refs: lavaan
             clearWith:
                      - dep
                      - modelTerms

@@ -278,7 +278,6 @@ options:
       default:
           - beta
           - component
-          - regression
 
     - name: pathOptions
       type: NMXList

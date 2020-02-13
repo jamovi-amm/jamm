@@ -9,6 +9,7 @@ jammGLMClass <- R6::R6Class(
     .cov_condition=conditioning$new(),
     .init=function() {
       ginfo("init")
+      mark(Sys.getlocale("LC_NUMERIC"))
       private$.names64<-names64$new()
       dep<-self$options$dep
       covs<-self$options$covs
@@ -99,7 +100,9 @@ jammGLMClass <- R6::R6Class(
       params<-jmf.mediationTable(infos64,data,level = ciWidth,se=se, boot.ci=ciType,bootN=bootN)
       table<-self$results$models$main
       if (ciType!="none")
-          table$setNote("cinote",paste("(a) Confidence intervals computed with method:",NOTES[["ci"]][[ciType]]))
+          table$setNote("cinote",paste("Confidence intervals computed with method:",NOTES[["ci"]][[ciType]]))
+          table$setNote("betas",paste("Betas are completely standardized effect sizes"))
+      
       table$setVisible(TRUE)
       
       if (!is.something(infos64$moderators)) {

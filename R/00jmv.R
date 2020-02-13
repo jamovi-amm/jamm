@@ -8,4 +8,10 @@
         `year`=2019, 
         `title`="jAMM: jamovi Advanced Mediation Models", 
         `publisher`="[jamovi module]. Retrieved from https://jamovi-amm.github.io/", 
-        `url`="https://jamovi-amm.github.io/"))
+        `url`="https://jamovi-amm.github.io/"), 
+    `lavaan`=list(
+        `type`="software", 
+        `author`="Yves Rosseel", 
+        `title`="lavaan: An R Package for Structural Equation Modeling", 
+        `publisher`="Journal of Statistical Software, 48(2), 1-36", 
+        `url`="http://www.jstatsoft.org/v48/i02/"))
