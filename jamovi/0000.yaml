@@ -29,5 +29,7 @@ datasets:
       - Mediation
       - Conditional mediation
       - Moderation
+usesNative: true
+minApp: 1.0.8
 
 ...

@@ -9,8 +9,21 @@ description:
     main: GLM mediation model
     R:
         dontrun: true
-
-
+formula:
+   dep:
+     custom: true
+   factors: 
+     custom: true
+   covs: 
+     custom: true
+   mediators: 
+     custom: true
+   mediatorsTerms: 
+     custom: true
+   modelTerms:
+     custom: true
+   moderatorsTerms:
+     custom: true
 options:
     - name: data
       type: Data
@@ -132,8 +145,8 @@ options:
               - name: type
                 type: List
                 options:
-                  - deviation
                   - simple
+                  - deviation
                   - dummy
                   - difference
                   - helmert
@@ -265,7 +278,6 @@ options:
       default:
           - beta
           - component
-          - regression
 
     - name: pathOptions
       type: NMXList

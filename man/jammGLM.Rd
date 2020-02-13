@@ -4,16 +4,35 @@
 \alias{jammGLM}
 \title{GLM Mediation Model}
 \usage{
-jammGLM(data, dep = NULL, mediators = NULL, factors = NULL,
-  covs = NULL, modelTerms = NULL, ciType = "standard",
-  ciWidth = 95, bootN = 1000, contrasts = NULL,
-  showRealNames = TRUE, showContrastCode = FALSE, bogus = FALSE,
-  simpleScale = "mean_sd", cvalue = 1, percvalue = 25,
-  simpleScaleLabels = "labels", scaling = NULL,
-  tableOptions = list("beta"), mediatorsTerms = list(list()),
-  moderatorsTerms = list(list()))
+jammGLM(
+  formula,
+  data,
+  dep = NULL,
+  mediators = NULL,
+  factors = NULL,
+  covs = NULL,
+  modelTerms = NULL,
+  ciType = "standard",
+  ciWidth = 95,
+  bootN = 1000,
+  contrasts = NULL,
+  showRealNames = TRUE,
+  showContrastCode = FALSE,
+  bogus = FALSE,
+  simpleScale = "mean_sd",
+  cvalue = 1,
+  percvalue = 25,
+  simpleScaleLabels = "labels",
+  scaling = NULL,
+  tableOptions = list("beta", "component", "regression"),
+  pathOptions = list("suggested"),
+  mediatorsTerms = list(list()),
+  moderatorsTerms = list(list())
+)
 }
 \arguments{
+\item{formula}{(optional) the formula to use, see the examples}
+
 \item{data}{the data as a data frame}
 
 \item{dep}{a string naming the dependent variable from \code{data},
@@ -65,6 +84,8 @@ children}}
 
 \item{tableOptions}{.}
 
+\item{pathOptions}{.}
+
 \item{mediatorsTerms}{a list of lists specifying the models for with the
 mediators as dependent variables.}
 
@@ -80,6 +101,9 @@ A results object containing:
   \code{results$models$moderationEffects} \tab \tab \tab \tab \tab a table \cr
   \code{results$models$main} \tab \tab \tab \tab \tab a table \cr
   \code{results$models$contrastCodeTables} \tab \tab \tab \tab \tab an array of contrast coefficients tables \cr
+  \code{results$regressions$overall} \tab \tab \tab \tab \tab a table \cr
+  \code{results$regressions$mediator_regressions} \tab \tab \tab \tab \tab an array of regressions for the mediators \cr
+  \code{results$regressions$full} \tab \tab \tab \tab \tab a table \cr
 }
 
 Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:

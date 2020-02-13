@@ -26,6 +26,17 @@ info<-function(what=NULL) {
   }
 }
 
+ginfo<-function(what=NULL,obj=NULL) {
+  if (GAMLj_INFO) {
+    if (!is.null(what))
+      print(what)
+    if (!is.null(obj)) {
+      print(obj)
+      cat("------------\n")
+    }
+  }
+}
+
 mark<-function(what=NULL,obj=NULL) {
   if (GAMLj_DEBUG) {
     if (!is.null(what))

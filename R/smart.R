@@ -67,6 +67,17 @@ smartMediation <- R6Class("smartMediation",
                   paths
 
                 },
+                medFormulas=function() {
+                  modelFormulas<-list()
+                  for (i in seq_along(self$mediators) )
+                     modelFormulas[[i]]<-lf.modelFormula(self$original_medmodels[[i]])
+                  modelFormulas
+                },
+                fullFormula=function() {
+                    if (length(self$original_fullmodel)>0)
+                      lf.modelFormula(self$original_fullmodel)
+                },
+                
                 print=function() {
                   add<-""
                   if (self$hasRequired())

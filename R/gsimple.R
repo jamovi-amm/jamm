@@ -118,7 +118,7 @@ gsimple.populate<-function(model,options,tables,cov_conditioning) {
   
   #### check if estimation is needed
        if (!is.null(anovaTable$state)) {
-            mark("simple effects have been recycled")
+            ginfo("simple effects have been recycled")
             anovaTableData<-anovaTable$state
             parametersTableData<-parametersTable$state
        } else {
@@ -137,12 +137,11 @@ gsimple.populate<-function(model,options,tables,cov_conditioning) {
              anovaTable$setState(anovaTableData)
              parametersTableData<-resultsTables[[1]]  
              parametersTable$setState(parametersTableData)
-             mark("simple effects have been computed")
+             ginfo("simple effects have been computed")
     
        }
 
    ### fill the Anova Table ###
-        mark(parametersTable)
         for(r in seq_len(nrow(anovaTableData))) {
               anovaTable$setRow(rowNo=r,anovaTableData[r,])
         }

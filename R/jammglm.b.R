@@ -5,9 +5,11 @@ jammGLMClass <- R6::R6Class(
     .model=NA,
     .names64=NA,
     .infos=NULL,
+    .infos64=NULL,
     .cov_condition=conditioning$new(),
     .init=function() {
-      mark("init")
+      ginfo("init")
+      mark(Sys.getlocale("LC_NUMERIC"))
       private$.names64<-names64$new()
       dep<-self$options$dep
       covs<-self$options$covs
@@ -15,12 +17,10 @@ jammGLMClass <- R6::R6Class(
       mediators<-self$options$mediators
       ciWidth<-self$options$ciWidth
       ciType<-self$options$ciType
-      
       ### here we initialize things ####
       data<-private$.cleandata()
       infos<-private$.prepareDiagram() 
       private$.infos<-infos
-      
       if (infos$isImpossible)   return()
       if (infos$hasRequired())   return()
       
@@ -36,39 +36,38 @@ jammGLMClass <- R6::R6Class(
         private$.names64$factorize(m)
       })
       
-      infos<-smartMediation$new(meds,full,moderators = mods)
-      private$.infos<-infos
+      infos64<-smartMediation$new(meds,full,moderators = mods)
+      private$.infos64<-infos64
       ## prepare main result table
        table<-self$results$models$main
-       if (is.something(infos$moderators)) {
+       if (is.something(infos64$moderators)) {
          modtable<-self$results$models$moderationEffects
          modtable$setVisible(TRUE)
-         mr.initConditionalTable(infos,table,private$.names64,private$.cov_condition,ciType,ciWidth,self$options$tableOptions)
+         mr.initConditionalTable(infos64,table,private$.names64,private$.cov_condition,ciType,ciWidth,self$options$tableOptions)
        }
        else
-         mr.initTable(infos,table,private$.names64,ciType,ciWidth,self$options$tableOptions)
+         mr.initTable(infos64,table,private$.names64,ciType,ciWidth,self$options$tableOptions)
        
       if  (is.something(self$options$factors))   
           mr.initContrastCode(data,self$options,self$results,private$.names64)
 
        if ("regression" %in% self$options$tableOptions) 
-          regressions.init(infos,data,self$options,self$results,private$.names64)
-         
+          regressions.init(infos64,data,self$options,self$results,private$.names64)
 
     },
     .run=function() {
       n64<-private$.names64
-      mark("run")
+      ginfo("run")
       # collect some option
       dep <- self$options$dep
       factors <- self$options$factors
       covs <- self$options$covs
       mediators <- self$options$mediators
+      infos64<-private$.infos64
       infos<-private$.infos
       ciWidth<-self$options$ciWidth/100
       ciType<-self$options$ciType
       bootN<-self$options$bootN
-      
       if (is.null(dep))
         return()
       if (is.null(mediators))
@@ -94,17 +93,19 @@ jammGLMClass <- R6::R6Class(
       ## and then the mediated effect. Because in .init the mediated effect is defined at
       ## the first row, this function fills the table well because it uses the rowKey appropriately
 
-      if (!infos$isEstimable())
+      if (!infos64$isEstimable())
          return()
       
       se<-ifelse(ciType=="standard" || ciType=="none",ciType,"bootstrap")
-      params<-jmf.mediationTable(infos,data,level = ciWidth,se=se, boot.ci=ciType,bootN=bootN)
+      params<-jmf.mediationTable(infos64,data,level = ciWidth,se=se, boot.ci=ciType,bootN=bootN)
       table<-self$results$models$main
       if (ciType!="none")
-          table$setNote("cinote",paste("(a) Confidence intervals computed with method:",NOTES[["ci"]][[ciType]]))
+          table$setNote("cinote",paste("Confidence intervals computed with method:",NOTES[["ci"]][[ciType]]))
+          table$setNote("betas",paste("Betas are completely standardized effect sizes"))
+      
       table$setVisible(TRUE)
       
-      if (!is.something(infos$moderators)) {
+      if (!is.something(infos64$moderators)) {
            for (rowKey in table$rowKeys) {
                row<-params[params$label==rowKey,]
                if (dim(row)[1]>0)
@@ -114,7 +115,7 @@ jammGLMClass <- R6::R6Class(
         # first we fill the interaction table    
         modtable<-self$results$models$moderationEffects
 
-        moderators<-unique(unlist(sapply(infos$moderators,n64$factorName)))
+        moderators<-unique(unlist(sapply(infos64$moderators,n64$factorName)))
         moderators64<-jmvcore::toB64(moderators)
         
         itable<-params[(params$op=="~" & params$model=="med"),]
@@ -149,7 +150,7 @@ jammGLMClass <- R6::R6Class(
             }
           }
            tableKeys<-table$rowKeys
-           params<-jmf.mediationTable(infos,ldata,level = ciWidth,se=se, boot.ci=ciType,bootN=bootN)
+           params<-jmf.mediationTable(infos64,ldata,level = ciWidth,se=se, boot.ci=ciType,bootN=bootN)
            for (i in seq_along(params$label)) {
               row<-params[i,]
               for (name in names(lcombs))
@@ -163,7 +164,7 @@ jammGLMClass <- R6::R6Class(
       }
       
       if ("regression" %in% self$options$tableOptions) 
-        regressions.results(infos,data,self$options,self$results,private$.names64)
+        regressions.results(infos64,data,self$options,self$results,private$.names64)
       
     },
   .cleandata=function() {
@@ -206,10 +207,10 @@ jammGLMClass <- R6::R6Class(
         factor64<-jmvcore::toB64(factor)
         data[[factor64]] <- dataRaw[[factor]]
         levels <- base::levels(data[[factor64]])
-        stats::contrasts(data[[factor64]]) <- lf.createContrasts(levels,"deviation")
+        stats::contrasts(data[[factor64]]) <- lf.createContrasts(levels,"simple")
         n64$addFactor(factor,levels)
-        n64$addLabel(factor,lf.contrastLabels(levels, "deviation")) 
-        attr(data[[factor64]],"jcontrast")<-"deviation"
+        n64$addLabel(factor,lf.contrastLabels(levels, "simple")) 
+        attr(data[[factor64]],"jcontrast")<-"simple"
         private$.cov_condition$addFactor(factor64,levels)
       }
       
@@ -327,11 +328,54 @@ jammGLMClass <- R6::R6Class(
   diag.plot_mods(plot,infos$moderators)
   TRUE
 },
+.marshalFormula= function(formula, data, name) {
+# mark("formula",formula)
+  mark("name",name)
+},
+.formula=function(){
+  
+  if (private$.infos$isEstimable()) {
+    forms=private$.infos$medFormulas()
+    forms[[length(forms)+1]]<-private$.infos$fullFormula()
+    for (i in seq_along(forms))
+      forms[[i]]=private$.names64$translate(forms[[i]])
+    return(paste('list(',paste(forms,collapse = ",\n\t"),')'))      
+  } else {
+    return('list()')
+  }
+  
+  
+},
 .sourcifyOption = function(option) {
         name <- option$name
         value <- option$value
-        if (name=="mediatorsTerms")
-          return('mediatorsTerms=list(y~1+x,y~1+x+z)')      
+        if (name %in% c('mediators', 'factors', 'dep', 'covs', 'cluster', 'modelTerms','mediatorsTerms'))
+          return('')
+        if (name == 'scaling') {
+          i <- 1
+          while (i <= length(value)) {
+            item <- value[[i]]
+            if (item$type == 'centered')
+              value[[i]] <- NULL
+            else
+              i <- i + 1
+          }
+          if (length(value) == 0)
+            return('')
+        }
+        
+        if (name == 'contrasts') {
+          i <- 1
+          while (i <= length(value)) {
+            item <- value[[i]]
+            if (item$type == 'simple')
+              value[[i]] <- NULL
+            else
+              i <- i + 1
+          }
+          if (length(value) == 0)
+            return('')
+        }        
         super$.sourcifyOption(option)
 }
 ))
