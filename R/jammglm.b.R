@@ -9,7 +9,7 @@ jammGLMClass <- R6::R6Class(
     .cov_condition=conditioning$new(),
     .init=function() {
       ginfo("init")
-      mark(Sys.getlocale("LC_NUMERIC"))
+      Sys.getlocale("LC_NUMERIC")
       private$.names64<-names64$new()
       dep<-self$options$dep
       covs<-self$options$covs
@@ -165,7 +165,8 @@ jammGLMClass <- R6::R6Class(
       
       if ("regression" %in% self$options$tableOptions) 
         regressions.results(infos64,data,self$options,self$results,private$.names64)
-      
+      mark(attr(data,"warning"))
+      out.table_notes(self$results$info,attr(data,"warning"))
     },
   .cleandata=function() {
       n64<-private$.names64
@@ -173,11 +174,13 @@ jammGLMClass <- R6::R6Class(
       factors <- self$options$factors
       covs <- self$options$covs
       mediators<-self$options$mediators
-
+      .warning<-list()
       dataRaw <- jmvcore::naOmit(self$data)
       data <- list()
       
       if ( ! is.null(dep)) {
+        if (class(dataRaw[[dep]]) == "factor")
+          .warning<-append(.warning,"Warming: The dependent variable is defined as factor. Please make sure it is a continuous variable.")
         data[[jmvcore::toB64(dep)]] <- jmvcore::toNumeric(dataRaw[[dep]])
         n64$addVar(dep)
       }
@@ -228,8 +231,8 @@ jammGLMClass <- R6::R6Class(
       }
       
       private$.names64<-n64
-      data<-as.data.frame(data)      
-
+      data<-as.data.frame(data)     
+      attr(data,"warning")<-.warning
       return(data)
       
     },

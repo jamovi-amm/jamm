@@ -355,7 +355,8 @@ jammGLMResults <- if (requireNamespace('jmvcore')) R6::R6Class(
                                 "mediatorsTerms",
                                 "modelTerms",
                                 "moderatorsTerms",
-                                "pathOptions")))
+                                "pathOptions"),
+                            refs="diagram"))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="pathnotes",

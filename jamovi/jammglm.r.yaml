@@ -54,7 +54,7 @@ items:
                   - modelTerms
                   - moderatorsTerms
                   - pathOptions
-                  
+              refs: diagram    
             - name: pathnotes
               type: Table
               title: ""
