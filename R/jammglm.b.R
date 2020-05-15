@@ -21,8 +21,6 @@ jammGLMClass <- R6::R6Class(
       data<-private$.cleandata()
       infos<-private$.prepareDiagram() 
       private$.infos<-infos
-      if (infos$isImpossible)   return()
-      if (infos$hasRequired())   return()
       
       meds<-lapply(infos$original_medmodels, function(m) {
         m$ind=private$.names64$factorize(m$ind)
@@ -35,9 +33,11 @@ jammGLMClass <- R6::R6Class(
       mods<-lapply(infos$moderators, function(m) {
         private$.names64$factorize(m)
       })
-      
       infos64<-smartMediation$new(meds,full,moderators = mods)
       private$.infos64<-infos64
+      if (infos$isImpossible)   return()
+      if (infos$isEmpty)        return()
+      if (infos$hasRequired())  return()
       ## prepare main result table
        table<-self$results$models$main
        if (is.something(infos64$moderators)) {
@@ -92,11 +92,12 @@ jammGLMClass <- R6::R6Class(
       ## notice that jmf.modelSummaries return first the individual coefficients
       ## and then the mediated effect. Because in .init the mediated effect is defined at
       ## the first row, this function fills the table well because it uses the rowKey appropriately
-
-      if (!infos64$isEstimable())
-         return()
+     
+#      if (!infos64$isEstimable())
+#         return()
       
       se<-ifelse(ciType=="standard" || ciType=="none",ciType,"bootstrap")
+      mark(names(data))
       params<-jmf.mediationTable(infos64,data,level = ciWidth,se=se, boot.ci=ciType,bootN=bootN)
       table<-self$results$models$main
       if (ciType!="none")
@@ -165,7 +166,6 @@ jammGLMClass <- R6::R6Class(
       
       if ("regression" %in% self$options$tableOptions) 
         regressions.results(infos64,data,self$options,self$results,private$.names64)
-      mark(attr(data,"warning"))
       out.table_notes(self$results$info,attr(data,"warning"))
     },
   .cleandata=function() {
@@ -200,7 +200,6 @@ jammGLMClass <- R6::R6Class(
         data[[jmvcore::toB64(med)]] <- jmvcore::toNumeric(dataRaw[[med]])
         n64$addVar(med)
       }
-
       for (factor in factors) {
         ### we need this for Rinterface ####
         if (!("factor" %in% class(dataRaw[[factor]]))) {
@@ -332,8 +331,9 @@ jammGLMClass <- R6::R6Class(
   TRUE
 },
 .marshalFormula= function(formula, data, name) {
-# mark("formula",formula)
+  mark("formula",formula)
   mark("name",name)
+  
 },
 .formula=function(){
   

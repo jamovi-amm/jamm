@@ -16,6 +16,7 @@ smartMediation <- R6Class("smartMediation",
                 original_fullmodel=NULL,
                 M=NULL,
                 isImpossible=FALSE,
+                isEmpty=TRUE,
                 impossibles=NULL,
                 ieffects=NULL,
                 mod_ieffects=NULL,
@@ -44,7 +45,7 @@ smartMediation <- R6Class("smartMediation",
                   private$indirects()
                   },
                 isEstimable=function() {
-                  (!self$isImpossible && !self$hasRequired())
+                  (!self$isImpossible && !self$isEmpty)
                 },
                 
                 hasRequired=function() {
@@ -105,6 +106,8 @@ smartMediation <- R6Class("smartMediation",
                   
                   cat("\nPaths\n")
                   print(self$M)
+                  cat("\nIs empty?\n")
+                  cat(self$isEmpty)
                   cat("\nIs impossible?\n")
                   cat(self$isImpossible)
                   cat("\nHas required\n")
@@ -116,10 +119,9 @@ smartMediation <- R6Class("smartMediation",
                     cat("\nImpossible paths\n")
                     print(self$impossibles)
                   }
-                  else {
-                    cat("\n Indirect Effects\n")
-                    print(self$ieffects)
-                  }
+                  cat("\n Indirect Effects\n")
+                  print(self$ieffects)
+                  
                 }
                 
                 ), #end of public
@@ -233,7 +235,7 @@ smartMediation <- R6Class("smartMediation",
                         self$isImpossible<-FALSE
                         self$impossibles<-NULL
                         self$ieffects<-NULL
-                        return()
+  #                      return()
                       }
                         
                       isImpossible<-FALSE
@@ -296,6 +298,8 @@ smartMediation <- R6Class("smartMediation",
                         self$impossibles<-impossibles
                         self$mod_ieffects<-mod_ieffects
                         self$ieffects<-indeff
+                        if (is.something(indeff))
+                          self$isEmpty<-FALSE
                         totaleffects<-list()
                         for (ie in indeff) {
                           value<-c(ie[[1]],ie[[length(ie)]])

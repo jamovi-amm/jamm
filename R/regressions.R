@@ -88,6 +88,8 @@ regressions.results<-function(infos,data, options, results, names64) {
   # here we have to deduce the total model because infos does not compute it
   # it is the full model without mediators
   mod<-infos$original_fullmodel
+  mark(infos$fullFormula())
+  mark(mod)
   modelterms<-remove_a_from_b(infos$mediators,mod$ind)
   modelFormula<-jmvcore::composeFormula(mod$dep,modelterms)
   rtable<-.regression_table(modelFormula,data,names64,ciWidth) 
