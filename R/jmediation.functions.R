@@ -22,6 +22,7 @@ jmf.mediationSummary <-
       amodifier <- paste(paste0(ie, collapse = "_"), amodifier, sep = ":=")
       lavformula <- paste(lavformula, amodifier, sep = ";")
     }
+    ginfo(lavformula)
     fit <-
       try(lavaan::sem(lavformula,
                       data = data,
