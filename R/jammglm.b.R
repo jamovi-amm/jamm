@@ -9,7 +9,7 @@ jammGLMClass <- R6::R6Class(
     .cov_condition=conditioning$new(),
     .init=function() {
       ginfo("init")
-      mark(Sys.getlocale("LC_NUMERIC"))
+      Sys.getlocale("LC_NUMERIC")
       private$.names64<-names64$new()
       dep<-self$options$dep
       covs<-self$options$covs
@@ -21,8 +21,6 @@ jammGLMClass <- R6::R6Class(
       data<-private$.cleandata()
       infos<-private$.prepareDiagram() 
       private$.infos<-infos
-      if (infos$isImpossible)   return()
-      if (infos$hasRequired())   return()
       
       meds<-lapply(infos$original_medmodels, function(m) {
         m$ind=private$.names64$factorize(m$ind)
@@ -35,9 +33,11 @@ jammGLMClass <- R6::R6Class(
       mods<-lapply(infos$moderators, function(m) {
         private$.names64$factorize(m)
       })
-      
       infos64<-smartMediation$new(meds,full,moderators = mods)
       private$.infos64<-infos64
+      if (infos$isImpossible)   return()
+      if (infos$isEmpty)        return()
+      if (infos$hasRequired())  return()
       ## prepare main result table
        table<-self$results$models$main
        if (is.something(infos64$moderators)) {
@@ -92,9 +92,9 @@ jammGLMClass <- R6::R6Class(
       ## notice that jmf.modelSummaries return first the individual coefficients
       ## and then the mediated effect. Because in .init the mediated effect is defined at
       ## the first row, this function fills the table well because it uses the rowKey appropriately
-
-      if (!infos64$isEstimable())
-         return()
+     
+#      if (!infos64$isEstimable())
+#         return()
       
       se<-ifelse(ciType=="standard" || ciType=="none",ciType,"bootstrap")
       params<-jmf.mediationTable(infos64,data,level = ciWidth,se=se, boot.ci=ciType,bootN=bootN)
@@ -165,7 +165,7 @@ jammGLMClass <- R6::R6Class(
       
       if ("regression" %in% self$options$tableOptions) 
         regressions.results(infos64,data,self$options,self$results,private$.names64)
-      
+      out.table_notes(self$results$info,attr(data,"warning"))
     },
   .cleandata=function() {
       n64<-private$.names64
@@ -173,11 +173,13 @@ jammGLMClass <- R6::R6Class(
       factors <- self$options$factors
       covs <- self$options$covs
       mediators<-self$options$mediators
-
+      .warning<-list()
       dataRaw <- jmvcore::naOmit(self$data)
       data <- list()
       
       if ( ! is.null(dep)) {
+        if (class(dataRaw[[dep]]) == "factor")
+          .warning<-append(.warning,"Warming: The dependent variable is defined as factor. Please make sure it is a continuous variable.")
         data[[jmvcore::toB64(dep)]] <- jmvcore::toNumeric(dataRaw[[dep]])
         n64$addVar(dep)
       }
@@ -197,7 +199,6 @@ jammGLMClass <- R6::R6Class(
         data[[jmvcore::toB64(med)]] <- jmvcore::toNumeric(dataRaw[[med]])
         n64$addVar(med)
       }
-
       for (factor in factors) {
         ### we need this for Rinterface ####
         if (!("factor" %in% class(dataRaw[[factor]]))) {
@@ -228,8 +229,8 @@ jammGLMClass <- R6::R6Class(
       }
       
       private$.names64<-n64
-      data<-as.data.frame(data)      
-
+      data<-as.data.frame(data)     
+      attr(data,"warning")<-.warning
       return(data)
       
     },
@@ -329,8 +330,9 @@ jammGLMClass <- R6::R6Class(
   TRUE
 },
 .marshalFormula= function(formula, data, name) {
-# mark("formula",formula)
+  mark("formula",formula)
   mark("name",name)
+  
 },
 .formula=function(){
   

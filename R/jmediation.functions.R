@@ -8,6 +8,10 @@ jmf.mediationSummary <-
     models <- infos$original_medmodels
     models[[length(models) + 1]] <- infos$original_fullmodel
     formulas <- .modelFormulas(models)
+    ok<-unlist(lapply(formulas, function(f){
+       class(tryCatch(as.formula(f), error=function(e) FALSE))=="formula"
+    }))
+    formulas<-formulas[ok]
     lavformula <- paste(formulas, collapse = " ; ")
     ierecoded<-lapply(infos$ieffects, function(x) gsub(":","____",x))
     for (ie in ierecoded) {
@@ -39,18 +43,20 @@ jmf.mediationSummary <-
 
 jmf.mediationTotal <-
   function(infos,data,level) {
+        .warning<-list()
         model <- infos$original_fullmodel
         meds<-infos$mediators
         ind<-lapply(model$ind, function(x) if(!any(x %in% meds)) x)
-        model$ind<-ind[!(sapply(ind, is.null))]
+#        model$ind<-infos$independents
+        model$ind<-ind
         .formula<-.modelFormula(model,"_t_")
         fit<-try(lavaan::sem(.formula,data = data,likelihood = "wishart"))
         if (jmvcore::isError(fit)) {
             msg <- jmvcore::extractErrorMessage(fit)
             if (is.something(grep("definite", msg)))
-                    jmvcore::reject("The model cannot be estimated. Please check whether the independent variables are very highly correlated or the model is ill-defined")
+                    .warning<-append(.warning,"The total effect cannot be estimated. Please check whether the independent variables are very highly correlated or the model is ill-defined")
             else
-              jmvcore::reject(msg)
+                    .warning<-append(.warning,"The total effect cannot be estimated")
         }
         table<-lavaan::parameterestimates(
           fit,
@@ -84,7 +90,6 @@ jmf.mediationTable <- function(
   
   if (se=="none") se<-"standard"
   if (boot.ci=="bca") boot.ci<-"bca.simple"
-  
   models <- infos$original_medmodels
   models[[length(models) + 1]] <- infos$original_fullmodel
   ldata<-.make_var(models,data)
@@ -106,12 +111,17 @@ jmf.mediationTable <- function(
 
 .modelFormula <- function(alist,sep="_") {
   dep <- alist$dep
-  terms <- sapply(alist$ind, function(a) {
+  ind<-list()
+  for (a in alist$ind)
+      if (is.something(a))
+         ind[[length(ind)+1]]<-a
+  terms <- sapply(ind, function(a) {
     if (length(a)>1)
       paste(paste0(paste0(a,collapse = "____"),sep,dep),paste0(a,collapse = "____"),sep="*")
     else
       paste(paste0(a, sep, dep), a, sep = " * ")
   })
+
   terms <- paste(terms, collapse = " + ")
   lformula <- paste(dep, "~", terms)
   return(lformula)

@@ -1,7 +1,7 @@
 ---
 title: Advanced Mediation Models
 name: jamm
-version: 1.0.4
+version: 1.0.5
 jms: '1.0'
 authors:
   - Marcello Gallucci

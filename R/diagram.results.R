@@ -178,7 +178,8 @@ ds.modelInfo <- function(infos, self, n64) {
         value = .nicifychain64(chain,n64)
       ))
     }
-  } else {
+  } 
+  if (infos$isImpossible) {
     infoTable$addRow(rowKey = "wrong",
                      list(
                        info = "Overall model",

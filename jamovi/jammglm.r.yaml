@@ -54,7 +54,7 @@ items:
                   - modelTerms
                   - moderatorsTerms
                   - pathOptions
-                  
+              refs: diagram    
             - name: pathnotes
               type: Table
               title: ""
@@ -76,7 +76,7 @@ items:
         - covs
     items:
           - name: moderationEffects
-            title: Moderation effects (interations)
+            title: Moderation effects (interactions)
             visible: false
             type: Table
             clearWith:
