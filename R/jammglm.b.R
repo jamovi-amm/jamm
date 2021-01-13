@@ -97,7 +97,6 @@ jammGLMClass <- R6::R6Class(
 #         return()
       
       se<-ifelse(ciType=="standard" || ciType=="none",ciType,"bootstrap")
-      mark(names(data))
       params<-jmf.mediationTable(infos64,data,level = ciWidth,se=se, boot.ci=ciType,bootN=bootN)
       table<-self$results$models$main
       if (ciType!="none")

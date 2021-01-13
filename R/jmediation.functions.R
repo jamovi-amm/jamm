@@ -22,7 +22,6 @@ jmf.mediationSummary <-
       amodifier <- paste(paste0(ie, collapse = "_"), amodifier, sep = ":=")
       lavformula <- paste(lavformula, amodifier, sep = ";")
     }
-    ginfo(lavformula)
     fit <-
       try(lavaan::sem(lavformula,
                       data = data,
@@ -48,7 +47,8 @@ jmf.mediationTotal <-
         model <- infos$original_fullmodel
         meds<-infos$mediators
         ind<-lapply(model$ind, function(x) if(!any(x %in% meds)) x)
-        model$ind<-infos$independents
+#        model$ind<-infos$independents
+        model$ind<-ind
         .formula<-.modelFormula(model,"_t_")
         fit<-try(lavaan::sem(.formula,data = data,likelihood = "wishart"))
         if (jmvcore::isError(fit)) {
@@ -90,7 +90,6 @@ jmf.mediationTable <- function(
   
   if (se=="none") se<-"standard"
   if (boot.ci=="bca") boot.ci<-"bca.simple"
-  
   models <- infos$original_medmodels
   models[[length(models) + 1]] <- infos$original_fullmodel
   ldata<-.make_var(models,data)
@@ -112,12 +111,17 @@ jmf.mediationTable <- function(
 
 .modelFormula <- function(alist,sep="_") {
   dep <- alist$dep
-  terms <- sapply(alist$ind, function(a) {
+  ind<-list()
+  for (a in alist$ind)
+      if (is.something(a))
+         ind[[length(ind)+1]]<-a
+  terms <- sapply(ind, function(a) {
     if (length(a)>1)
       paste(paste0(paste0(a,collapse = "____"),sep,dep),paste0(a,collapse = "____"),sep="*")
     else
       paste(paste0(a, sep, dep), a, sep = " * ")
   })
+
   terms <- paste(terms, collapse = " + ")
   lformula <- paste(dep, "~", terms)
   return(lformula)

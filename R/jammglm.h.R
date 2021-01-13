@@ -388,7 +388,7 @@ jammGLMResults <- if (requireNamespace('jmvcore')) R6::R6Class(
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="moderationEffects",
-                            title="Moderation effects (interations)",
+                            title="Moderation effects (interactions)",
                             visible=FALSE,
                             clearWith=list(
                                 "dep",
@@ -717,7 +717,7 @@ jammGLMBase <- if (requireNamespace('jmvcore')) R6::R6Class(
             super$initialize(
                 package = 'jamm',
                 name = 'jammGLM',
-                version = c(1,0,0),
+                version = c(1,0,5),
                 options = options,
                 results = jammGLMResults$new(options=options),
                 data = data,
@@ -725,7 +725,8 @@ jammGLMBase <- if (requireNamespace('jmvcore')) R6::R6Class(
                 analysisId = analysisId,
                 revision = revision,
                 pause = NULL,
-                completeWhenFilled = FALSE)
+                completeWhenFilled = FALSE,
+                requiresMissings = FALSE)
         }))
 
 #' GLM Mediation Model
