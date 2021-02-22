@@ -60,6 +60,7 @@ c.real<-function(...) {
   aList[[what]]
 }
 
+### apply for list of lists
 lolapply<-function(listOfLists,tracer=seq_along(listOfLists),FUN=identity,...) {
   results<-list()
   for (i in seq_along(tracer)) {

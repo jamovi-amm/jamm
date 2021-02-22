@@ -540,61 +540,98 @@ jammGLMResults <- if (requireNamespace('jmvcore')) R6::R6Class(
                     "dep",
                     "contrasts",
                     "scaling"))
-                        self$add(jmvcore::Table$new(
-                            options=options,
-                            name="overall",
-                            title="Total effects",
-                            visible="(tableOptions:regression)",
-                            clearWith=list(
-                                "dep",
-                                "contrasts",
-                                "scaling"),
-                            columns=list(
-                                list(
-                                    `name`="source", 
-                                    `title`="Names", 
-                                    `type`="text", 
-                                    `visible`="(showRealNames)"),
-                                list(
-                                    `name`="label", 
-                                    `title`="Effect", 
-                                    `type`="text"),
-                                list(
-                                    `name`="estimate", 
-                                    `title`="Estimate", 
-                                    `type`="number"),
-                                list(
-                                    `name`="se", 
-                                    `title`="SE", 
-                                    `type`="number"),
-                                list(
-                                    `name`="cilow", 
-                                    `type`="number", 
-                                    `title`="Lower", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
-                                list(
-                                    `name`="cihig", 
-                                    `type`="number", 
-                                    `title`="Upper", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
-                                list(
-                                    `name`="beta", 
-                                    `type`="number", 
-                                    `title`="\u03B2", 
-                                    `visible`="(tableOptions:beta)"),
-                                list(
-                                    `name`="df", 
-                                    `title`="df", 
-                                    `type`="number"),
-                                list(
-                                    `name`="t", 
-                                    `title`="t", 
-                                    `type`="number"),
-                                list(
-                                    `name`="p", 
-                                    `title`="p", 
-                                    `type`="number", 
-                                    `format`="zto,pvalue"))))
+                        self$add(R6::R6Class(
+                            inherit = jmvcore::Group,
+                            active = list(
+                                anova = function() private$.items[["anova"]],
+                                regression = function() private$.items[["regression"]]),
+                            private = list(),
+                            public=list(
+                                initialize=function(options) {
+                                    super$initialize(
+                                        options=options,
+                                        name="overall",
+                                        title="Total effects",
+                                        clearWith=list(
+                    "dep",
+                    "contrasts",
+                    "scaling"))
+                                    self$add(jmvcore::Table$new(
+                                        options=options,
+                                        name="anova",
+                                        title="ANOVA Table",
+                                        columns=list(
+                                            list(
+                                                `name`="rsquared", 
+                                                `title`="R-squared", 
+                                                `type`="number"),
+                                            list(
+                                                `name`="f", 
+                                                `type`="number", 
+                                                `title`="F"),
+                                            list(
+                                                `name`="df1", 
+                                                `title`="df1", 
+                                                `type`="number"),
+                                            list(
+                                                `name`="df2", 
+                                                `title`="df2", 
+                                                `type`="number"),
+                                            list(
+                                                `name`="p", 
+                                                `title`="p", 
+                                                `type`="number", 
+                                                `format`="zto,pvalue"))))
+                                    self$add(jmvcore::Table$new(
+                                        options=options,
+                                        name="regression",
+                                        title="Regression Table",
+                                        columns=list(
+                                            list(
+                                                `name`="source", 
+                                                `title`="Names", 
+                                                `type`="text", 
+                                                `visible`="(showRealNames)"),
+                                            list(
+                                                `name`="label", 
+                                                `title`="Effect", 
+                                                `type`="text"),
+                                            list(
+                                                `name`="estimate", 
+                                                `title`="Estimate", 
+                                                `type`="number"),
+                                            list(
+                                                `name`="se", 
+                                                `title`="SE", 
+                                                `type`="number"),
+                                            list(
+                                                `name`="cilow", 
+                                                `type`="number", 
+                                                `title`="Lower", 
+                                                `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                            list(
+                                                `name`="cihig", 
+                                                `type`="number", 
+                                                `title`="Upper", 
+                                                `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                            list(
+                                                `name`="beta", 
+                                                `type`="number", 
+                                                `title`="\u03B2", 
+                                                `visible`="(tableOptions:beta)"),
+                                            list(
+                                                `name`="df", 
+                                                `title`="df", 
+                                                `type`="number"),
+                                            list(
+                                                `name`="t", 
+                                                `title`="t", 
+                                                `type`="number"),
+                                            list(
+                                                `name`="p", 
+                                                `title`="p", 
+                                                `type`="number", 
+                                                `format`="zto,pvalue"))))}))$new(options=options))
                         self$add(jmvcore::Array$new(
                             options=options,
                             name="mediator_regressions",
@@ -603,111 +640,187 @@ jammGLMResults <- if (requireNamespace('jmvcore')) R6::R6Class(
                                 "dep",
                                 "contrasts",
                                 "scaling"),
-                            template=jmvcore::Table$new(
-                                options=options,
-                                clearWith=list(),
-                                title="",
-                                columns=list(
-                                    list(
-                                        `name`="source", 
-                                        `title`="Names", 
-                                        `type`="text", 
-                                        `visible`="(showRealNames)"),
-                                    list(
-                                        `name`="label", 
-                                        `title`="Effect", 
-                                        `type`="text"),
-                                    list(
-                                        `name`="estimate", 
-                                        `title`="Estimate", 
-                                        `type`="number"),
-                                    list(
-                                        `name`="se", 
-                                        `title`="SE", 
-                                        `type`="number"),
-                                    list(
-                                        `name`="cilow", 
-                                        `type`="number", 
-                                        `title`="Lower", 
-                                        `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
-                                    list(
-                                        `name`="cihig", 
-                                        `type`="number", 
-                                        `title`="Upper", 
-                                        `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
-                                    list(
-                                        `name`="beta", 
-                                        `type`="number", 
-                                        `title`="\u03B2", 
-                                        `visible`="(tableOptions:beta)"),
-                                    list(
-                                        `name`="df", 
-                                        `title`="df", 
-                                        `type`="number"),
-                                    list(
-                                        `name`="t", 
-                                        `title`="t", 
-                                        `type`="number"),
-                                    list(
-                                        `name`="p", 
-                                        `title`="p", 
-                                        `type`="number", 
-                                        `format`="zto,pvalue")))))
-                        self$add(jmvcore::Table$new(
-                            options=options,
-                            name="full",
-                            title="Full model",
-                            visible="(tableOptions:regression)",
-                            clearWith=list(
-                                "dep",
-                                "contrasts",
-                                "scaling"),
-                            columns=list(
-                                list(
-                                    `name`="source", 
-                                    `title`="Names", 
-                                    `type`="text", 
-                                    `visible`="(showRealNames)"),
-                                list(
-                                    `name`="label", 
-                                    `title`="Effect", 
-                                    `type`="text"),
-                                list(
-                                    `name`="estimate", 
-                                    `title`="Estimate", 
-                                    `type`="number"),
-                                list(
-                                    `name`="se", 
-                                    `title`="SE", 
-                                    `type`="number"),
-                                list(
-                                    `name`="cilow", 
-                                    `type`="number", 
-                                    `title`="Lower", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
-                                list(
-                                    `name`="cihig", 
-                                    `type`="number", 
-                                    `title`="Upper", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
-                                list(
-                                    `name`="beta", 
-                                    `type`="number", 
-                                    `title`="\u03B2", 
-                                    `visible`="(tableOptions:beta)"),
-                                list(
-                                    `name`="df", 
-                                    `title`="df", 
-                                    `type`="number"),
-                                list(
-                                    `name`="t", 
-                                    `title`="t", 
-                                    `type`="number"),
-                                list(
-                                    `name`="p", 
-                                    `title`="p", 
-                                    `type`="number", 
-                                    `format`="zto,pvalue"))))}))$new(options=options))}))
+                            template=R6::R6Class(
+                                inherit = jmvcore::Group,
+                                active = list(
+                                    anova = function() private$.items[["anova"]],
+                                    regression = function() private$.items[["regression"]]),
+                                private = list(),
+                                public=list(
+                                    initialize=function(options) {
+                                        super$initialize(
+                                            options=options,
+                                            name="undefined",
+                                            title="",
+                                            clearWith=list())
+                                        self$add(jmvcore::Table$new(
+                                            options=options,
+                                            name="anova",
+                                            title="ANOVA",
+                                            columns=list(
+                                                list(
+                                                    `name`="rsquared", 
+                                                    `title`="R-squared", 
+                                                    `type`="number"),
+                                                list(
+                                                    `name`="f", 
+                                                    `type`="number", 
+                                                    `title`="F"),
+                                                list(
+                                                    `name`="df1", 
+                                                    `title`="df1", 
+                                                    `type`="number"),
+                                                list(
+                                                    `name`="df2", 
+                                                    `title`="df2", 
+                                                    `type`="number"),
+                                                list(
+                                                    `name`="p", 
+                                                    `title`="p", 
+                                                    `type`="number", 
+                                                    `format`="zto,pvalue"))))
+                                        self$add(jmvcore::Table$new(
+                                            options=options,
+                                            name="regression",
+                                            title="Regression",
+                                            columns=list(
+                                                list(
+                                                    `name`="source", 
+                                                    `title`="Names", 
+                                                    `type`="text", 
+                                                    `visible`="(showRealNames)"),
+                                                list(
+                                                    `name`="label", 
+                                                    `title`="Effect", 
+                                                    `type`="text"),
+                                                list(
+                                                    `name`="estimate", 
+                                                    `title`="Estimate", 
+                                                    `type`="number"),
+                                                list(
+                                                    `name`="se", 
+                                                    `title`="SE", 
+                                                    `type`="number"),
+                                                list(
+                                                    `name`="cilow", 
+                                                    `type`="number", 
+                                                    `title`="Lower", 
+                                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                                list(
+                                                    `name`="cihig", 
+                                                    `type`="number", 
+                                                    `title`="Upper", 
+                                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                                list(
+                                                    `name`="beta", 
+                                                    `type`="number", 
+                                                    `title`="\u03B2", 
+                                                    `visible`="(tableOptions:beta)"),
+                                                list(
+                                                    `name`="df", 
+                                                    `title`="df", 
+                                                    `type`="number"),
+                                                list(
+                                                    `name`="t", 
+                                                    `title`="t", 
+                                                    `type`="number"),
+                                                list(
+                                                    `name`="p", 
+                                                    `title`="p", 
+                                                    `type`="number", 
+                                                    `format`="zto,pvalue"))))}))$new(options=options)))
+                        self$add(R6::R6Class(
+                            inherit = jmvcore::Group,
+                            active = list(
+                                anova = function() private$.items[["anova"]],
+                                regression = function() private$.items[["regression"]]),
+                            private = list(),
+                            public=list(
+                                initialize=function(options) {
+                                    super$initialize(
+                                        options=options,
+                                        name="full",
+                                        title="Full model effects",
+                                        clearWith=list(
+                    "dep",
+                    "contrasts",
+                    "scaling"))
+                                    self$add(jmvcore::Table$new(
+                                        options=options,
+                                        name="anova",
+                                        title="ANOVA Table",
+                                        columns=list(
+                                            list(
+                                                `name`="rsquared", 
+                                                `title`="R-squared", 
+                                                `type`="number"),
+                                            list(
+                                                `name`="f", 
+                                                `type`="number", 
+                                                `title`="F"),
+                                            list(
+                                                `name`="df1", 
+                                                `title`="df1", 
+                                                `type`="number"),
+                                            list(
+                                                `name`="df2", 
+                                                `title`="df2", 
+                                                `type`="number"),
+                                            list(
+                                                `name`="p", 
+                                                `title`="p", 
+                                                `type`="number", 
+                                                `format`="zto,pvalue"))))
+                                    self$add(jmvcore::Table$new(
+                                        options=options,
+                                        name="regression",
+                                        title="Regression Table",
+                                        columns=list(
+                                            list(
+                                                `name`="source", 
+                                                `title`="Names", 
+                                                `type`="text", 
+                                                `visible`="(showRealNames)"),
+                                            list(
+                                                `name`="label", 
+                                                `title`="Effect", 
+                                                `type`="text"),
+                                            list(
+                                                `name`="estimate", 
+                                                `title`="Estimate", 
+                                                `type`="number"),
+                                            list(
+                                                `name`="se", 
+                                                `title`="SE", 
+                                                `type`="number"),
+                                            list(
+                                                `name`="cilow", 
+                                                `type`="number", 
+                                                `title`="Lower", 
+                                                `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                            list(
+                                                `name`="cihig", 
+                                                `type`="number", 
+                                                `title`="Upper", 
+                                                `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                            list(
+                                                `name`="beta", 
+                                                `type`="number", 
+                                                `title`="\u03B2", 
+                                                `visible`="(tableOptions:beta)"),
+                                            list(
+                                                `name`="df", 
+                                                `title`="df", 
+                                                `type`="number"),
+                                            list(
+                                                `name`="t", 
+                                                `title`="t", 
+                                                `type`="number"),
+                                            list(
+                                                `name`="p", 
+                                                `title`="p", 
+                                                `type`="number", 
+                                                `format`="zto,pvalue"))))}))$new(options=options))}))$new(options=options))}))
 
 jammGLMBase <- if (requireNamespace('jmvcore')) R6::R6Class(
     "jammGLMBase",
@@ -778,9 +891,9 @@ jammGLMBase <- if (requireNamespace('jmvcore')) R6::R6Class(
 #'   \code{results$models$moderationEffects} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$models$main} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$models$contrastCodeTables} \tab \tab \tab \tab \tab an array of contrast coefficients tables \cr
-#'   \code{results$regressions$overall} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$regressions$overall} \tab \tab \tab \tab \tab a group \cr
 #'   \code{results$regressions$mediator_regressions} \tab \tab \tab \tab \tab an array of regressions for the mediators \cr
-#'   \code{results$regressions$full} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$regressions$full} \tab \tab \tab \tab \tab a group \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:

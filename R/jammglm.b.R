@@ -165,7 +165,7 @@ jammGLMClass <- R6::R6Class(
       
       if ("regression" %in% self$options$tableOptions) 
         regressions.results(infos64,data,self$options,self$results,private$.names64)
-      out.table_notes(self$results$info,attr(data,"warning"))
+        out.table_notes(self$results$info,attr(data,"warning"))
     },
   .cleandata=function() {
       n64<-private$.names64
