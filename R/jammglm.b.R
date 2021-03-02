@@ -5,6 +5,7 @@ jammGLMClass <- R6::R6Class(
     .model=NA,
     .names64=NA,
     .infos=NULL,
+    .paths=NULL,
     .infos64=NULL,
     .cov_condition=conditioning$new(),
     .init=function() {
@@ -281,7 +282,9 @@ jammGLMClass <- R6::R6Class(
   #            paths$labs[[i]]<-paste0(paths$labs[[i]]," (",paste(1:n,collapse=","),")")
   #         }
   ## save the results for showing later      
-  image$setState(list(paths=paths,infos=infos))
+# image$setState(list(paths=paths,infos=infos))
+  private$.infos<-infos
+  private$.paths<-paths
   #### includes possible diagrams notes 
       notes<-self$results$pathmodelgroup$pathnotes
       ds.annotate.diagram(infos,paths,notes,self$options,n64)       
@@ -292,12 +295,11 @@ jammGLMClass <- R6::R6Class(
 
 .showDiagram=function(image, ggtheme, theme, ...) {
 
-    if (is.null(image$state))
+    if (is.null(private$.infos))
         return()
-  
-  
-  infos<-image$state$infos
-  paths<-image$state$paths
+ # mark(length(serialize(image$state, connection=NULL)))
+  infos<-private$.infos
+  paths<-private$.paths
   box.size=.1+(max(length(infos$mediators),length(infos$independents))+3)^-8
   box.text=.80+(infos$nvars)^-2
   arr.lenght=1/(infos$nvars-1)
