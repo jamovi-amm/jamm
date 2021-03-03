@@ -54,6 +54,7 @@
 
 regressions.init<-function(infos,data, options, results, names64) {
 
+#  results$regressions$setVisible(TRUE)
   results$regressions$setTitle("Regressions Results")
 
   #initial model

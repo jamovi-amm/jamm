@@ -38,7 +38,7 @@ jammGLMClass <- R6::R6Class(
       private$.infos64<-infos64
       if (infos$isImpossible)   return()
       if (infos$isEmpty)        return()
-      if (infos$hasRequired())  return()
+#      if (infos$hasRequired())  return()
       ## prepare main result table
        table<-self$results$models$main
        if (is.something(infos64$moderators)) {
@@ -104,8 +104,8 @@ jammGLMClass <- R6::R6Class(
           table$setNote("cinote",paste("Confidence intervals computed with method:",NOTES[["ci"]][[ciType]]))
           table$setNote("betas",paste("Betas are completely standardized effect sizes"))
       
-      table$setVisible(TRUE)
-      
+#      table$setVisible(TRUE)
+
       if (!is.something(infos64$moderators)) {
            for (rowKey in table$rowKeys) {
                row<-params[params$label==rowKey,]
@@ -121,6 +121,8 @@ jammGLMClass <- R6::R6Class(
         
         itable<-params[(params$op=="~" & params$model=="med"),]
         where<-grep("____",itable$rhs, fixed=T)
+        if (length(where)==0)
+             jmvcore::reject("A moderator is specified by no interaction is present in the  models")
         itable<-itable[where,]
         inters<-list()
         for (i in 1:nrow(itable)) {
@@ -177,7 +179,6 @@ jammGLMClass <- R6::R6Class(
       .warning<-list()
       dataRaw <- jmvcore::naOmit(self$data)
       data <- list()
-      
       if ( ! is.null(dep)) {
         if (class(dataRaw[[dep]]) == "factor")
           .warning<-append(.warning,"Warming: The dependent variable is defined as factor. Please make sure it is a continuous variable.")
@@ -200,6 +201,9 @@ jammGLMClass <- R6::R6Class(
         data[[jmvcore::toB64(med)]] <- jmvcore::toNumeric(dataRaw[[med]])
         n64$addVar(med)
       }
+      .contrasts<-sapply(self$options$contrasts,function(a) a$type)
+      .contrastsnames<-sapply(self$options$contrasts,function(a) a$var)
+      names(.contrasts)<-.contrastsnames
       for (factor in factors) {
         ### we need this for Rinterface ####
         if (!("factor" %in% class(dataRaw[[factor]]))) {
@@ -209,26 +213,20 @@ jammGLMClass <- R6::R6Class(
         factor64<-jmvcore::toB64(factor)
         data[[factor64]] <- dataRaw[[factor]]
         levels <- base::levels(data[[factor64]])
-        stats::contrasts(data[[factor64]]) <- lf.createContrasts(levels,"simple")
+        .cont<-ifelse(factor %in% .contrastsnames,.contrasts[[factor]],"simple")
+        stats::contrasts(data[[factor64]]) <- lf.createContrasts(levels,.cont)
         n64$addFactor(factor,levels)
-        n64$addLabel(factor,lf.contrastLabels(levels, "simple")) 
-        attr(data[[factor64]],"jcontrast")<-"simple"
+        n64$addLabel(factor,lf.contrastLabels(levels, .cont)) 
+        attr(data[[factor64]],"jcontrast")<-.cont
         private$.cov_condition$addFactor(factor64,levels)
-      }
-      
-      for (contrast in self$options$contrasts) {
-        var64<-jmvcore::toB64(contrast$var)
-        levels <- base::levels(data[[var64]])
-        stats::contrasts(data[[var64]]) <- lf.createContrasts(levels, contrast$type)
-        n64$addLabel(contrast$var,lf.contrastLabels(levels, contrast$type)) 
-        attr(data[[var64]],"jcontrast")<-contrast$type
-        dummies<-model.matrix(as.formula(paste0("~",jmvcore::toB64(contrast$var))),data=data)
+        dummies<-model.matrix(as.formula(paste0("~",factor64)),data=data)
         dummies<-dummies[,-1]
         dummies<-data.frame(dummies)
-        names(dummies)<-unlist(n64$contrasts(contrast$var))
+        names(dummies)<-unlist(n64$contrasts(factor))
         data<-cbind(data,dummies)
+        
       }
-      
+
       private$.names64<-n64
       data<-as.data.frame(data)     
       attr(data,"warning")<-.warning
@@ -248,10 +246,9 @@ jammGLMClass <- R6::R6Class(
   factors64<-jmvcore::toB64(self$options$factors)
   mediators64<-jmvcore::toB64(self$options$mediators)
   modelTerms<-self$options$modelTerms
-
   mediatorsTerms<-self$options$mediatorsTerms
   moderatorsTerms<-self$options$moderatorsTerms
-
+  mark(moderatorsTerms)
   n64<-private$.names64
   
   ### update model info table
@@ -332,8 +329,57 @@ jammGLMClass <- R6::R6Class(
   TRUE
 },
 .marshalFormula= function(formula, data, name) {
-  mark("formula",formula)
-  mark("name",name)
+
+    
+    formula<-lapply(formula,expand.formula)
+    
+    if (name=="simpleScale")
+     return("mean_sd")
+  deps<-sapply(formula, function(f) jmvcore::marshalFormula(f,data,from = "lhs"))
+  ivs<-unique(unlist(sapply(formula, function(f) jmvcore::marshalFormula(f,data,from = "rhs"))))
+  factors<-unique(unlist(sapply(formula, function(f) jmvcore::marshalFormula(f,data,from = "rhs",permitted = "factor"))))
+  covs<-setdiff(ivs,factors)
+  dep<-setdiff(deps,ivs)
+  meds<-intersect(deps,ivs)
+  
+  if (name=="dep") {
+          if (length(dep)>1)
+              jmvcore::reject("The models in formula imply more than one dependent variable. Please refine your models")
+           return(dep)  
+  }
+  if (name=="factors") {
+    return(factors)  
+  }
+  if (name=="covs") {
+    return(covs)  
+  }
+  
+  if (name=="mediators") {
+    if (length(meds)==0)
+      jmvcore::reject("The models in formula imply no mediator. Please refine your models")
+    return(meds)  
+  }
+  if (name=="mediatorsTerms") {
+    medsterms<-lapply(formula, function(f) {
+       .dep<-jmvcore::marshalFormula(f,data,from = "lhs")
+       res<-NULL
+       if (.dep %in% meds)
+          res<-jmvcore::marshalFormula(f,data,from = "rhs",type = "terms")
+       res
+    })
+    medsterms<-medsterms[-which(sapply(medsterms, is.null))]
+    return(medsterms)  
+  }
+
+    if (name=="modelTerms") {
+    for (f in formula) {
+      .dep<-jmvcore::marshalFormula(f,data,from = "lhs")
+      .vars<-jmvcore::marshalFormula(f,data,from = "rhs")
+      .ivs<-unique(unlist(.vars))
+      if (.dep==dep & length(intersect(meds,.ivs))>0)
+         return(jmvcore::marshalFormula(f,data,from = "rhs",type = "terms"))
+    }
+    }
   
 },
 .formula=function(){

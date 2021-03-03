@@ -196,7 +196,9 @@ items:
 
   - name: regressions
     type: Group
-    title: ""
+    title: "Individual Regression"
+    visible: false
+
     clearWith:
         - dep
         - contrasts
@@ -206,7 +208,6 @@ items:
           - name: overall
             title: Total effects 
             type: Group
-            visible: (tableOptions:regression)
             clearWith: 
                      - dep
                      - contrasts
@@ -351,7 +352,7 @@ items:
           - name: full
             title: Full model effects 
             type: Group
-            visible: (tableOptions:regression)
+            visible: false
             clearWith: 
                      - dep
                      - contrasts
@@ -360,6 +361,7 @@ items:
                - name: anova
                  title: ANOVA Table 
                  type: Table
+            
                  columns:
                     - name: rsquared
                       title: R-squared

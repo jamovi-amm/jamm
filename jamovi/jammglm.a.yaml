@@ -4,6 +4,7 @@ title: GLM Mediation Model
 menuGroup: medmod
 version: '1.0.5'
 jas: '1.2'
+export: false
 completeWhenFilled: false
 description:
     main: GLM mediation model
@@ -24,6 +25,9 @@ formula:
      custom: true
    moderatorsTerms:
      custom: true
+   simpleScale:
+     custom: true
+   
 options:
     - name: data
       type: Data
@@ -298,7 +302,7 @@ options:
             a list of lists specifying the models for with the mediators as dependent variables.          
 
     - name: moderatorsTerms
-      title: Mediated effects
+      title: Moderators effects
       type: Array
       default: [[]]
       template:

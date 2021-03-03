@@ -117,3 +117,12 @@ findTerms<-function(what,terms,order=1) {
   }))
 }
 
+####### models and formuals #########
+
+expand.formula<-function(aform) {
+            af<-paste(aform[[2]],paste(attr(terms(aform),"term.labels"),collapse = " + "),sep=" ~ ")
+            af<-as.formula(af)
+            af
+}
+
+
