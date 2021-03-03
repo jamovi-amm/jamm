@@ -168,7 +168,8 @@ jammGLMClass <- R6::R6Class(
       
       if ("regression" %in% self$options$tableOptions) 
         regressions.results(infos64,data,self$options,self$results,private$.names64)
-        out.table_notes(self$results$info,attr(data,"warning"))
+          
+      out.table_notes(self$results$info,attr(data,"warning"))
     },
   .cleandata=function() {
       n64<-private$.names64
@@ -248,7 +249,6 @@ jammGLMClass <- R6::R6Class(
   modelTerms<-self$options$modelTerms
   mediatorsTerms<-self$options$mediatorsTerms
   moderatorsTerms<-self$options$moderatorsTerms
-  mark(moderatorsTerms)
   n64<-private$.names64
   
   ### update model info table
@@ -401,31 +401,35 @@ jammGLMClass <- R6::R6Class(
         value <- option$value
         if (name %in% c('mediators', 'factors', 'dep', 'covs', 'cluster', 'modelTerms','mediatorsTerms'))
           return('')
-        if (name == 'scaling') {
-          i <- 1
-          while (i <= length(value)) {
-            item <- value[[i]]
-            if (item$type == 'centered')
-              value[[i]] <- NULL
-            else
-              i <- i + 1
-          }
-          if (length(value) == 0)
+        if (length(value) == 0)
             return('')
+        if (name =='scaling') {
+          vec<-sourcifyList(option,"centered")
+          return(vec)
+        }
+        if (name =='contrasts') {
+          vec<-sourcifyList(option,"simple")
+          return(vec)
+        }
+        if (name =='moderatorsTerms') {
+          alist<-lapply(value, unlist)
+          if (all(sapply(alist,is.null)))
+               return('')
+          names(alist)<-jmvcore::fromB64(private$.infos$mediators)
+          alist<-alist[!sapply(alist,is.null)]
+          res<-paste(sapply(names(alist),function(name) {
+            a<-alist[[name]]
+            if (length(a)==1) 
+              paste0(name,"=\"",a,sep ="\"")
+            else {
+              paste0(name,"=c(",paste0("\"",a,sep ="\"",collapse=","),")")
+            }
+          }),collapse=",")
+          res<-paste0("list(",res,")")
+          return(paste("moderatorsTerms",res,sep = " = "))
         }
         
-        if (name == 'contrasts') {
-          i <- 1
-          while (i <= length(value)) {
-            item <- value[[i]]
-            if (item$type == 'simple')
-              value[[i]] <- NULL
-            else
-              i <- i + 1
-          }
-          if (length(value) == 0)
-            return('')
-        }        
+                
         super$.sourcifyOption(option)
 }
 ))

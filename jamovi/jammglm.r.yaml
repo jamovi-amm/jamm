@@ -197,7 +197,7 @@ items:
   - name: regressions
     type: Group
     title: "Individual Regression"
-    visible: false
+    visible: (optionsTables:regression)
 
     clearWith:
         - dep
@@ -352,7 +352,6 @@ items:
           - name: full
             title: Full model effects 
             type: Group
-            visible: false
             clearWith: 
                      - dep
                      - contrasts

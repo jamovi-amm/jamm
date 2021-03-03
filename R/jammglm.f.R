@@ -4,6 +4,11 @@
 #' GLM mediation model
 #' @param formula a list of formulas to use, see the examples
 #' @param data the data as a data frame
+#' @param mediatorsTerms a list of lists specifying the models for with the
+#'   mediators as dependent variables. Not required in formula is used.
+#' @param moderatorsTerms a named list of the form list("med"=c("mod1",mod2"),med2="mod1") specifying the moderator(s) of each mediator. 
+#'           This is required to decide for which variable we need to condition the mediated effects and to single out moderators
+#'           in the path diagram. If not specified, any interaction is considered as any other term in the model 
 #' @param dep a string naming the dependent variable from \code{data},
 #'   variable must be numeric. Not useful if formula is used.
 #' @param mediators a vector of strings naming the mediators from \code{data}. Not useful if formula is used.
@@ -35,11 +40,6 @@
 #' @param tableOptions a vector of options to be shown in the tables. \code{'component'} shows the indirect effects 
 #' components in the results tables. \code{'regression'} show the results of all the regression (R-squared, F-test and coefficients) involved in the model.
 #' @param pathOptions .
-#' @param mediatorsTerms a list of lists specifying the models for with the
-#'   mediators as dependent variables. Not required in formula is used.
-#' @param moderatorsTerms a named vector of the form c("med"=c("mod1",mod2")) specifying the moderator(s) of each mediator. 
-#'           This is required to decide for which variable we need to condition the mediated effects and to single out moderators
-#'           in the path diagram. If not specified, any interaction is considered as any other term in the model 
 #' @param bogus \code{a bogus option to define a label without visible
 #'   children, used for internal checks}
 
@@ -155,18 +155,29 @@ jammGLM <- function(
   if (inherits(modelTerms, 'formula')) modelTerms <- jmvcore::decomposeFormula(modelTerms)
   
   ## fix some option when passed by R console ###
-  
+
   if (is.something(names(moderatorsTerms))) {
+    if (!is.list(moderatorsTerms))
+      jmvcore::reject("The `modelTerms` option should be a list")
+     
      moderatorsTerms<-lapply(mediators, function(med) {
-        ifelse(med %in% names(moderatorsTerms),moderatorsTerms[[med]],list())
+        ifelse(med %in% names(moderatorsTerms),as.list(moderatorsTerms[med]),list())
      })
-   }
+  }
+  mark(moderatorsTerms)
   if (is.something(names(scaling))) 
     scaling<-lapply(names(scaling), function(a) list(var=a,type=scaling[[a]]))
   if (is.something(names(contrasts))) 
     contrasts<-lapply(names(contrasts), function(a) list(var=a,type=contrasts[[a]]))
   
   ############
+  ### some check for input passed by R console ###
+  moderators<-unlist(moderatorsTerms)
+  test1<-intersect(moderators,mediators)
+  if (length(test1)>0)
+    jmvcore::reject(paste("You specified the variable", test1,"to be both a mediator and a moderator. This is not allowed. You can specify interactions
+                          involving moderators and mediators as you like, but do not assign the role of moderator to a mediator."))
+  
   
   
   options <- jammGLMOptions$new(
@@ -192,6 +203,9 @@ jammGLM <- function(
     mediatorsTerms = mediatorsTerms,
     moderatorsTerms = moderatorsTerms)
 
+  
+  
+  
   analysis <- jammGLMClass$new(
     options = options,
     data = data)

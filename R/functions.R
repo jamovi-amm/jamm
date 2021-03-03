@@ -10,6 +10,8 @@ is.something<- function(x,...) UseMethod(".is.something")
 
 .is.something.logical<-function(obj) !is.na(obj)
 
+
+
 fill.if<-function(test,ifyes,ifnot) {
   
   if (test)
@@ -117,6 +119,16 @@ findTerms<-function(what,terms,order=1) {
   }))
 }
 
+sourcifyList<-function(option,def) {
+  alist<-option$value
+  test<-all(sapply(alist,function(a) a$type)==def)
+  if (test)
+    return("")
+  paste0(option$name,"=c(",paste(sapply(alist,function(a) paste0(a$var,' = \"',a$type,'\"')),collapse=", "),")")
+}
+
+
+
 ####### models and formuals #########
 
 expand.formula<-function(aform) {
@@ -124,5 +136,6 @@ expand.formula<-function(aform) {
             af<-as.formula(af)
             af
 }
+
 
 
