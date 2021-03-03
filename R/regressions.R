@@ -55,7 +55,6 @@
 regressions.init<-function(infos,data, options, results, names64) {
 
   results$regressions$setTitle("Regressions Results")
-
   #initial model
   agroup<-results$regressions$overall
   atable<-agroup$regression
@@ -69,8 +68,7 @@ regressions.init<-function(infos,data, options, results, names64) {
     label<-jmvcore::stringifyTerm(alabels[[i]])
     atable$addRow(rowKey=paste0(amodel[i]),list("source"=term,"label"=label))
   }
-  
-    
+
   ### mediators model
   medgroups<-results$regressions$mediator_regressions
   if (length(infos$mediators)>1)

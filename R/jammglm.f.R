@@ -175,8 +175,7 @@ jammGLM <- function(
   moderators<-unlist(moderatorsTerms)
   test1<-intersect(moderators,mediators)
   if (length(test1)>0)
-    jmvcore::reject(paste("You specified the variable", test1,"to be both a mediator and a moderator. This is not allowed. You can specify interactions
-                          involving moderators and mediators as you like, but do not assign the role of moderator to a mediator."))
+    jmvcore::reject(paste("You specified the variable", test1,"to be both a mediator and a moderator. This is not allowed. You can specify interactions involving moderators and mediators as you like, but do not assign the role of moderator to a mediator."))
   
   
   

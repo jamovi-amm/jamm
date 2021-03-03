@@ -196,8 +196,8 @@ items:
 
   - name: regressions
     type: Group
-    title: "Individual Regression"
-    visible: (optionsTables:regression)
+    title: ""
+    visible: (tableOptions:regression)
 
     clearWith:
         - dep
@@ -208,6 +208,8 @@ items:
           - name: overall
             title: Total effects 
             type: Group
+            visible: (tableOptions:regression)
+
             clearWith: 
                      - dep
                      - contrasts
@@ -217,6 +219,7 @@ items:
                - name: anova
                  title: ANOVA Table 
                  type: Table
+                 visible: (tableOptions:regression)
                  columns:
                     - name: rsquared
                       title: R-squared
@@ -237,6 +240,8 @@ items:
                - name: regression
                  title: Regression Table 
                  type: Table
+                 visible: (tableOptions:regression)
+
                  columns:
                     - name: source
                       title: "Names"
@@ -312,6 +317,7 @@ items:
                    - name: regression
                      type: Table
                      title: Regression
+                     visible: (tableOptions:regression)
                      columns:
                          - name: source
                            title: "Names"
@@ -352,6 +358,7 @@ items:
           - name: full
             title: Full model effects 
             type: Group
+            visible: (tableOptions:regression)
             clearWith: 
                      - dep
                      - contrasts
@@ -360,7 +367,7 @@ items:
                - name: anova
                  title: ANOVA Table 
                  type: Table
-            
+                 visible: (tableOptions:regression)
                  columns:
                     - name: rsquared
                       title: R-squared
@@ -380,6 +387,7 @@ items:
                       format: zto,pvalue
                - name: regression
                  title: Regression Table 
+                 visible: (tableOptions:regression)
                  type: Table
                  columns:
                     - name: source

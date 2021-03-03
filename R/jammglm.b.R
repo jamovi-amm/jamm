@@ -428,8 +428,7 @@ jammGLMClass <- R6::R6Class(
           res<-paste0("list(",res,")")
           return(paste("moderatorsTerms",res,sep = " = "))
         }
-        
-                
+
         super$.sourcifyOption(option)
 }
 ))

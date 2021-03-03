@@ -535,7 +535,7 @@ jammGLMResults <- if (requireNamespace('jmvcore')) R6::R6Class(
                         super$initialize(
                             options=options,
                             name="regressions",
-                            title="Individual Regression",
+                            title="",
                             clearWith=list(
                     "dep",
                     "contrasts",
@@ -560,6 +560,7 @@ jammGLMResults <- if (requireNamespace('jmvcore')) R6::R6Class(
                                         options=options,
                                         name="anova",
                                         title="ANOVA Table",
+                                        visible="(tableOptions:regression)",
                                         columns=list(
                                             list(
                                                 `name`="rsquared", 
@@ -586,6 +587,7 @@ jammGLMResults <- if (requireNamespace('jmvcore')) R6::R6Class(
                                         options=options,
                                         name="regression",
                                         title="Regression Table",
+                                        visible="(tableOptions:regression)",
                                         columns=list(
                                             list(
                                                 `name`="source", 
@@ -683,6 +685,7 @@ jammGLMResults <- if (requireNamespace('jmvcore')) R6::R6Class(
                                             options=options,
                                             name="regression",
                                             title="Regression",
+                                            visible="(tableOptions:regression)",
                                             columns=list(
                                                 list(
                                                     `name`="source", 
@@ -749,6 +752,7 @@ jammGLMResults <- if (requireNamespace('jmvcore')) R6::R6Class(
                                         options=options,
                                         name="anova",
                                         title="ANOVA Table",
+                                        visible="(tableOptions:regression)",
                                         columns=list(
                                             list(
                                                 `name`="rsquared", 
@@ -775,6 +779,7 @@ jammGLMResults <- if (requireNamespace('jmvcore')) R6::R6Class(
                                         options=options,
                                         name="regression",
                                         title="Regression Table",
+                                        visible="(tableOptions:regression)",
                                         columns=list(
                                             list(
                                                 `name`="source", 
