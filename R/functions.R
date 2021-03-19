@@ -10,6 +10,8 @@ is.something<- function(x,...) UseMethod(".is.something")
 
 .is.something.logical<-function(obj) !is.na(obj)
 
+
+
 fill.if<-function(test,ifyes,ifnot) {
   
   if (test)
@@ -60,6 +62,7 @@ c.real<-function(...) {
   aList[[what]]
 }
 
+### apply for list of lists
 lolapply<-function(listOfLists,tracer=seq_along(listOfLists),FUN=identity,...) {
   results<-list()
   for (i in seq_along(tracer)) {
@@ -115,4 +118,24 @@ findTerms<-function(what,terms,order=1) {
        FALSE
   }))
 }
+
+sourcifyList<-function(option,def) {
+  alist<-option$value
+  test<-all(sapply(alist,function(a) a$type)==def)
+  if (test)
+    return("")
+  paste0(option$name,"=c(",paste(sapply(alist,function(a) paste0(a$var,' = \"',a$type,'\"')),collapse=", "),")")
+}
+
+
+
+####### models and formuals #########
+
+expand.formula<-function(aform) {
+            af<-paste(aform[[2]],paste(attr(terms(aform),"term.labels"),collapse = " + "),sep=" ~ ")
+            af<-as.formula(af)
+            af
+}
+
+
 

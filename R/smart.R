@@ -155,18 +155,25 @@ smartMediation <- R6Class("smartMediation",
                      meds<-self$original_medmodels
                      full<-self$original_fullmodel
                      models<-concat(meds,full)
-                     for (mod in self$moderators) 
+                     for (mod in self$moderators) {
+                       found<-0
                         for (i in seq_along(models)) {
                           where=findTerms(mod,models[[i]]$ind)
                           for (term in models[[i]]$ind[where]) {
                             if (length(term)==1)
                                ipaths[[mod]]=concat(ipaths[[mod]],list(from=mod,to=models[[i]]$dep, type="P"))
                             else {
+                               found<-found+1
                                ipaths[[mod]]=concat(ipaths[[mod]],list(from=term[!(term %in% self$moderators)],to=models[[i]]$dep,type="P"))
                             }
                           }
                           models[[i]]$ind<-models[[i]]$ind[!where]
                         }
+                       if (found==0) {
+                         jmvcore::reject(paste("Moderator",jmvcore::fromB64(mod)," is specified but is not involved in any interaction"))
+                       }
+                       
+                     }
                     # now that we removed the moderators, we treat other interactions
                     # as standard variables for plotting by forcing the interaction in a x:z format
 

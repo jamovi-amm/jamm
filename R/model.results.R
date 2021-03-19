@@ -149,7 +149,6 @@ mr.initConditionalTable<-function(infos,resultsTable,n64,cov_condition,ciType,ci
 }
 
 mr.initTable<-function(infos,resultsTable,n64,ciType,ciWidth,tableOptions) {
-  
   resultsTable$getColumn('ci.lower')$setSuperTitle(jmvcore::format('{}% C.I. (a)', ciWidth))
   resultsTable$getColumn('ci.upper')$setSuperTitle(jmvcore::format('{}% C.I. (a)', ciWidth))
   ierecoded<-lapply(infos$ieffects, function(x) gsub(":","____",x))

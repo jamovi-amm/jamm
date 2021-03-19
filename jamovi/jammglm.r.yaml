@@ -197,6 +197,8 @@ items:
   - name: regressions
     type: Group
     title: ""
+    visible: (tableOptions:regression)
+
     clearWith:
         - dep
         - contrasts
@@ -205,14 +207,42 @@ items:
     items:
           - name: overall
             title: Total effects 
-            type: Table
+            type: Group
             visible: (tableOptions:regression)
+
             clearWith: 
                      - dep
                      - contrasts
                      - scaling
 
-            columns:
+            items:
+               - name: anova
+                 title: ANOVA Table 
+                 type: Table
+                 visible: (tableOptions:regression)
+                 columns:
+                    - name: rsquared
+                      title: R-squared
+                      type: number
+                    - name: f
+                      type: number
+                      title: F
+                    - name: df1
+                      title: "df1"
+                      type: number
+                    - name: df2
+                      title: "df2"
+                      type: number
+                    - name: p
+                      title: "p"
+                      type: number
+                      format: zto,pvalue
+               - name: regression
+                 title: Regression Table 
+                 type: Table
+                 visible: (tableOptions:regression)
+
+                 columns:
                     - name: source
                       title: "Names"
                       type: text
@@ -248,6 +278,8 @@ items:
                       title: "p"
                       type: number
                       format: zto,pvalue
+
+
           - name: mediator_regressions
             title: Mediator Model
             type: Array
@@ -260,53 +292,104 @@ items:
             template:
                 clearWith: []
                 title:  ""
-                type: Table
-                columns:
-                    - name: source
-                      title: "Names"
-                      type: text
-                      visible: (showRealNames)
-                    - name: label
-                      title: "Effect"
-                      type: text
-                    - name: estimate
-                      title: "Estimate"
+                type: Group
+                items:
+                   - name: anova
+                     type: Table
+                     title: ANOVA
+                     columns:
+                         - name: rsquared
+                           title: "R-squared"
+                           type: number
+                         - name: f
+                           type: number
+                           title: F
+                         - name: df1
+                           title: "df1"
+                           type: number
+                         - name: df2
+                           title: "df2"
+                           type: number
+                         - name: p
+                           title: "p"
+                           type: number
+                           format: zto,pvalue
+                   - name: regression
+                     type: Table
+                     title: Regression
+                     visible: (tableOptions:regression)
+                     columns:
+                         - name: source
+                           title: "Names"
+                           type: text
+                           visible: (showRealNames)
+                         - name: label
+                           title: "Effect"
+                           type: text
+                         - name: estimate
+                           title: "Estimate"
+                           type: number
+                         - name: se
+                           title: "SE"
+                           type: number
+                         - name: cilow
+                           type: number
+                           title: Lower
+                           visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                         - name: cihig
+                           type: number
+                           title: Upper
+                           visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                         - name: beta
+                           type: number
+                           title: β
+                           visible: (tableOptions:beta)
+                         - name: df
+                           title: "df"
+                           type: number
+                         - name: t
+                           title: "t"
+                           type: number
+                         - name: p
+                           title: "p"
+                           type: number
+                           format: zto,pvalue
+
+          - name: full
+            title: Full model effects 
+            type: Group
+            visible: (tableOptions:regression)
+            clearWith: 
+                     - dep
+                     - contrasts
+                     - scaling
+            items:
+               - name: anova
+                 title: ANOVA Table 
+                 type: Table
+                 visible: (tableOptions:regression)
+                 columns:
+                    - name: rsquared
+                      title: R-squared
                       type: number
-                    - name: se
-                      title: "SE"
+                    - name: f
                       type: number
-                    - name: cilow
+                      title: F
+                    - name: df1
+                      title: "df1"
                       type: number
-                      title: Lower
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
-                    - name: cihig
-                      type: number
-                      title: Upper
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
-                    - name: beta
-                      type: number
-                      title: β
-                      visible: (tableOptions:beta)
-                    - name: df
-                      title: "df"
-                      type: number
-                    - name: t
-                      title: "t"
+                    - name: df2
+                      title: "df2"
                       type: number
                     - name: p
                       title: "p"
                       type: number
                       format: zto,pvalue
-
-          - name: full
-            title: Full model  
-            type: Table
-            visible: (tableOptions:regression)
-            clearWith:
-                     - dep
-                     - contrasts
-                     - scaling
-            columns:
+               - name: regression
+                 title: Regression Table 
+                 visible: (tableOptions:regression)
+                 type: Table
+                 columns:
                     - name: source
                       title: "Names"
                       type: text
