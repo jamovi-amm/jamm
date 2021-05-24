@@ -1,5 +1,5 @@
-GAMLj_DEBUG=F
-GAMLj_INFO=F
+j_DEBUG=T
+j_INFO=T
 
 
 NOTES<-list()

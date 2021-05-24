@@ -21,6 +21,8 @@ jammGLMClass <- R6::R6Class(
       ### here we initialize things ####
       data<-private$.cleandata()
       infos<-private$.prepareDiagram() 
+      if (is.logical(infos))
+          return()
       private$.infos<-infos
       
       meds<-lapply(infos$original_medmodels, function(m) {
@@ -253,7 +255,8 @@ jammGLMClass <- R6::R6Class(
   
   ### update model info table
   goon<-ds.initModelInfo(self)  
-  
+  if (!goon)
+     return(FALSE)
   ## build the models list
   medmodels64<-list()
   for (i in seq_along(mediators64))  
@@ -383,7 +386,9 @@ jammGLMClass <- R6::R6Class(
   
 },
 .formula=function(){
-  
+
+  if (is.null(self$options$dep))
+      return()
   if (private$.infos$isEstimable()) {
     forms=private$.infos$medFormulas()
     forms[[length(forms)+1]]<-private$.infos$fullFormula()

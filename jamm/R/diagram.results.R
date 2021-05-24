@@ -104,6 +104,7 @@ ds.initModelInfo <- function(self) {
                          specs = "",
                          value = "Fill in the model"
                        ))
+      goon<-FALSE
     }
   return(goon)
 }
