@@ -139,8 +139,8 @@ children:
             persistentItems: true
             stretchFactor: 1
             events:
-              update: './jamm.events::onUpdate_moderatorsSupplier'
-              change: './jamm.events::onChange_moderatorsSupplier'
+                update: './jamm.events::onUpdate_moderatorsSupplier'
+                change: './jamm.events::onChange_moderatorsSupplier'
             children:
               - type: TargetLayoutBox
                 transferAction: interactions
@@ -299,14 +299,15 @@ children:
                 name: ciType_standard
                 optionName: ciType
                 optionPart: standard
-              - name: ciType_bca.simple
-                type: RadioButton
-                optionName: ciType
-                optionPart: bca.simple
               - type: RadioButton
                 name: ciType_bootperc
                 optionName: ciType
                 optionPart: perc
+              - type: RadioButton
+                name: ciType_bootbca
+                optionName: ciType
+                optionPart: bca
+
               - type: RadioButton
                 name: ciType_bootnorm
                 optionName: ciType
@@ -336,111 +337,17 @@ children:
                 type: CheckBox
                 optionName: tableOptions
                 optionPart: beta
-              - name: tableOptions_intercepts
-                type: CheckBox
-                optionName: tableOptions
-                optionPart: intercepts
-                
               - name: tableOptions_regression
                 type: CheckBox
                 optionName: tableOptions
                 optionPart: regression
-  - type: CollapseBox
-    label: Path Diagram
-    collapsed: true
-    stretchFactor: 1
-    style: list
-    children:
-      - type: LayoutBox
-        margin: large
-        stretchFactor: 1
-        style: list
-        children:
-          - type: LayoutBox
-            margin: large
-            stretchFactor: 1
-            style: inline
-            children:
-                - type: CheckBox
-                  name: meddiagram
-                - type: Label
-                  label: Diagram Options
-                  margin: large
-                  style: list
-                  children:
-                    - name: pathOptions_suggested
-                      type: CheckBox
-                      optionPart: suggested
-                      optionName: pathOptions
-                      enable: (meddiagram)
 
-          - type: LayoutBox
+          - type: Label
+            label: Path model
             margin: large
-            stretchFactor: 1
-            style: inline
+            style: list
             children:
-              - type: CheckBox
-                name: diagram
-              - type: Label
-                label: Paths
-                margin: large
-                style: list
-                children:
-                  - type: RadioButton
-                    name: diag_paths_est
-                    optionName: diag_paths
-                    optionPart: est
-                    enable: (diagram)
-                  - type: RadioButton
-                    name: diag_paths_stand
-                    optionName: diag_paths
-                    optionPart: stand
-                    enable: (diagram)
-                  - type: RadioButton
-                    name: diag_paths_name
-                    optionName: diag_paths
-                    optionPart: name
-                    enable: (diagram)
-                  - type: RadioButton
-                    name: diag_paths_hide
-                    optionName: diag_paths
-                    optionPart: hide
-                    enable: (diagram)
-              - type: Label
-                label: Show
-                margin: large
-                style: list
-                children:
-                  - type: CheckBox
-                    name: diag_resid
-                    enable: (diagram)
-          - type: LayoutBox
-            margin: large
-            stretchFactor: 1
-            style: inline
-            children:
-              - type: Label
-                label: Layout
-                margin: large
-                style: list
-                children:
-                  - type: ComboBox
-                    name: diag_type
-                    enable: (diagram)
-                  - type: ComboBox
-                    name: diag_rotate
-                    enable: (diagram)
-              - type: Label
-                label: Nodes
-                margin: large
-                style: list
-                children:
-                  - type: ComboBox
-                    name: diag_labsize
-                    enable: (diagram)
-                  - type: ComboBox
-                    name: diag_shape
-                    enable: (diagram)
-                  - type: ComboBox
-                    name: diag_abbrev
-                    enable: (diagram)
+              - name: pathOptions_suggested
+                type: CheckBox
+                optionPart: suggested
+                optionName: pathOptions

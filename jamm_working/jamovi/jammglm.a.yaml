@@ -4,7 +4,7 @@ title: GLM Mediation Model
 menuGroup: medmod
 version: '1.0.5'
 jas: '1.2'
-export: true
+export: false
 completeWhenFilled: false
 description:
     main: GLM mediation model
@@ -101,7 +101,7 @@ options:
       options:
         - name: standard
           title: Standard
-        - name: bca.simple
+        - name: bca
           title: Bootstrap (BC)
         - name: perc
           title: Bootstrap (Percent)
@@ -269,14 +269,13 @@ options:
 ######### specs here ##########
 
     - name: tableOptions
+      title: Display
       type: NMXList
       options:
           - name: component
             title: IE Components
           - name: beta
             title: β  
-          - name: intercepts
-            title: Intercepts  
           - name: regression
             title: Individual regressions  
 
@@ -311,155 +310,6 @@ options:
       description:
           R: >
             a list of lists specifying the the IV which moderatorate each mediated effect.          
-
-#### path diagram ###
-
-    - name: meddiagram
-      title: Model Diagram
-      type: Bool
-      default: false
-      description:
-          R: >
-            `TRUE` or `FALSE` (default), produce a path diagram
-
-
-
-    - name: diagram
-      title: Path Diagram
-      type: Bool
-      default: false
-      description:
-          R: >
-            `TRUE` or `FALSE` (default), produce a path diagram
-
-    - name: diag_paths
-      title: Paths Labels
-      type: List
-      options:
-        - name:  est
-          title: Coefficients
-        - name: stand
-          title: Betas
-        - name: name
-          title: Labels
-        - name: hide
-          title: None
-      default: est
-      description:
-          R: >
-             Choose the diagram labels
-
-    - name: diag_resid
-      title: Residuals
-      type: Bool
-      default: false
-      description:
-          R: >
-            `TRUE` or `FALSE` (default), produce a path diagram
-
-    - name: diag_labsize
-      title: Node Size
-      type: List
-      options:
-        - name:  small
-          title: Small
-        - name: medium
-          title: Medium
-        - name: large
-          title: Large
-        - name: vlarge
-          title: Very Large
-
-      default: medium
-      description:
-          R: >
-             Choose the diagram labels
-
-    - name: diag_rotate
-      title: Rotate
-      type: List
-      options:
-        - name:  "1"
-          title: Exog. top
-        - name: "2"
-          title: Exog. left
-        - name: "3"
-          title: Exog. bottom
-        - name: "4"
-          title: Exog. right
-
-      default: "1"
-      description:
-          R: >
-             Choose the diagram labels
-    - name: diag_type
-      title: Type
-      type: List
-      options:
-        - name: "circle"
-          title: Circle
-        - name: "circle2"
-          title: Circle alt.
-
-        - name:  "tree2"
-          title: Tree-like
-        - name:  "tree"
-          title: Tree-like alt.
-        - name: "spring"
-          title: Spring
-
-      default: "circle"
-      description:
-          R: >
-             Choose the diagram labels
-
-    - name: diag_shape
-      title: Shapes
-      type: List
-      options:
-        - name:  "rectangle"
-          title:  Rectangles
-        - name:  "square"
-          title:  Squares
-        - name: "circle"
-          title: Circles
-        - name: "ellipse"
-          title: Ellipses
-        - name: "diamond"
-          title: Diamonds
-
-      default: "rectangle"
-      description:
-          R: >
-             Choose the diagram labels
-
-
-    - name: diag_abbrev
-      title: Abbreviate
-      type: List
-      options:
-        - name:  "0"
-          title:  No abbrev.
-        - name:  "5"
-          title:  "5"
-        - name:  "10"
-          title:  "10"
-        - name:  "15"
-          title:  "15"
-        - name:  "20"
-          title:  "20"
-        - name:  "25"
-          title:  "25"
-      default: "0"
-      description:
-          R: >
-             Choose the diagram labels
-
-
-### end diagram ###
-
-
-
 
 ...
 

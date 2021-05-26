@@ -17,8 +17,6 @@ const events = {
 
     onChange_mediators: function(ui) {
         updateSuppliers(ui,this);
-        updateScaling(ui, this);
-
     },
 
     onChange_covariates: function(ui) {
@@ -371,10 +369,7 @@ var  fromMediatorsToModelTerms = function(ui,context) {
 var updateScaling = function(ui,context) {
     log("updateScaling");
     var currentList = context.cloneArray(ui.scaling.value(), []);
-    var covList = context.cloneArray(ui.covs.value(), [])
-    var mediatorList = context.cloneArray(ui.mediators.value(), [])
-    var variableList= covList.concat(mediatorList); 
-
+    var variableList = context.cloneArray(ui.covs.value(), [])
     var list3 = [];
     for (let i = 0; i < variableList.length; i++) {
         let found = null;

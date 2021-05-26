@@ -31,16 +31,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             mediatorsTerms = list(
                 list()),
             moderatorsTerms = list(
-                list()),
-            meddiagram = FALSE,
-            diagram = FALSE,
-            diag_paths = "est",
-            diag_resid = FALSE,
-            diag_labsize = "medium",
-            diag_rotate = "1",
-            diag_type = "circle",
-            diag_shape = "rectangle",
-            diag_abbrev = "0", ...) {
+                list()), ...) {
 
             super$initialize(
                 package="jamm",
@@ -93,7 +84,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 ciType,
                 options=list(
                     "standard",
-                    "bca.simple",
+                    "bca",
                     "perc",
                     "norm",
                     "none"),
@@ -198,7 +189,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=list(
                     "component",
                     "beta",
-                    "intercepts",
                     "regression"),
                 default=list(
                     "beta",
@@ -226,76 +216,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 template=jmvcore::OptionTerms$new(
                     "moderatorsTerms",
                     NULL))
-            private$..meddiagram <- jmvcore::OptionBool$new(
-                "meddiagram",
-                meddiagram,
-                default=FALSE)
-            private$..diagram <- jmvcore::OptionBool$new(
-                "diagram",
-                diagram,
-                default=FALSE)
-            private$..diag_paths <- jmvcore::OptionList$new(
-                "diag_paths",
-                diag_paths,
-                options=list(
-                    "est",
-                    "stand",
-                    "name",
-                    "hide"),
-                default="est")
-            private$..diag_resid <- jmvcore::OptionBool$new(
-                "diag_resid",
-                diag_resid,
-                default=FALSE)
-            private$..diag_labsize <- jmvcore::OptionList$new(
-                "diag_labsize",
-                diag_labsize,
-                options=list(
-                    "small",
-                    "medium",
-                    "large",
-                    "vlarge"),
-                default="medium")
-            private$..diag_rotate <- jmvcore::OptionList$new(
-                "diag_rotate",
-                diag_rotate,
-                options=list(
-                    "1",
-                    "2",
-                    "3",
-                    "4"),
-                default="1")
-            private$..diag_type <- jmvcore::OptionList$new(
-                "diag_type",
-                diag_type,
-                options=list(
-                    "circle",
-                    "circle2",
-                    "tree2",
-                    "tree",
-                    "spring"),
-                default="circle")
-            private$..diag_shape <- jmvcore::OptionList$new(
-                "diag_shape",
-                diag_shape,
-                options=list(
-                    "rectangle",
-                    "square",
-                    "circle",
-                    "ellipse",
-                    "diamond"),
-                default="rectangle")
-            private$..diag_abbrev <- jmvcore::OptionList$new(
-                "diag_abbrev",
-                diag_abbrev,
-                options=list(
-                    "0",
-                    "5",
-                    "10",
-                    "15",
-                    "20",
-                    "25"),
-                default="0")
 
             self$.addOption(private$..dep)
             self$.addOption(private$..mediators)
@@ -318,15 +238,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..pathOptions)
             self$.addOption(private$..mediatorsTerms)
             self$.addOption(private$..moderatorsTerms)
-            self$.addOption(private$..meddiagram)
-            self$.addOption(private$..diagram)
-            self$.addOption(private$..diag_paths)
-            self$.addOption(private$..diag_resid)
-            self$.addOption(private$..diag_labsize)
-            self$.addOption(private$..diag_rotate)
-            self$.addOption(private$..diag_type)
-            self$.addOption(private$..diag_shape)
-            self$.addOption(private$..diag_abbrev)
         }),
     active = list(
         dep = function() private$..dep$value,
@@ -349,16 +260,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         tableOptions = function() private$..tableOptions$value,
         pathOptions = function() private$..pathOptions$value,
         mediatorsTerms = function() private$..mediatorsTerms$value,
-        moderatorsTerms = function() private$..moderatorsTerms$value,
-        meddiagram = function() private$..meddiagram$value,
-        diagram = function() private$..diagram$value,
-        diag_paths = function() private$..diag_paths$value,
-        diag_resid = function() private$..diag_resid$value,
-        diag_labsize = function() private$..diag_labsize$value,
-        diag_rotate = function() private$..diag_rotate$value,
-        diag_type = function() private$..diag_type$value,
-        diag_shape = function() private$..diag_shape$value,
-        diag_abbrev = function() private$..diag_abbrev$value),
+        moderatorsTerms = function() private$..moderatorsTerms$value),
     private = list(
         ..dep = NA,
         ..mediators = NA,
@@ -380,36 +282,24 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..tableOptions = NA,
         ..pathOptions = NA,
         ..mediatorsTerms = NA,
-        ..moderatorsTerms = NA,
-        ..meddiagram = NA,
-        ..diagram = NA,
-        ..diag_paths = NA,
-        ..diag_resid = NA,
-        ..diag_labsize = NA,
-        ..diag_rotate = NA,
-        ..diag_type = NA,
-        ..diag_shape = NA,
-        ..diag_abbrev = NA)
+        ..moderatorsTerms = NA)
 )
 
 jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "jammGLMResults",
     inherit = jmvcore::Group,
     active = list(
-        model = function() private$..model,
         info = function() private$.items[["info"]],
+        pathmodelgroup = function() private$.items[["pathmodelgroup"]],
         models = function() private$.items[["models"]],
-        regressions = function() private$.items[["regressions"]],
-        pathgroup = function() private$.items[["pathgroup"]]),
-    private = list(
-        ..model = NA),
+        regressions = function() private$.items[["regressions"]]),
+    private = list(),
     public=list(
         initialize=function(options) {
             super$initialize(
                 options=options,
                 name="",
                 title="GLM Mediation Analysis")
-            private$..model <- NULL
             self$add(jmvcore::Table$new(
                 options=options,
                 name="info",
@@ -440,9 +330,49 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(
-                    r2 = function() private$.items[["r2"]],
+                    pathmodel = function() private$.items[["pathmodel"]],
+                    pathnotes = function() private$.items[["pathnotes"]]),
+                private = list(),
+                public=list(
+                    initialize=function(options) {
+                        super$initialize(
+                            options=options,
+                            name="pathmodelgroup",
+                            title="Path Model",
+                            clearWith=list(
+                    "dep",
+                    "mediatorsTerms",
+                    "modelTerms",
+                    "moderatorsTerms"))
+                        self$add(jmvcore::Image$new(
+                            options=options,
+                            name="pathmodel",
+                            title="Model Diagram",
+                            width=600,
+                            height=500,
+                            renderFun=".showDiagram",
+                            clearWith=list(
+                                "dep",
+                                "mediatorsTerms",
+                                "modelTerms",
+                                "moderatorsTerms",
+                                "pathOptions"),
+                            refs="diagram"))
+                        self$add(jmvcore::Table$new(
+                            options=options,
+                            name="pathnotes",
+                            title="",
+                            visible=FALSE,
+                            columns=list(
+                                list(
+                                    `name`="info", 
+                                    `type`="text", 
+                                    `title`="Model diagram notes"))))}))$new(options=options))
+            self$add(R6::R6Class(
+                inherit = jmvcore::Group,
+                active = list(
                     moderationEffects = function() private$.items[["moderationEffects"]],
-                    coefficients = function() private$.items[["coefficients"]],
+                    main = function() private$.items[["main"]],
                     contrastCodeTables = function() private$.items[["contrastCodeTables"]]),
                 private = list(),
                 public=list(
@@ -456,51 +386,6 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "mediators",
                     "factors",
                     "covs"))
-                        self$add(jmvcore::Table$new(
-                            options=options,
-                            name="r2",
-                            title="R-squared",
-                            clearWith=list(
-                                "dep",
-                                "mediators",
-                                "covs",
-                                "factors",
-                                "ciType",
-                                "data"),
-                            columns=list(
-                                list(
-                                    `name`="lhs", 
-                                    `title`="Variable", 
-                                    `type`="text"),
-                                list(
-                                    `name`="r2", 
-                                    `title`="R\u00B2", 
-                                    `type`="number"),
-                                list(
-                                    `name`="ci.lower", 
-                                    `type`="number", 
-                                    `title`="Lower", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)", 
-                                    `format`="zto"),
-                                list(
-                                    `name`="ci.upper", 
-                                    `type`="number", 
-                                    `title`="Upper", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)", 
-                                    `format`="zto"),
-                                list(
-                                    `name`="chisq", 
-                                    `title`="Wald X\u00B2", 
-                                    `type`="number"),
-                                list(
-                                    `name`="df", 
-                                    `title`="df", 
-                                    `type`="integer"),
-                                list(
-                                    `name`="pvalue", 
-                                    `title`="p", 
-                                    `type`="number", 
-                                    `format`="zto,pvalue"))))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="moderationEffects",
@@ -561,7 +446,7 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `format`="zto,pvalue"))))
                         self$add(jmvcore::Table$new(
                             options=options,
-                            name="coefficients",
+                            name="main",
                             title="Indirect and Total Effects",
                             refs="lavaan",
                             clearWith=list(
@@ -578,7 +463,7 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `type`="text", 
                                     `combineBelow`=TRUE),
                                 list(
-                                    `name`="effect", 
+                                    `name`="source", 
                                     `title`="Effect", 
                                     `type`="text"),
                                 list(
@@ -679,10 +564,6 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                         visible="(tableOptions:regression)",
                                         columns=list(
                                             list(
-                                                `name`="dep", 
-                                                `title`="Variable", 
-                                                `type`="text"),
-                                            list(
                                                 `name`="rsquared", 
                                                 `title`="R-squared", 
                                                 `type`="number"),
@@ -757,7 +638,7 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         self$add(jmvcore::Array$new(
                             options=options,
                             name="mediator_regressions",
-                            title="Mediator(s) Model",
+                            title="Mediator Model",
                             clearWith=list(
                                 "dep",
                                 "contrasts",
@@ -773,17 +654,13 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                         super$initialize(
                                             options=options,
                                             name="undefined",
-                                            title="Regression model for ",
+                                            title="",
                                             clearWith=list())
                                         self$add(jmvcore::Table$new(
                                             options=options,
                                             name="anova",
                                             title="ANOVA",
                                             columns=list(
-                                                list(
-                                                    `name`="lhs", 
-                                                    `title`="Variable", 
-                                                    `type`="text"),
                                                 list(
                                                     `name`="rsquared", 
                                                     `title`="R-squared", 
@@ -812,11 +689,12 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                             visible="(tableOptions:regression)",
                                             columns=list(
                                                 list(
-                                                    `name`="lhs", 
-                                                    `title`="Dependent", 
-                                                    `type`="text"),
+                                                    `name`="source", 
+                                                    `title`="Names", 
+                                                    `type`="text", 
+                                                    `visible`="(showRealNames)"),
                                                 list(
-                                                    `name`="rhs", 
+                                                    `name`="label", 
                                                     `title`="Effect", 
                                                     `type`="text"),
                                                 list(
@@ -878,10 +756,6 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                         visible="(tableOptions:regression)",
                                         columns=list(
                                             list(
-                                                `name`="lhs", 
-                                                `title`="Dependent", 
-                                                `type`="text"),
-                                            list(
                                                 `name`="rsquared", 
                                                 `title`="R-squared", 
                                                 `type`="number"),
@@ -909,12 +783,12 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                         visible="(tableOptions:regression)",
                                         columns=list(
                                             list(
-                                                `name`="lhs", 
-                                                `title`="Dependent", 
+                                                `name`="source", 
+                                                `title`="Names", 
                                                 `type`="text", 
-                                                `combineBelow`=TRUE),
+                                                `visible`="(showRealNames)"),
                                             list(
-                                                `name`="rhs", 
+                                                `name`="label", 
                                                 `title`="Effect", 
                                                 `type`="text"),
                                             list(
@@ -952,82 +826,7 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                                 `name`="p", 
                                                 `title`="p", 
                                                 `type`="number", 
-                                                `format`="zto,pvalue"))))}))$new(options=options))}))$new(options=options))
-            self$add(R6::R6Class(
-                inherit = jmvcore::Group,
-                active = list(
-                    pathmodel = function() private$.items[["pathmodel"]],
-                    pathnotes = function() private$.items[["pathnotes"]],
-                    diagrams = function() private$.items[["diagrams"]],
-                    notes = function() private$.items[["notes"]]),
-                private = list(),
-                public=list(
-                    initialize=function(options) {
-                        super$initialize(
-                            options=options,
-                            name="pathgroup",
-                            title="Path Model",
-                            clearWith=list(
-                    "data"))
-                        self$add(jmvcore::Image$new(
-                            options=options,
-                            name="pathmodel",
-                            title="Model Diagram",
-                            visible="(meddiagram)",
-                            width=600,
-                            height=500,
-                            renderFun=".showModelDiagram",
-                            clearWith=list(
-                                "dep",
-                                "mediatorsTerms",
-                                "modelTerms",
-                                "moderatorsTerms",
-                                "pathOptions"),
-                            refs="diagram"))
-                        self$add(jmvcore::Table$new(
-                            options=options,
-                            name="pathnotes",
-                            title="",
-                            visible=FALSE,
-                            columns=list(
-                                list(
-                                    `name`="info", 
-                                    `type`="text", 
-                                    `title`="Model diagram notes"))))
-                        self$add(jmvcore::Array$new(
-                            options=options,
-                            name="diagrams",
-                            title="Path Diagrams",
-                            visible="(diagram)",
-                            template=jmvcore::Image$new(
-                                options=options,
-                                title="$key",
-                                renderFun=".showDiagram",
-                                width=700,
-                                height=500,
-                                clearWith=list(
-                                    "diag_resid",
-                                    "diag_paths",
-                                    "diag_labsize",
-                                    "diag_rotate",
-                                    "diag_type",
-                                    "diag_shape",
-                                    "diag_abbrev",
-                                    "modelTerms",
-                                    "mediatorsTerms",
-                                    "data")),
-                            refs="semplot"))
-                        self$add(jmvcore::Table$new(
-                            options=options,
-                            name="notes",
-                            title="",
-                            visible=FALSE,
-                            columns=list(
-                                list(
-                                    `name`="message", 
-                                    `type`="text", 
-                                    `title`="Path diagram notes"))))}))$new(options=options))},
-        .setModel=function(x) private$..model <- x))
+                                                `format`="zto,pvalue"))))}))$new(options=options))}))$new(options=options))}))
 
 jammGLMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     "jammGLMBase",
@@ -1048,222 +847,4 @@ jammGLMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 completeWhenFilled = FALSE,
                 requiresMissings = FALSE)
         }))
-
-#' GLM Mediation Model
-#'
-#' GLM mediation model
-#' @param data the data as a data frame
-#' @param dep a string naming the dependent variable from \code{data},
-#'   variable must be numeric
-#' @param mediators a vector of strings naming the mediators from \code{data}
-#' @param factors a vector of strings naming the fixed factors from
-#'   \code{data}
-#' @param covs a vector of strings naming the covariates from \code{data}
-#' @param modelTerms a list of character vectors describing fixed effects
-#'   terms
-#' @param ciType Choose the confidence interval type
-#' @param ciWidth a number between 50 and 99.9 (default: 95) specifying the
-#'   confidence interval width for the parameter estimates
-#' @param bootN number of bootstrap samples for estimating confidence
-#'   intervals
-#' @param contrasts a list of lists specifying the factor and type of contrast
-#'   to use, one of \code{'deviation'}, \code{'simple'}, \code{'difference'},
-#'   \code{'helmert'}, \code{'repeated'} or \code{'polynomial'}
-#' @param showRealNames \code{TRUE} or \code{FALSE} (default), provide raw
-#'   names of the contrasts variables
-#' @param showContrastCode \code{TRUE} or \code{FALSE} (default), provide
-#'   contrast coefficients tables
-#' @param bogus \code{a bogus option to define a label without visible
-#'   children}
-#' @param simpleScale \code{'mean_sd'} (default), \code{'custom'} , or
-#'   \code{'custom_percent'}. Use to condition the covariates (if any)
-#' @param cvalue offset value for conditioning
-#' @param percvalue offset value for conditioning
-#' @param simpleScaleLabels .
-#' @param scaling a list of lists specifying the covariates scaling, one of
-#'   \code{'centered to the mean'}, \code{'standardized'}, or \code{'none'}.
-#'   \code{'none'} leaves the variable as it is
-#' @param tableOptions .
-#' @param pathOptions .
-#' @param mediatorsTerms a list of lists specifying the models for with the
-#'   mediators as dependent variables.
-#' @param moderatorsTerms a list of lists specifying the the IV which
-#'   moderatorate each mediated effect.
-#' @param meddiagram \code{TRUE} or \code{FALSE} (default), produce a path
-#'   diagram
-#' @param diagram \code{TRUE} or \code{FALSE} (default), produce a path
-#'   diagram
-#' @param diag_paths Choose the diagram labels
-#' @param diag_resid \code{TRUE} or \code{FALSE} (default), produce a path
-#'   diagram
-#' @param diag_labsize Choose the diagram labels
-#' @param diag_rotate Choose the diagram labels
-#' @param diag_type Choose the diagram labels
-#' @param diag_shape Choose the diagram labels
-#' @param diag_abbrev Choose the diagram labels
-#' @param formula (optional) the formula to use, see the examples
-#' @return A results object containing:
-#' \tabular{llllll}{
-#'   \code{results$model} \tab \tab \tab \tab \tab The underlying \code{lavaan} object \cr
-#'   \code{results$info} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$models$r2} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$models$moderationEffects} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$models$coefficients} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$models$contrastCodeTables} \tab \tab \tab \tab \tab an array of contrast coefficients tables \cr
-#'   \code{results$regressions$overall} \tab \tab \tab \tab \tab a group \cr
-#'   \code{results$regressions$mediator_regressions} \tab \tab \tab \tab \tab an array of regressions for the mediators \cr
-#'   \code{results$regressions$full} \tab \tab \tab \tab \tab a group \cr
-#'   \code{results$pathgroup$pathmodel} \tab \tab \tab \tab \tab a model diagram \cr
-#'   \code{results$pathgroup$pathnotes} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$pathgroup$diagrams} \tab \tab \tab \tab \tab an array of path diagrams \cr
-#'   \code{results$pathgroup$notes} \tab \tab \tab \tab \tab a table \cr
-#' }
-#'
-#' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
-#'
-#' \code{results$info$asDF}
-#'
-#' \code{as.data.frame(results$info)}
-#'
-#' @export
-jammGLM <- function(
-    data,
-    dep = NULL,
-    mediators = NULL,
-    factors = NULL,
-    covs = NULL,
-    modelTerms = NULL,
-    ciType = "standard",
-    ciWidth = 95,
-    bootN = 1000,
-    contrasts = NULL,
-    showRealNames = TRUE,
-    showContrastCode = FALSE,
-    bogus = FALSE,
-    simpleScale = "mean_sd",
-    cvalue = 1,
-    percvalue = 25,
-    simpleScaleLabels = "labels",
-    scaling = NULL,
-    tableOptions = list(
-                "beta",
-                "component"),
-    pathOptions = list(
-                "suggested"),
-    mediatorsTerms = list(
-                list()),
-    moderatorsTerms = list(
-                list()),
-    meddiagram = FALSE,
-    diagram = FALSE,
-    diag_paths = "est",
-    diag_resid = FALSE,
-    diag_labsize = "medium",
-    diag_rotate = "1",
-    diag_type = "circle",
-    diag_shape = "rectangle",
-    diag_abbrev = "0",
-    formula) {
-
-    if ( ! requireNamespace("jmvcore", quietly=TRUE))
-        stop("jammGLM requires jmvcore to be installed (restart may be required)")
-
-    if ( ! missing(formula)) {
-        if (missing(dep))
-            dep <- jammGLMClass$private_methods$.marshalFormula(
-                formula=formula,
-                data=`if`( ! missing(data), data, NULL),
-                name="dep")
-        if (missing(factors))
-            factors <- jammGLMClass$private_methods$.marshalFormula(
-                formula=formula,
-                data=`if`( ! missing(data), data, NULL),
-                name="factors")
-        if (missing(covs))
-            covs <- jammGLMClass$private_methods$.marshalFormula(
-                formula=formula,
-                data=`if`( ! missing(data), data, NULL),
-                name="covs")
-        if (missing(mediators))
-            mediators <- jammGLMClass$private_methods$.marshalFormula(
-                formula=formula,
-                data=`if`( ! missing(data), data, NULL),
-                name="mediators")
-        if (missing(mediatorsTerms))
-            mediatorsTerms <- jammGLMClass$private_methods$.marshalFormula(
-                formula=formula,
-                data=`if`( ! missing(data), data, NULL),
-                name="mediatorsTerms")
-        if (missing(modelTerms))
-            modelTerms <- jammGLMClass$private_methods$.marshalFormula(
-                formula=formula,
-                data=`if`( ! missing(data), data, NULL),
-                name="modelTerms")
-        if (missing(moderatorsTerms))
-            moderatorsTerms <- jammGLMClass$private_methods$.marshalFormula(
-                formula=formula,
-                data=`if`( ! missing(data), data, NULL),
-                name="moderatorsTerms")
-        if (missing(simpleScale))
-            simpleScale <- jammGLMClass$private_methods$.marshalFormula(
-                formula=formula,
-                data=`if`( ! missing(data), data, NULL),
-                name="simpleScale")
-    }
-
-    if ( ! missing(dep)) dep <- jmvcore::resolveQuo(jmvcore::enquo(dep))
-    if ( ! missing(mediators)) mediators <- jmvcore::resolveQuo(jmvcore::enquo(mediators))
-    if ( ! missing(factors)) factors <- jmvcore::resolveQuo(jmvcore::enquo(factors))
-    if ( ! missing(covs)) covs <- jmvcore::resolveQuo(jmvcore::enquo(covs))
-    if (missing(data))
-        data <- jmvcore::marshalData(
-            parent.frame(),
-            `if`( ! missing(dep), dep, NULL),
-            `if`( ! missing(mediators), mediators, NULL),
-            `if`( ! missing(factors), factors, NULL),
-            `if`( ! missing(covs), covs, NULL))
-
-    for (v in factors) if (v %in% names(data)) data[[v]] <- as.factor(data[[v]])
-    if (inherits(modelTerms, "formula")) modelTerms <- jmvcore::decomposeFormula(modelTerms)
-
-    options <- jammGLMOptions$new(
-        dep = dep,
-        mediators = mediators,
-        factors = factors,
-        covs = covs,
-        modelTerms = modelTerms,
-        ciType = ciType,
-        ciWidth = ciWidth,
-        bootN = bootN,
-        contrasts = contrasts,
-        showRealNames = showRealNames,
-        showContrastCode = showContrastCode,
-        bogus = bogus,
-        simpleScale = simpleScale,
-        cvalue = cvalue,
-        percvalue = percvalue,
-        simpleScaleLabels = simpleScaleLabels,
-        scaling = scaling,
-        tableOptions = tableOptions,
-        pathOptions = pathOptions,
-        mediatorsTerms = mediatorsTerms,
-        moderatorsTerms = moderatorsTerms,
-        meddiagram = meddiagram,
-        diagram = diagram,
-        diag_paths = diag_paths,
-        diag_resid = diag_resid,
-        diag_labsize = diag_labsize,
-        diag_rotate = diag_rotate,
-        diag_type = diag_type,
-        diag_shape = diag_shape,
-        diag_abbrev = diag_abbrev)
-
-    analysis <- jammGLMClass$new(
-        options = options,
-        data = data)
-
-    analysis$run()
-
-    analysis$results
-}
 

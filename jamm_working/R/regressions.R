@@ -1,5 +1,5 @@
 
-.regression_table<-function(modelFormula,data,ciWidth) {
+.regression_table<-function(modelFormula,data,names64,ciWidth) {
      
      estimates <- try({
        model<-stats::lm(modelFormula, data=data)
