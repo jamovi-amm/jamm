@@ -96,7 +96,7 @@ jammGLMClass <- R6::R6Class(
      
 #      if (!infos64$isEstimable())
 #         return()
-      
+      mark("first estimate of the model")
       se<-ifelse(ciType=="standard" || ciType=="none",ciType,"bootstrap")
       params<-jmf.mediationTable(infos64,data,level = ciWidth,se=se, boot.ci=ciType,bootN=bootN)
       table<-self$results$models$main
@@ -152,6 +152,7 @@ jammGLMClass <- R6::R6Class(
               ldata[,var]<-condata[,var]
             }
           }
+          mark("estim",lcombs[j])
            tableKeys<-table$rowKeys
            params<-jmf.mediationTable(infos64,ldata,level = ciWidth,se=se, boot.ci=ciType,bootN=bootN)
            for (i in seq_along(params$label)) {

@@ -187,8 +187,6 @@ var fromMediatorsTerms= function(ui,context) {
     var mediators = context.cloneArray(ui.mediators.value(), []);
     var mediatorsTerms = context.cloneArray(ui.mediatorsTerms.value(),[]);
     var moderatorsTerms= context.cloneArray(ui.moderatorsTerms.value(),[]);
-       log ("frommed")
-       log(mediatorsTerms)
 
     for (var i = 0; i < mediators.length; i++)
         mediatorsTerms[i]=removeFromList(mediators[i],mediatorsTerms[i],context,1);
@@ -198,8 +196,6 @@ var fromMediatorsTerms= function(ui,context) {
          moderatorsTerms[diff.index]=removeFromList(diff.changes[diff.index].removed,moderatorsTerms[diff.index],context,1) ;
          mediatorsTerms[diff.index]=removeFromList(diff.changes[diff.index].removed,mediatorsTerms[diff.index],context,1) ;
        }
-       log ("frommed2")
-       log(mediatorsTerms)
         ui.mediatorsTerms.setValue(mediatorsTerms);
         ui.moderatorsTerms.setValue(moderatorsTerms);
         isRoomForModerators(ui,context)
@@ -314,7 +310,7 @@ var fromModeratorsToOthers = function(ui,context) {
       // if nothing happens, we spread the moderators. However, we need
       // to check diff again, bacause we did not save moderatorsTerms before
       // to avoid a loop that would unflash the warning no matter what.
-      // d
+      // 
       if (removeAdded===false) {
 
          var diff2 = findChangesMulti("moderatorsTerms",moderatorsTerms,context,true);
@@ -327,8 +323,13 @@ var fromModeratorsToOthers = function(ui,context) {
              mediatorsTerms[diff.index]=combine(mediatorsTerms[diff.index],newTerm,context,0);
              mediatorsTerms[diff.index]=cleanInteractions(moderatorsTerms[diff.index],mediatorsTerms[diff.index],context);
           // add interactions to full model terms if there are new moderators
-           modelTerms=combine(modelTerms,newTerm,context,0);
-           modelTerms=cleanInteractions(moderators,modelTerms,context);
+          // we should add interactions with the other IV and only the selected mediator
+          var others=combine(mediatorsTerms[diff.index],newTerm,context,1);
+          var int=newTerm[0];
+          int.push(mediators[diff.index]);
+          others.push(int);
+          modelTerms=modelTerms.concat(others);
+
       }
       // remove interactions from mediators and full model terms if moderators are removed
       for (var i = 0; i < diff.changes[diff.index].removed.length; i++)  {
@@ -358,7 +359,7 @@ var  fromMediatorsToModelTerms = function(ui,context) {
      var moderatorsTerms = context.cloneArray(ui.moderatorsTerms.value(),[]);
      var meds=[];
      for (var i = 0; i < mediators.length; i++) {
-           var ameds=combine(moderatorsTerms[i],modelTerms,context,0);
+           var ameds=combine(moderatorsTerms[i],mediators[i],context,0);
            meds=meds.concat(ameds);
      }
     modelTerms=addToList(unique(meds),modelTerms,context);
@@ -434,7 +435,6 @@ var addToList = function(quantum, cosmos, context) {
 var removeFromMultiList = function(quantum, cosmos, context, strict = 1) {
 
     var cosmos = context.cloneArray(cosmos);
-    var dimq = dim(quantum);
         for (var j = 0; j < cosmos.length; j++) 
            cosmos[j]=removeFromList(quantum,cosmos[j],context, strict);
     return(cosmos);
@@ -587,6 +587,9 @@ var combine = function(cosmos1, cosmos2 , context, order=2) {
               light = cosmos1.concat(cosmos2).concat(light);
         return unique(light);
 };
+
+
+
 
 
 var dim = function(aList) {
