@@ -18,9 +18,6 @@ items:
          title: ""
          combineBelow: true
 
-       - name: specs
-         type: text
-         title: ""
        - name: value
          type: text
          title: ""
@@ -76,21 +73,9 @@ items:
                       title: Upper
                       visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
                       format: zto
-                    - name: chisq
-                      title: Wald X²
-                      type: number
-                    - name:  df
-                      title: "df"
-                      type: integer
-
-                    - name: pvalue
-                      title: "p"
-                      type: number
-                      format: zto,pvalue
 
     
-    
-          - name: moderationEffects
+          - name: interactions
             title: Moderation effects (interactions)
             visible: false
             type: Table
@@ -101,16 +86,12 @@ items:
                      - fixedIntercept
                      - simpleScale
             columns:
-                    - name: mod
-                      title: "Moderator"
+                    - name: lhs
+                      title: "Dependent"
                       combineBelow: true
                       type: text
-                    - name: target
+                    - name: rhs
                       title: "Interaction"
-                      type: text
-                    - name: label
-                      title: "Contrasts"
-                      visible: false
                       type: text
                     - name: est
                       title: "Estimate"
@@ -189,25 +170,18 @@ items:
                       format: zto,pvalue
 
 
-          - name: contrastCodeTables
-            title: Contrast Coefficients 
-            type: Array
-            description: an array of contrast coefficients tables
-            visible: (showContrastCode)
-            clearWith:
-                    - contrasts
-                    - showContrastCode
-            template:
-                   title:  $key
-                   type: Table
-                   visible: (showContrastCode)
-                   columns:
-                         - name: rnames
+          - name: contrastCodeTable
+            title: Contrasts Definition
+            type: Table
+            visible: false
+            columns:
+                         - name: rname
                            title: 'Name'
                            type: text
-                         - name: clabs
+                         - name: clab
                            title: 'Contrast'
                            type: text
+
 
   - name: regressions
     type: Group

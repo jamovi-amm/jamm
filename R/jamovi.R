@@ -64,6 +64,9 @@ bogusfromb64<-function(obj,ref=NULL) fromb64(obj,ref=ref)
 
 
 j.init_table<-function(table,obj,ci=FALSE,ciroot="",ciformat="{}% Confidence Intervals",ciwidth,indent=NULL) {
+  
+  if (is.null(obj))
+    return()
 
   square<-length(dim(obj))>1
   if (ci) {
@@ -86,6 +89,7 @@ j.init_table<-function(table,obj,ci=FALSE,ciroot="",ciformat="{}% Confidence Int
     for (j in rows)
       table$addFormat(rowKey=j,col=1,jmvcore::Cell.INDENTED)
   }
+  table$setVisible(TRUE)
 
 }
 j.init_table_append<-function(table,obj, indent=NULL) {

@@ -275,8 +275,6 @@ options:
             title: IE Components
           - name: beta
             title: β  
-          - name: intercepts
-            title: Intercepts  
           - name: regression
             title: Individual regressions  
 

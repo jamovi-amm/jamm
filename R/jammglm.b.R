@@ -33,21 +33,19 @@ jammGLMClass <- R6::R6Class(
             ### fill the info table ###
             j.init_table(self$results$info,lav_machine$tab_info)
             j.init_table_append(self$results$info,lav_machine$models())
-            j.init_table_append(self$results$info,lav_machine$constraints)
-
+            j.init_table_append(self$results$info,lav_machine$tab_indirect)
 
 
             j.init_table(self$results$models$r2,lav_machine$tab_r2,ci=T,ciwidth=self$options$ciWidth)
+
+            #### parameter estimates table ####
+            j.init_table(self$results$models$interactions,lav_machine$tab_interactions,ci=T,ciwidth=self$options$ciWidth)
             
             #### parameter estimates table ####
             j.init_table(self$results$models$coefficients,lav_machine$tab_coefficients,ci=T,ciwidth=self$options$ciWidth)
 
 
 
-            ### prepare intercepts ###
-            if ("intercepts" %in% self$options$tableOptions)
-                 j.init_table(self$results$models$intercepts,lav_machine$tab_intercepts,ci=T,ciwidth=self$options$ciWidth)
-            
             ### prepare regressions ###
             if ("regression" %in% self$options$tableOptions) {
                 maingroup<-self$results$regressions$mediator_regressions
@@ -63,8 +61,7 @@ jammGLMClass <- R6::R6Class(
                 
                 
             }
-#                j.init_table(self$results$models$intercepts,lav_machine$tab_intercepts,ci=T,ciwidth=self$options$ciWidth)
-            
+
             
             
             
@@ -113,18 +110,22 @@ jammGLMClass <- R6::R6Class(
                     stop(paste(lav_machine$errors,collapse = "; "))
             } 
 
-
+            ## fit info
+            j.fill_table(self$results$info,lav_machine$tab_info)
+            
+            ## interactions
+            j.fill_table(self$results$models$interactions,lav_machine$tab_interactions)
+            
+            
+            
             ### parameters estimates ####
             j.fill_table(self$results$models$coefficients,lav_machine$tab_coefficients)
-
 
             j.fill_table(self$results$models$r2,lav_machine$tab_r2)
             j.add_warnings(self$results$models$r2,lav_machine,"r2")
             
 
-            if ("intercepts" %in% self$options$tableOptions)
-                   j.fill_table(self$results$models$intercepts,lav_machine$tab_intercepts)
-            
+
 
             ## diagrams
             private$.plot_machine$preparePlots()   

@@ -198,7 +198,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=list(
                     "component",
                     "beta",
-                    "intercepts",
                     "regression"),
                 default=list(
                     "beta",
@@ -421,10 +420,6 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `title`="", 
                         `combineBelow`=TRUE),
                     list(
-                        `name`="specs", 
-                        `type`="text", 
-                        `title`=""),
-                    list(
                         `name`="value", 
                         `type`="text", 
                         `title`="")),
@@ -441,9 +436,9 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(
                     r2 = function() private$.items[["r2"]],
-                    moderationEffects = function() private$.items[["moderationEffects"]],
+                    interactions = function() private$.items[["interactions"]],
                     coefficients = function() private$.items[["coefficients"]],
-                    contrastCodeTables = function() private$.items[["contrastCodeTables"]]),
+                    contrastCodeTable = function() private$.items[["contrastCodeTable"]]),
                 private = list(),
                 public=list(
                     initialize=function(options) {
@@ -487,23 +482,10 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `type`="number", 
                                     `title`="Upper", 
                                     `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)", 
-                                    `format`="zto"),
-                                list(
-                                    `name`="chisq", 
-                                    `title`="Wald X\u00B2", 
-                                    `type`="number"),
-                                list(
-                                    `name`="df", 
-                                    `title`="df", 
-                                    `type`="integer"),
-                                list(
-                                    `name`="pvalue", 
-                                    `title`="p", 
-                                    `type`="number", 
-                                    `format`="zto,pvalue"))))
+                                    `format`="zto"))))
                         self$add(jmvcore::Table$new(
                             options=options,
-                            name="moderationEffects",
+                            name="interactions",
                             title="Moderation effects (interactions)",
                             visible=FALSE,
                             clearWith=list(
@@ -514,18 +496,13 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "simpleScale"),
                             columns=list(
                                 list(
-                                    `name`="mod", 
-                                    `title`="Moderator", 
+                                    `name`="lhs", 
+                                    `title`="Dependent", 
                                     `combineBelow`=TRUE, 
                                     `type`="text"),
                                 list(
-                                    `name`="target", 
+                                    `name`="rhs", 
                                     `title`="Interaction", 
-                                    `type`="text"),
-                                list(
-                                    `name`="label", 
-                                    `title`="Contrasts", 
-                                    `visible`=FALSE, 
                                     `type`="text"),
                                 list(
                                     `name`="est", 
@@ -618,27 +595,20 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `title`="p", 
                                     `type`="number", 
                                     `format`="zto,pvalue"))))
-                        self$add(jmvcore::Array$new(
+                        self$add(jmvcore::Table$new(
                             options=options,
-                            name="contrastCodeTables",
-                            title="Contrast Coefficients",
-                            visible="(showContrastCode)",
-                            clearWith=list(
-                                "contrasts",
-                                "showContrastCode"),
-                            template=jmvcore::Table$new(
-                                options=options,
-                                title="$key",
-                                visible="(showContrastCode)",
-                                columns=list(
-                                    list(
-                                        `name`="rnames", 
-                                        `title`="Name", 
-                                        `type`="text"),
-                                    list(
-                                        `name`="clabs", 
-                                        `title`="Contrast", 
-                                        `type`="text")))))}))$new(options=options))
+                            name="contrastCodeTable",
+                            title="Contrasts Definition",
+                            visible=FALSE,
+                            columns=list(
+                                list(
+                                    `name`="rname", 
+                                    `title`="Name", 
+                                    `type`="text"),
+                                list(
+                                    `name`="clab", 
+                                    `title`="Contrast", 
+                                    `type`="text"))))}))$new(options=options))
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(
@@ -1107,9 +1077,9 @@ jammGLMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   \code{results$model} \tab \tab \tab \tab \tab The underlying \code{lavaan} object \cr
 #'   \code{results$info} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$models$r2} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$models$moderationEffects} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$models$interactions} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$models$coefficients} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$models$contrastCodeTables} \tab \tab \tab \tab \tab an array of contrast coefficients tables \cr
+#'   \code{results$models$contrastCodeTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$regressions$overall} \tab \tab \tab \tab \tab a group \cr
 #'   \code{results$regressions$mediator_regressions} \tab \tab \tab \tab \tab an array of regressions for the mediators \cr
 #'   \code{results$regressions$full} \tab \tab \tab \tab \tab a group \cr

@@ -22,7 +22,16 @@ Estimate <- R6::R6Class("Estimate",
                             private$.lavaan_estimate(data)
                             private$.ols_estimate(data)
                             
-                          }, # end of private function estimate
+                            # fit indices
+                            alist<-list()
+                            alist[[length(alist)+1]]<-c(info="Estimation Method",value=self$model@Options$estimator)
+                            alist[[length(alist)+1]]<-c(info="Number of observations",value=lavaan::lavInspect(self$model,"ntotal")) 
+                            alist[[length(alist)+1]]<-c(info="Converged",value=self$model@Fit@converged) 
+                            alist[[length(alist)+1]]<-c(info="",value="")
+                            
+                            self$tab_info<-alist
+                            
+                          }, 
                           
                           computeR2=function(data) {
                             

@@ -21,14 +21,17 @@ Syntax <- R6::R6Class(
           public=list(
               endogenous=NULL,
               endogenousTerms=NULL,
+              moderators=NULL,
               lav_terms=NULL,
               lav_structure=NULL,
               tab_coefficients=NULL,
               tab_covariances=NULL,
-              tab_intercepts=NULL,
+              tab_indirect=NULL,
               tab_defined=NULL,
               tab_r2=NULL,
               tab_info=NULL,
+              tab_interactions=NULL,
+              tab_moderators_main=NULL,
               structure=NULL,
               options=NULL,
               constraints=NULL,
@@ -43,10 +46,12 @@ Syntax <- R6::R6Class(
               ols_r2=NULL,
               ols_mediators=NULL,
               ols_full=NULL,
+              ols_total=NULL,
               
               initialize=function(options,datamatic) {
                 super$initialize(options=options,vars=unlist(c(options$dep,options$mediators,options$factors,options$covs)))
                 self$contrasts_names<-datamatic$contrasts_names
+                self$moderators<-unlist(options$moderatorsTerms)
                 
                 # here we force the mediation analysis models to look like a path model
                 
@@ -61,6 +66,7 @@ Syntax <- R6::R6Class(
                 self$lav_terms<-lapply(self$endogenousTerms, function(alist) private$.factorlist(alist,factorinfo))
                 names(factorinfo)<-tob64(names(factorinfo))
                 private$.lav_terms<-lapply(tob64(self$endogenousTerms), function(alist) private$.factorlist(alist,factorinfo))
+                private$.lav_moderators<-unlist(lapply(tob64(self$moderators), function(alist) private$.factorlist(alist,factorinfo)))
                 
                 # check_* check the input options and produces tables and list with names
                 ### prepare list of models for lavaan
@@ -131,6 +137,8 @@ Syntax <- R6::R6Class(
             .lav_indirect=NULL,
             .lav_total=NULL,
             .lav_varcov=NULL,
+            .lav_moderators=NULL,
+            .indirect_names=NULL,
             
 
             ### collapse the informations in the private lists of terms and constraints and produce a lavaan syntax string
@@ -193,10 +201,24 @@ Syntax <- R6::R6Class(
             ### estimation, so here are missing
             
             .make_tables=function() {
-              
 
               ## now we start the filling of the tables to be used in the init of results
               .lav_structure<-private$.lav_structure
+              
+              # deal with interactions
+              if (is.something(self$moderators)) {
+                sel<-grep(private$.lav_moderators,.lav_structure$rhs,fixed = T)
+                sel<-grep(INTERACTION_SYMBOL,.lav_structure$rhs,fixed = TRUE)
+                self$tab_interactions<-.lav_structure[sel,]
+                self$tab_interactions<-self$tab_interactions[self$tab_interactions$op=="~",]
+                self$tab_interactions$lhs<-fromb64(self$tab_interactions$lhs,self$vars)
+                self$tab_interactions$rhs<-fromb64(self$tab_interactions$rhs,self$vars)
+                sel<-grep(private$.lav_moderators,.lav_structure$rhs,invert = TRUE)
+                .lav_structure<-.lav_structure[sel,]
+
+              }
+              
+
                   ## translate names
                   .lav_structure$lhs<-fromb64(.lav_structure$lhs,self$vars)
                   .lav_structure$rhs<-fromb64(.lav_structure$rhs,self$vars)
@@ -254,19 +276,12 @@ Syntax <- R6::R6Class(
               ### tab_covariances contains variances and covariances
               self$tab_covariances<-.lav_structure[.lav_structure$op=="~~",]
               
-              ### intercepts table
-              self$tab_intercepts<-.lav_structure[.lav_structure$op=="~1",]
-              if (nrow(self$tab_intercepts)==0) self$tab_intercepts<-NULL
-              
+
               ### info contains the info table, with some loose information about the model
               alist<-list()
               alist[[length(alist)+1]]<-c(info="Estimation Method",value="ML")
               alist[[length(alist)+1]]<-c(info="Number of observations",value="") 
-              alist[[length(alist)+1]]<-c(info="Free parameters",value=max(.lav_structure$free))
               alist[[length(alist)+1]]<-c(info="Converged","") 
-              alist[[length(alist)+1]]<-c(info="",value="")
-              alist[[length(alist)+1]]<-c(info="Loglikelihood user model",value="" )
-              alist[[length(alist)+1]]<-c(info="Loglikelihood unrestricted model",value="")
               alist[[length(alist)+1]]<-c(info="",value="")
               
               self$tab_info<-alist
@@ -334,7 +349,6 @@ Syntax <- R6::R6Class(
               tab<-tab[tab$lhs %in% med & tab$rhs %in% med,c("lhs","rhs")] 
               cov<-remove_pair(medpairs,tab)
               synt<-lapply(cov, paste,collapse="~~")
-              mark(synt)
               private$.lav_varcov<-NULL
 
 
@@ -366,8 +380,22 @@ Syntax <- R6::R6Class(
               termslist<-list()
               labslist<-list()
               groupslist<-list()
+              ## remove the contraints
               sel<-grep(":",tab$rhs,fixed = T,invert=T) 
               tab<-tab[sel,]
+              # remove interactions
+              sel<-grep(INTERACTION_SYMBOL,tab$rhs, fixed=T,invert = T)
+              tab<-tab[sel,]
+              sel<-tab$rhs!=""
+              tab<-tab[sel,]
+
+              # remove moderators
+              if (is.something(self$moderators)) {
+                sel<-!(tab$rhs %in% private$.lav_moderators)
+                tab<-tab[sel,]
+                mark(tab)
+              }
+              # select the path rows
               sel<-tab$op=="~" 
               tab<-tab[sel,]
               tab<-tab[tab$group>0,]
@@ -419,40 +447,46 @@ Syntax <- R6::R6Class(
                     self$warnings<-list(topic="defined",message=WARNS[["noindirect"]])
                 results[[i]]<-.results
               }
+              # we moltiply the parameters labs to compose the indirect effect
               pars<-sapply(labslist,paste,collapse="*")
               
               if (!is.something(pars))
                 return()
-              
-#              termslist<-termslist[order(sapply(termslist,length),decreasing = T)]
-              labs<-sapply(termslist,paste,collapse=" \U21d2 ")
+              # labels for the new parameter for lavaaan
               plabs<-paste0("IE",1:length(pars))
+              # collapse into lavaan syntax
               synt<-paste(plabs,pars,sep=":=",collapse = " ; ")
               private$.lav_indirect<-synt
+              # we save the indirect effects as list of b64 terms for later usage
+              private$.indirect_names=termslist
+              ## compose into string with the arrow
+              labs<-sapply(termslist,paste,collapse=" \U21d2 ")
               self$indirect_names<-as.list(fromb64(labs,self$vars))
               names(self$indirect_names)<-pars
+              # save also as a list for the tab_info
+              self$tab_indirect<-lapply(self$indirect_names,function(a) list(info="Indirect effects",value=a))
             },
             
             .total=function() {
               ## first, we update the lavaanified structure table
               private$.make_structure()
               tab<-private$.lav_structure
-
-              inds<-stringr::str_split(self$indirect_names,"\U21d2")
-              inames<-names(self$indirect_names)
               totals<-list()
               total_names<-list()
               direct_names<-list()
+              inds<-private$.indirect_names
+              inames<-names(self$indirect_names)
+              
               for (i in seq_along(inds)) {
                 ind<-inds[[i]]
-                rhs<-tob64(trimws(ind[1]))
-                lhs<-tob64(trimws(ind[length(ind)]))
+                rhs<-trimws(ind[1])
+                lhs<-trimws(ind[length(ind)])
                 lab<-tab$label[tab$rhs==rhs & tab$lhs==lhs]
                 if (lab %in% names(totals)) totals[[lab]]<-c(totals[[lab]],inames[i])
                 else {
                     totals[[lab]]<-c(lab,inames[i])
-                    total_names[[lab]]<-paste0(ind[1],"\U21d2",ind[length(ind)])
-                    direct_names[[lab]]<-paste0(ind[1],"\U21d2",ind[length(ind)])
+                    total_names[[lab]]<-paste0(fromb64(ind[1]),"\U21d2",fromb64(trimws(ind[length(ind)])))
+                    direct_names[[lab]]<-paste0(fromb64(ind[1]),"\U21d2",fromb64(trimws(ind[length(ind)])))
                 }
               }
               plabs<-paste0("TOT",1:length(totals))
@@ -472,6 +506,10 @@ Syntax <- R6::R6Class(
               self$ols_total<-lapply(deps, function(x) {
                   x
               })
+              self$ols_mediators<-lapply(self$options$mediators, function(x) {
+                x
+              })
+              
               names(self$ols_mediators)<-deps
               
               ols_med1<-lapply(self$options$mediators, function(x) {
@@ -482,8 +520,7 @@ Syntax <- R6::R6Class(
               ols_med2<-lapply(self$options$mediatorsTerms, function(x) {
                  x
               })
-              names(self$ols_mediators)<-self$options$mediators
-              
+
               self$ols_full<-self$options$modelTerms
 
             }

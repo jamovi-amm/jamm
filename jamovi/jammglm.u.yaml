@@ -336,11 +336,7 @@ children:
                 type: CheckBox
                 optionName: tableOptions
                 optionPart: beta
-              - name: tableOptions_intercepts
-                type: CheckBox
-                optionName: tableOptions
-                optionPart: intercepts
-                
+
               - name: tableOptions_regression
                 type: CheckBox
                 optionName: tableOptions
