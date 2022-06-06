@@ -13,6 +13,15 @@ jmf.mediationSummary <-
     }))
     formulas<-formulas[ok]
     lavformula <- paste(formulas, collapse = " ; ")
+    
+    ## correlates the parallel mediators
+    if (length(infos$mediators)>1) {
+      cmb<-combn(infos$mediators,2)
+      medcor<-paste(lapply(1:ncol(cmb), function(i) paste(cmb[1,i],cmb[2,i],sep = "~~")),collapse = ";")
+      lavformula <- paste(lavformula,medcor, sep = " ;")
+    }
+    
+    
     ierecoded<-lapply(infos$ieffects, function(x) gsub(":","____",x))
     for (ie in ierecoded) {
       modifiers <- list()
@@ -22,6 +31,7 @@ jmf.mediationSummary <-
       amodifier <- paste(paste0(ie, collapse = "_"), amodifier, sep = ":=")
       lavformula <- paste(lavformula, amodifier, sep = ";")
     }
+    mark(lavformula)
     fit <-
       try(lavaan::sem(lavformula,
                       data = data,
@@ -121,7 +131,6 @@ jmf.mediationTable <- function(
     else
       paste(paste0(a, sep, dep), a, sep = " * ")
   })
-
   terms <- paste(terms, collapse = " + ")
   lformula <- paste(dep, "~", terms)
   return(lformula)
