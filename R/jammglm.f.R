@@ -158,7 +158,7 @@ jammGLM <- function(
 
   if (is.something(names(moderatorsTerms))) {
     if (!is.list(moderatorsTerms))
-      jmvcore::reject("The `modelTerms` option should be a list")
+      jmvcore::reject("The `moderatorsTerms` option should be a list")
      
      moderatorsTerms<-lapply(mediators, function(med) {
         ifelse(med %in% names(moderatorsTerms),as.list(moderatorsTerms[med]),list())
