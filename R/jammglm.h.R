@@ -836,7 +836,7 @@ jammGLMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 package = "jamm",
                 name = "jammGLM",
-                version = c(1,0,5),
+                version = c(1,1,0),
                 options = options,
                 results = jammGLMResults$new(options=options),
                 data = data,

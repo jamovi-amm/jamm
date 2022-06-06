@@ -74,7 +74,7 @@ children:
                       listItemAdded: './jamm.events::onEvent_nothing'
                       listItemRemoved: './jamm.events::onEvent_nothing'
                     selectable: true
-                    templateName: linreg-block-template
+#                    templateName: linreg-block-template
                     template:
                       type: LayoutBox
                       margin: normal
