@@ -152,7 +152,6 @@ jammGLMClass <- R6::R6Class(
               ldata[,var]<-condata[,var]
             }
           }
-          mark("estim",lcombs[j])
            tableKeys<-table$rowKeys
            params<-jmf.mediationTable(infos64,ldata,level = ciWidth,se=se, boot.ci=ciType,bootN=bootN)
            for (i in seq_along(params$label)) {

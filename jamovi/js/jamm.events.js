@@ -175,7 +175,6 @@ var fromSupplierToMediatorsTerms= function(ui,context) {
      // we remove the independent variables removed from the ui, if any
     if (diff.removed.length>0)
         light = removeFromMultiList(diff.removed,light,context,1);
-    log(light)
     ui.mediatorsTerms.setValue(light);    
     labelize(ui.mediatorsTerms,mediators, "Mediator");  
     storeComponent("mediatorsTerms",light,context);
@@ -198,7 +197,7 @@ var fromMediatorsTerms= function(ui,context) {
        }
         ui.mediatorsTerms.setValue(mediatorsTerms);
         ui.moderatorsTerms.setValue(moderatorsTerms);
-        isRoomForModerators(ui,context)
+//        isRoomForModerators(ui,context)
 };
 var fromSupplierToModeratorsTerms= function(ui,context) {
 

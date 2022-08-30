@@ -96,7 +96,7 @@ jmf.mediationTable <- function(
                 se = "standard",
                 level = 0.95, 
                 boot.ci=NULL,
-                bootN=100) {
+                bootN=1000) {
   
   if (se=="none") se<-"standard"
   if (boot.ci=="bca") boot.ci<-"bca.simple"
