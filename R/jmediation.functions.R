@@ -15,10 +15,22 @@ jmf.mediationSummary <-
     lavformula <- paste(formulas, collapse = " ; ")
     
     ## correlates the parallel mediators
+    mark(infos$M)
+    mark(names(infos))
+    
     if (length(infos$mediators)>1) {
-      cmb<-combn(infos$mediators,2)
-      medcor<-paste(lapply(1:ncol(cmb), function(i) paste(cmb[1,i],cmb[2,i],sep = "~~")),collapse = ";")
-      lavformula <- paste(lavformula,medcor, sep = " ;")
+     
+      MM<-infos$M[infos$mediators,infos$mediators]
+      MM[lower.tri(MM,diag=TRUE)]<-"NULL"
+      mr<-rownames(MM)
+      mc<-colnames(MM)
+      w<-which(MM=="0",arr.ind=TRUE)
+      if (dim(w)[1]>0) {
+          medcor<-""
+          medcor<-lapply(1:nrow(w), function(i) paste(mr[w[i,1]],"~~",mc[w[i,2]]))
+          medcor<-paste(medcor,collapse ="  ; ")
+          lavformula <- paste(lavformula,medcor, sep=" ; ",collapse =  " ;")
+      }
     }
     
     

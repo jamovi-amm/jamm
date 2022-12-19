@@ -172,7 +172,6 @@ smartMediation <- R6Class("smartMediation",
                        if (found==0) {
                          jmvcore::reject(paste("Moderator",jmvcore::fromB64(mod)," is specified but is not involved in any interaction"))
                        }
-                       
                      }
                     # now that we removed the moderators, we treat other interactions
                     # as standard variables for plotting by forcing the interaction in a x:z format
@@ -395,7 +394,7 @@ smartMediation <- R6Class("smartMediation",
   rownames(iM)<-rownames(oM)
   colnames(iM)<-colnames(oM)[where]  
 
-  ## to draw interactions, we need to know moderator name, the index in the nex M of the two variables whose
+  ## to draw interactions, we need to know moderator name, the index in the next M of the two variables whose
   ## path is moderated by the moderator, and if is a required, suggested or actual path.
   ## here is the loop required.
   for (name in colnames(iM)) {

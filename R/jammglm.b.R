@@ -34,13 +34,17 @@ jammGLMClass <- R6::R6Class(
       mods<-lapply(infos$moderators, function(m) {
         private$.names64$factorize(m)
       })
+      
       infos64<-smartMediation$new(meds,full,moderators = mods)
       private$.infos64<-infos64
+      
       if (infos$isImpossible)   return()
       if (infos$isEmpty)        return()
 #      if (infos$hasRequired())  return()
       ## prepare main result table
+      
        table<-self$results$models$main
+       
        if (is.something(infos64$moderators)) {
          modtable<-self$results$models$moderationEffects
          modtable$setVisible(TRUE)
@@ -69,6 +73,7 @@ jammGLMClass <- R6::R6Class(
       ciWidth<-self$options$ciWidth/100
       ciType<-self$options$ciType
       bootN<-self$options$bootN
+
       if (is.null(dep))
         return()
       if (is.null(mediators))
@@ -80,7 +85,9 @@ jammGLMClass <- R6::R6Class(
       if (self$options$simpleScale=="percent" && self$options$percvalue==0)
          return()
       ###############      
+      
       data<-private$.cleandata()
+      
       for (scaling in self$options$scaling) {
         data[[jmvcore::toB64(scaling$var)]]<-lf.scaleContinuous(data[[jmvcore::toB64(scaling$var)]],scaling$type)  
       }
@@ -98,6 +105,14 @@ jammGLMClass <- R6::R6Class(
 #         return()
       mark("first estimate of the model")
       se<-ifelse(ciType=="standard" || ciType=="none",ciType,"bootstrap")
+
+      
+      ## update info table ####
+
+      self$results$info$addRow(rowKey="blank",list(info="",specs="",value=""))
+      self$results$info$addRow(rowKey="n",list(info="Sample size",specs="N",value=dim(data)[1]))
+      
+      ## fill the main tables
       params<-jmf.mediationTable(infos64,data,level = ciWidth,se=se, boot.ci=ciType,bootN=bootN)
       table<-self$results$models$main
       if (ciType!="none")
@@ -262,7 +277,7 @@ jammGLMClass <- R6::R6Class(
   fullmodel64<-list(dep=dep64,ind=sapply(modelTerms,jmvcore::toB64))
 
   modTerms64<-moderatorsTerms
-    for (i in seq_along(mediators64))  
+  for (i in seq_along(mediators64))  
        for (j in seq_along(moderatorsTerms[[i]]))
          modTerms64[[i]][[j]]<-jmvcore::toB64(moderatorsTerms[[i]][[j]])
        
@@ -283,10 +298,10 @@ jammGLMClass <- R6::R6Class(
   private$.infos<-infos
   private$.paths<-paths
   #### includes possible diagrams notes 
-      notes<-self$results$pathmodelgroup$pathnotes
-      ds.annotate.diagram(infos,paths,notes,self$options,n64)       
-   ds.modelInfo(infos,self,n64)
-   return(infos)      
+  notes<-self$results$pathmodelgroup$pathnotes
+  ds.annotate.diagram(infos,paths,notes,self$options,n64)       
+  ds.modelInfo(infos,self,n64)
+  return(infos)      
       
 },  
 

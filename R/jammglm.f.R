@@ -164,7 +164,6 @@ jammGLM <- function(
         ifelse(med %in% names(moderatorsTerms),as.list(moderatorsTerms[med]),list())
      })
   }
-  mark(moderatorsTerms)
   if (is.something(names(scaling))) 
     scaling<-lapply(names(scaling), function(a) list(var=a,type=scaling[[a]]))
   if (is.something(names(contrasts))) 
