@@ -17,7 +17,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             contrasts = NULL,
             showRealNames = TRUE,
             showContrastCode = FALSE,
-            bogus = FALSE,
             simpleScale = "mean_sd",
             cvalue = 1,
             percvalue = 25,
@@ -133,10 +132,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "showContrastCode",
                 showContrastCode,
                 default=FALSE)
-            private$..bogus <- jmvcore::OptionBool$new(
-                "bogus",
-                bogus,
-                default=FALSE)
             private$..simpleScale <- jmvcore::OptionList$new(
                 "simpleScale",
                 simpleScale,
@@ -228,7 +223,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..contrasts)
             self$.addOption(private$..showRealNames)
             self$.addOption(private$..showContrastCode)
-            self$.addOption(private$..bogus)
             self$.addOption(private$..simpleScale)
             self$.addOption(private$..cvalue)
             self$.addOption(private$..percvalue)
@@ -251,7 +245,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         contrasts = function() private$..contrasts$value,
         showRealNames = function() private$..showRealNames$value,
         showContrastCode = function() private$..showContrastCode$value,
-        bogus = function() private$..bogus$value,
         simpleScale = function() private$..simpleScale$value,
         cvalue = function() private$..cvalue$value,
         percvalue = function() private$..percvalue$value,
@@ -273,7 +266,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..contrasts = NA,
         ..showRealNames = NA,
         ..showContrastCode = NA,
-        ..bogus = NA,
         ..simpleScale = NA,
         ..cvalue = NA,
         ..percvalue = NA,

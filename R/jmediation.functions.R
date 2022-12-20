@@ -15,8 +15,6 @@ jmf.mediationSummary <-
     lavformula <- paste(formulas, collapse = " ; ")
     
     ## correlates the parallel mediators
-    mark(infos$M)
-    mark(names(infos))
     
     if (length(infos$mediators)>1) {
      
@@ -43,7 +41,7 @@ jmf.mediationSummary <-
       amodifier <- paste(paste0(ie, collapse = "_"), amodifier, sep = ":=")
       lavformula <- paste(lavformula, amodifier, sep = ";")
     }
-    mark(lavformula)
+ 
     fit <-
       try(lavaan::sem(lavformula,
                       data = data,

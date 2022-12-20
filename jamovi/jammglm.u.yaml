@@ -174,15 +174,7 @@ children:
                             change: './jamm.events::onEvent_moderatorChanged'
                           template:
                             type: TermLabel
-      - type: Label
-        name: modeNote
-        margin: small
-        label: >-
-          There are not enough independent variables in the mediator model to
-          define a moderator
-        children:
-          - type: CheckBox
-            name: bogus
+
   - type: CollapseBox
     label: Factors Coding
     collapsed: true

@@ -185,14 +185,6 @@ options:
 
 
 
-    - name: bogus
-      type: Bool
-      default: false
-      description:
-          R: >
-            `a bogus option to define a label without visible children`
-
-
 
     - name: simpleScale
       title: Covariates conditioning
