@@ -118,8 +118,8 @@ jmf.mediationTable <- function(
   params$model<-"med"
   totals<-jmf.mediationTotal(infos,ldata,level)
   totals$model<-"tot"
-
   mtable<-rbind(params,totals)
+  attr(mtable,"fit")<-fit
   mtable
 }
 

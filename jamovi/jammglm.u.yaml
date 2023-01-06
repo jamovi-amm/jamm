@@ -74,7 +74,6 @@ children:
                       listItemAdded: './jamm.events::onEvent_nothing'
                       listItemRemoved: './jamm.events::onEvent_nothing'
                     selectable: true
-#                    templateName: linreg-block-template
                     template:
                       type: LayoutBox
                       margin: normal
@@ -139,8 +138,8 @@ children:
             persistentItems: true
             stretchFactor: 1
             events:
-                update: './jamm.events::onUpdate_moderatorsSupplier'
-                change: './jamm.events::onChange_moderatorsSupplier'
+              update: './jamm.events::onUpdate_moderatorsSupplier'
+              change: './jamm.events::onChange_moderatorsSupplier'
             children:
               - type: TargetLayoutBox
                 transferAction: interactions
@@ -174,7 +173,6 @@ children:
                             change: './jamm.events::onEvent_moderatorChanged'
                           template:
                             type: TermLabel
-
   - type: CollapseBox
     label: Factors Coding
     collapsed: true
@@ -299,7 +297,6 @@ children:
                 name: ciType_bootbca
                 optionName: ciType
                 optionPart: bca
-
               - type: RadioButton
                 name: ciType_bootnorm
                 optionName: ciType
@@ -333,13 +330,74 @@ children:
                 type: CheckBox
                 optionName: tableOptions
                 optionPart: regression
-
+  - type: CollapseBox
+    label: Path Diagram
+    collapsed: true
+    stretchFactor: 1
+    style: list
+    children:
+      - type: LayoutBox
+        margin: large
+        stretchFactor: 1
+        style: list
+        children:
           - type: Label
-            label: Path model
-            margin: large
-            style: list
+            label: Type
+            style: inline
             children:
-              - name: pathOptions_suggested
-                type: CheckBox
-                optionPart: suggested
-                optionName: pathOptions
+              - type: RadioButton
+                name: diagram_conceptual
+                optionName: diagram
+                optionPart: conceptual
+              - type: RadioButton
+                name: diagram_statistical
+                optionName: diagram
+                optionPart: statistical
+          - type: LayoutBox
+            style: inline
+            children: 
+                  - type: Label
+                    label: Path model
+                    style: list
+                    children:
+                          - name: pathOptions_suggested
+                            type: CheckBox
+                            optionPart: suggested
+                            optionName: pathOptions
+                            enable: '(diagram:conceptual)'
+
+                  - type: Label
+                    label: Paths
+                    margin: large
+                    style: list
+                    children:
+                          - type: RadioButton
+                            name: diag_paths_est
+                            optionName: diag_paths
+                            optionPart: est
+                            enable: '(diagram:statistical)'
+                          - type: RadioButton
+                            name: diag_paths_stand
+                            optionName: diag_paths
+                            optionPart: stand
+                            enable: '(diagram:statistical)'
+                          - type: RadioButton
+                            name: diag_paths_hide
+                            optionName: diag_paths
+                            optionPart: hide
+                            enable: '(diagram:statistical)'
+                          - type: CheckBox
+                            name: diag_offset
+                            enable: '(diagram:statistical)'
+                  - type: Label
+                    label: Nodes
+                    margin: large
+                    style: list
+                    children:
+                          - type: ComboBox
+                            name: diag_labsize
+                          - type: ComboBox
+                            name: diag_shape
+                            enable: '(diagram:statistical)'
+                          - type: ComboBox
+                            name: diag_abbrev

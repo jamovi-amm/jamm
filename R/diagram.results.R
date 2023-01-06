@@ -1,4 +1,6 @@
 ds.annotate.diagram <- function(infos, paths, notes, options, n64) {
+  if (options$diagram != "conceptual")
+      return()
   
   if (infos$hasModerators()) {
     notes$addRow("modsin", list(info = "Moderators main effects are not shown"))
