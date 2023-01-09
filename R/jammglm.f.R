@@ -68,6 +68,7 @@
 #'   mediators as dependent variables.
 #' @param moderatorsTerms a list of lists specifying the the IV which
 #'   moderatorate each mediated effect.
+#' @param missing handle  missing values: \code{listwise} or \code{full information max likelihood}.
 #' @param diagram Choose the type of diagram: \code{conceptual} or
 #'   \code{statistical}.
 #' @param diag_paths Choose the diagram labels
@@ -125,6 +126,7 @@ jammGLM <- function(
       list()),
     moderatorsTerms = list(
       list()),
+    missing = "listwise",
     diagram = "conceptual",
     diag_paths = "est",
     diag_labsize = "medium",
@@ -242,6 +244,7 @@ jammGLM <- function(
     pathOptions = pathOptions,
     mediatorsTerms = mediatorsTerms,
     moderatorsTerms = moderatorsTerms,
+    missing= missing,
     diagram = diagram,
     diag_paths = diag_paths,
     diag_labsize = diag_labsize,

@@ -31,6 +31,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 list()),
             moderatorsTerms = list(
                 list()),
+            missing = "listwise",
             diagram = "conceptual",
             diag_paths = "est",
             diag_labsize = "medium",
@@ -217,6 +218,13 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 template=jmvcore::OptionTerms$new(
                     "moderatorsTerms",
                     NULL))
+            private$..missing <- jmvcore::OptionList$new(
+                "missing",
+                missing,
+                options=list(
+                    "listwise",
+                    "ml"),
+                default="listwise")
             private$..diagram <- jmvcore::OptionList$new(
                 "diagram",
                 diagram,
@@ -287,6 +295,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..pathOptions)
             self$.addOption(private$..mediatorsTerms)
             self$.addOption(private$..moderatorsTerms)
+            self$.addOption(private$..missing)
             self$.addOption(private$..diagram)
             self$.addOption(private$..diag_paths)
             self$.addOption(private$..diag_labsize)
@@ -315,6 +324,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         pathOptions = function() private$..pathOptions$value,
         mediatorsTerms = function() private$..mediatorsTerms$value,
         moderatorsTerms = function() private$..moderatorsTerms$value,
+        missing = function() private$..missing$value,
         diagram = function() private$..diagram$value,
         diag_paths = function() private$..diag_paths$value,
         diag_labsize = function() private$..diag_labsize$value,
@@ -342,6 +352,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..pathOptions = NA,
         ..mediatorsTerms = NA,
         ..moderatorsTerms = NA,
+        ..missing = NA,
         ..diagram = NA,
         ..diag_paths = NA,
         ..diag_labsize = NA,

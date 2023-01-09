@@ -4,7 +4,8 @@ jmf.mediationSummary <-
   function(infos,
            data,
            se = "standard",
-           bootN = 1000) {
+           bootN = 1000,
+           missing="listwise") {
     models <- infos$original_medmodels
     models[[length(models) + 1]] <- infos$original_fullmodel
     formulas <- .modelFormulas(models)
@@ -46,6 +47,7 @@ jmf.mediationSummary <-
       try(lavaan::sem(lavformula,
                       data = data,
                       se = se,
+                      missing=missing,
                       bootstrap = bootN))
     if (jmvcore::isError(fit)) {
       msg <- jmvcore::extractErrorMessage(fit)
@@ -62,15 +64,14 @@ jmf.mediationSummary <-
   }
 
 jmf.mediationTotal <-
-  function(infos,data,level) {
+  function(infos,data,level,missing="listwise") {
         .warning<-list()
         model <- infos$original_fullmodel
         meds<-infos$mediators
         ind<-lapply(model$ind, function(x) if(!any(x %in% meds)) x)
-#        model$ind<-infos$independents
         model$ind<-ind
         .formula<-.modelFormula(model,"_t_")
-        fit<-try(lavaan::sem(.formula,data = data,likelihood = "wishart"))
+        fit<-try(lavaan::sem(.formula,data = data,likelihood = "wishart",missing=missing))
         if (jmvcore::isError(fit)) {
             msg <- jmvcore::extractErrorMessage(fit)
             if (is.something(grep("definite", msg)))
@@ -104,6 +105,7 @@ jmf.mediationTable <- function(
                 infos,
                 data,
                 se = "standard",
+                missing="listwise",
                 level = 0.95, 
                 boot.ci=NULL,
                 bootN=1000) {
@@ -113,10 +115,10 @@ jmf.mediationTable <- function(
   models <- infos$original_medmodels
   models[[length(models) + 1]] <- infos$original_fullmodel
   ldata<-.make_var(models,data)
-  fit<-jmf.mediationSummary(infos,ldata, se=se,bootN=bootN)
+  fit<-jmf.mediationSummary(infos,ldata, se=se,bootN=bootN,missing=missing)
   params<-jmf.mediationInference(fit,level=level,boot.ci =boot.ci)
   params$model<-"med"
-  totals<-jmf.mediationTotal(infos,ldata,level)
+  totals<-jmf.mediationTotal(infos,ldata,level,missing=missing)
   totals$model<-"tot"
   mtable<-rbind(params,totals)
   attr(mtable,"fit")<-fit

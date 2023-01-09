@@ -330,6 +330,20 @@ children:
                 type: CheckBox
                 optionName: tableOptions
                 optionPart: regression
+          - type: Label
+            label: Missing
+            margin: large
+            style: list
+            children:
+              - type: RadioButton
+                name: missing_listwise
+                optionName: missing
+                optionPart: listwise
+              - type: RadioButton
+                name: missing_fiml
+                optionName: missing
+                optionPart: ml
+
   - type: CollapseBox
     label: Path Diagram
     collapsed: true
