@@ -61,14 +61,6 @@ items:
                   
               refs: diagram    
               visible: (diagram:conceptual)
-            - name: pathnotes
-              type: Table
-              title: ""
-              visible: false
-              columns:
-                  - name: info
-                    type: text
-                    title: "Conceptual diagram notes"
             - name: statmodel
               title: Statistical Diagram
               type: Image
@@ -90,15 +82,15 @@ items:
                   - diag_paths
               refs: diagram    
               visible: (diagram:statistical)
-            - name: statDiagNotes
+            - name: pathnotes
               type: Table
               title: ""
               visible: false
               columns:
                   - name: info
                     type: text
-                    title: "Statistical diagram notes"
-
+                    title: "Diagram notes"
+   
 
   - name: models
     title: "Mediation"

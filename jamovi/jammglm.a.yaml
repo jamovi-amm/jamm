@@ -313,7 +313,9 @@ options:
         - name: statistical
           title: Statistical
       default: conceptual
-
+      description:
+          R: >
+             Choose the type of diagram: `conceptual` or `statistical`.
 
     - name: diag_paths
       title: Paths Labels

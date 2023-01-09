@@ -396,9 +396,8 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(
                     pathmodel = function() private$.items[["pathmodel"]],
-                    pathnotes = function() private$.items[["pathnotes"]],
                     statmodel = function() private$.items[["statmodel"]],
-                    statDiagNotes = function() private$.items[["statDiagNotes"]]),
+                    pathnotes = function() private$.items[["pathnotes"]]),
                 private = list(),
                 public=list(
                     initialize=function(options) {
@@ -430,16 +429,6 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "diag_abbrev"),
                             refs="diagram",
                             visible="(diagram:conceptual)"))
-                        self$add(jmvcore::Table$new(
-                            options=options,
-                            name="pathnotes",
-                            title="",
-                            visible=FALSE,
-                            columns=list(
-                                list(
-                                    `name`="info", 
-                                    `type`="text", 
-                                    `title`="Conceptual diagram notes"))))
                         self$add(jmvcore::Image$new(
                             options=options,
                             name="statmodel",
@@ -463,14 +452,14 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             visible="(diagram:statistical)"))
                         self$add(jmvcore::Table$new(
                             options=options,
-                            name="statDiagNotes",
+                            name="pathnotes",
                             title="",
                             visible=FALSE,
                             columns=list(
                                 list(
                                     `name`="info", 
                                     `type`="text", 
-                                    `title`="Statistical diagram notes"))))}))$new(options=options))
+                                    `title`="Diagram notes"))))}))$new(options=options))
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(

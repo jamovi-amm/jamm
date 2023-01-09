@@ -300,6 +300,7 @@ jammGLMClass <- R6::R6Class(
   #         }
   ## save the results for showing later      
 # image$setState(list(paths=paths,infos=infos))
+  
   private$.infos<-infos
   private$.paths<-paths
   #### includes possible diagrams notes 
