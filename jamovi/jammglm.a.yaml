@@ -185,14 +185,6 @@ options:
 
 
 
-    - name: bogus
-      type: Bool
-      default: false
-      description:
-          R: >
-            `a bogus option to define a label without visible children`
-
-
 
     - name: simpleScale
       title: Covariates conditioning
@@ -310,6 +302,104 @@ options:
       description:
           R: >
             a list of lists specifying the the IV which moderatorate each mediated effect.          
+
+#### diagram
+    - name: diagram
+      title: Path Diagram
+      type: List
+      options:
+        - name: conceptual
+          title: Conceptual
+        - name: statistical
+          title: Statistical
+      default: conceptual
+      description:
+          R: >
+             Choose the type of diagram: `conceptual` or `statistical`.
+
+    - name: diag_paths
+      title: Paths Labels
+      type: List
+      options:
+        - name:  est
+          title: Coefficients
+        - name: stand
+          title: Betas
+        - name: hide
+          title: None
+      default: est
+      description:
+          R: >
+             Choose the diagram labels
+
+    - name: diag_labsize
+      title: Node Size
+      type: List
+      options:
+        - name:  small
+          title: Small
+        - name: medium
+          title: Medium
+        - name: large
+          title: Large
+        - name: vlarge
+          title: Very Large
+      default: medium
+      description:
+          R: >
+             Choose the diagram labels
+
+
+    - name: diag_shape
+      title: Shapes
+      type: List
+      options:
+        - name:  "rectangle"
+          title:  Rectangles
+        - name:  "square"
+          title:  Squares
+        - name: "circle"
+          title: Circles
+        - name: "ellipse"
+          title: Ellipses
+        - name: "diamond"
+          title: Diamonds
+
+      default: "rectangle"
+      description:
+          R: >
+             Choose the diagram labels
+
+    - name: diag_abbrev
+      title: Abbreviate
+      type: List
+      options:
+        - name:  "0"
+          title:  No abbrev.
+        - name:  "5"
+          title:  "5"
+        - name:  "10"
+          title:  "10"
+        - name:  "15"
+          title:  "15"
+        - name:  "20"
+          title:  "20"
+        - name:  "25"
+          title:  "25"
+      default: "0"
+      description:
+          R: >
+             Choose the diagram labels
+
+    - name: diag_offset
+      title: Offset labels
+      type: Bool
+      default: false
+      description:
+          R: >
+            `TRUE` or `FALSE` (default), offset labels in diagram
+
+### end diagram ###
 
 ...
 

@@ -42,19 +42,46 @@ items:
                   - moderatorsTerms
     items:
             - name: pathmodel
-              title: Model Diagram
+              title: Conceptual Diagram
               type: Image
               description: a path model
-              width: 600
-              height: 500
-              renderFun: .showDiagram
+              width: 800
+              height: 600
+              renderFun: .showConceptualDiagram
               clearWith:
                   - dep
                   - mediatorsTerms
                   - modelTerms
                   - moderatorsTerms
                   - pathOptions
+                  - diagram
+                  - diag_labsize
+                  - diag_shape
+                  - diag_abbrev
+                  
               refs: diagram    
+              visible: (diagram:conceptual)
+            - name: statmodel
+              title: Statistical Diagram
+              type: Image
+              description: a path model
+              width: 800
+              height: 600
+              renderFun: .showStatDiagram
+              clearWith:
+                  - dep
+                  - mediatorsTerms
+                  - modelTerms
+                  - moderatorsTerms
+                  - pathOptions
+                  - diagram
+                  - diag_offset
+                  - diag_labsize
+                  - diag_shape
+                  - diag_abbrev
+                  - diag_paths
+              refs: diagram    
+              visible: (diagram:statistical)
             - name: pathnotes
               type: Table
               title: ""
@@ -62,8 +89,8 @@ items:
               columns:
                   - name: info
                     type: text
-                    title: "Model diagram notes"
-
+                    title: "Diagram notes"
+   
 
   - name: models
     title: "Mediation"

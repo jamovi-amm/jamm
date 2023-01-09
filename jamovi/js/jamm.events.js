@@ -84,7 +84,7 @@ const events = {
     onEvent_mediatorToTerms: function(ui) {
       log("mediators terms changed");
       
-    unflashMGridOptionListControl(ui.moderatorsTerms,ui.modeNote);
+
     fromMediatorsTerms(ui,this);
     fromMediatorsToModelTerms(ui,this);
     },
@@ -118,11 +118,7 @@ var initializeAll = function(ui, context) {
     var moderatorsTerms= context.cloneArray(ui.moderatorsTerms.value(), []);
     context.workspace.moderatorsTerms=moderatorsTerms;
     
-    // this is for hiding the labels used for warnings 
-       ui.bogus.$el[0].remove();
-       ui.modeNote.$el[0].style.visibility="hidden";
-       ui.modeNote.$el[0].style.color="red";
-    
+
 };
 
 
@@ -175,7 +171,6 @@ var fromSupplierToMediatorsTerms= function(ui,context) {
      // we remove the independent variables removed from the ui, if any
     if (diff.removed.length>0)
         light = removeFromMultiList(diff.removed,light,context,1);
-    log(light)
     ui.mediatorsTerms.setValue(light);    
     labelize(ui.mediatorsTerms,mediators, "Mediator");  
     storeComponent("mediatorsTerms",light,context);
@@ -198,7 +193,7 @@ var fromMediatorsTerms= function(ui,context) {
        }
         ui.mediatorsTerms.setValue(mediatorsTerms);
         ui.moderatorsTerms.setValue(moderatorsTerms);
-        isRoomForModerators(ui,context)
+//        isRoomForModerators(ui,context)
 };
 var fromSupplierToModeratorsTerms= function(ui,context) {
 
@@ -260,7 +255,6 @@ var isRoomForModerators = function(ui,context) {
        var meds = mediatorsTerms[j];
            meds = removeFromList(moderators,meds,context);
            if (meds.length===0) {
-              flashMGridOptionListControl(ui.moderatorsTerms,ui.modeNote);
               noroom = true;
       }
     }
@@ -294,7 +288,6 @@ var fromModeratorsToOthers = function(ui,context) {
        var meds = mediatorsTerms[j];
            var medstest = removeFromList(moderators,meds,context);
            if (medstest.length===0) {
-              flashMGridOptionListControl(ui.moderatorsTerms,ui.modeNote);
               noroom = true;
       }
     }
@@ -315,7 +308,7 @@ var fromModeratorsToOthers = function(ui,context) {
 
          var diff2 = findChangesMulti("moderatorsTerms",moderatorsTerms,context,true);
          if (diff2.index > -1) {
-           unflashMGridOptionListControl(ui.moderatorsTerms,ui.modeNote);
+         
           // add interactions to mediators and full model terms if there are new moderators
            for (var i = 0; i < diff.changes[diff.index].added.length; i++) {
              var newTerm=diff.changes[diff.index].added[i];

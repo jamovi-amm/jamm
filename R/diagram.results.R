@@ -1,27 +1,29 @@
 ds.annotate.diagram <- function(infos, paths, notes, options, n64) {
+
+  if (options$diagram == "conceptual") {
+
+      if (infos$hasModerators()) {
+          notes$addRow("modsin", list(info = "Moderators main effects are not shown"))
+          notes$setVisible(TRUE)
+      }
   
-  if (infos$hasModerators()) {
-    notes$addRow("modsin", list(info = "Moderators main effects are not shown"))
-    notes$setVisible(TRUE)
-  }
-  
-  if (infos$hasRequired()) {
-    notes$addRow("red",
+      if (infos$hasRequired()) {
+          notes$addRow("red",
                  list(info = "Red paths indicate required coefficients"))
-    notes$setVisible(TRUE)
-  }
-  if (infos$hasSuggested() && ("suggested" %in% options$pathOptions)) {
-    notes$addRow("green",
+          notes$setVisible(TRUE)
+      }
+      if (infos$hasSuggested() && ("suggested" %in% options$pathOptions)) {
+          notes$addRow("green",
                  list(info = "Green paths indicate suggested coefficients"))
-    notes$setVisible(TRUE)
-  }
-  if (infos$isImpossible) {
-    notes$addRow(
-      "purple",
-      list(info = "Purple paths indicate coefficients that invalidate the mediation model")
-    )
-    notes$setVisible(TRUE)
-  }
+          notes$setVisible(TRUE)
+      }
+      if (infos$isImpossible) {
+          notes$addRow(
+            "purple",
+            list(info = "Purple paths indicate coefficients that invalidate the mediation model")
+          )
+          notes$setVisible(TRUE)
+      }
   facnote <- FALSE
   labs <- list()
   for (var64 in infos$independents) {
@@ -38,24 +40,56 @@ ds.annotate.diagram <- function(infos, paths, notes, options, n64) {
     labs[[var]] <-paste("For variable <b>", var, "</b> the contrasts are:", .note)
     }
   }
-  if (facnote) {
-    note = list(
-      "Categorical independent variables (factors) are shown with only one rectangle, but their effect",
-      "is estimated using contrast variables"
-    )
-    for (n in seq_along(note))
-      notes$addRow(paste0("squares", n), list(info = note[[n]]))
-    for (l in seq_along(labs))
-      notes$addRow(paste0("labels", l), list(info = labs[[l]]))
-    notes$setVisible(TRUE)
-
+       if (facnote) {
+          note = list(
+            "Categorical independent variables (factors) are shown with only one rectangle, but their effect",
+            "is estimated using contrast variables"
+          )
+          for (n in seq_along(note))
+              notes$addRow(paste0("squares", n), list(info = note[[n]]))
+          for (l in seq_along(labs))
+              notes$addRow(paste0("labels", l), list(info = labs[[l]]))
+          notes$setVisible(TRUE)
+        }
+  
+        if (length(infos$independents)>1) {
+              note ="Covariances among IV are estimated but not shown"
+              notes$addRow("xcov", list(info = note))
+              notes$setVisible(TRUE)
+        }
+  } else {
+    
+    facnote <- FALSE
+    labs <- list()
+    
+    for (var64 in infos$independents) {
+      var<-jmvcore::fromB64(var64)
+      if (var %in% options$factors) {
+        facnote <- TRUE
+        .note <-
+          paste(
+            n64$nicecontrasts(var),
+            n64$contrastsLabels(var),
+            sep = " = ",
+            collapse = ", "
+          )
+        labs[[var]] <-paste("For variable <b>", var, "</b> the contrasts are:", .note)
+      }
+    }
+    if (facnote) {
+      note = list(
+        "Categorical independent variables (factors) are represented by contrast indicators"
+      )
+      for (n in seq_along(note))
+        notes$addRow(paste0("squares", n), list(info = note[[n]]))
+      for (l in seq_along(labs))
+        notes$addRow(paste0("labels", l), list(info = labs[[l]]))
+      notes$setVisible(TRUE)
+    }
+    
+    
   }
   
-  if (length(infos$independents)>1) {
-    note ="Covariances among IV are estimated but not shown"
-    notes$addRow("xcov", list(info = note))
-    notes$setVisible(TRUE)
-  }
   
 }
 

@@ -13,6 +13,25 @@ jmf.mediationSummary <-
     }))
     formulas<-formulas[ok]
     lavformula <- paste(formulas, collapse = " ; ")
+    
+    ## correlates the parallel mediators
+    
+    if (length(infos$mediators)>1) {
+     
+      MM<-infos$M[infos$mediators,infos$mediators]
+      MM[lower.tri(MM,diag=TRUE)]<-"NULL"
+      mr<-rownames(MM)
+      mc<-colnames(MM)
+      w<-which(MM=="0",arr.ind=TRUE)
+      if (dim(w)[1]>0) {
+          medcor<-""
+          medcor<-lapply(1:nrow(w), function(i) paste(mr[w[i,1]],"~~",mc[w[i,2]]))
+          medcor<-paste(medcor,collapse ="  ; ")
+          lavformula <- paste(lavformula,medcor, sep=" ; ",collapse =  " ;")
+      }
+    }
+    
+    
     ierecoded<-lapply(infos$ieffects, function(x) gsub(":","____",x))
     for (ie in ierecoded) {
       modifiers <- list()
@@ -22,6 +41,7 @@ jmf.mediationSummary <-
       amodifier <- paste(paste0(ie, collapse = "_"), amodifier, sep = ":=")
       lavformula <- paste(lavformula, amodifier, sep = ";")
     }
+ 
     fit <-
       try(lavaan::sem(lavformula,
                       data = data,
@@ -86,7 +106,7 @@ jmf.mediationTable <- function(
                 se = "standard",
                 level = 0.95, 
                 boot.ci=NULL,
-                bootN=100) {
+                bootN=1000) {
   
   if (se=="none") se<-"standard"
   if (boot.ci=="bca") boot.ci<-"bca.simple"
@@ -98,8 +118,8 @@ jmf.mediationTable <- function(
   params$model<-"med"
   totals<-jmf.mediationTotal(infos,ldata,level)
   totals$model<-"tot"
-
   mtable<-rbind(params,totals)
+  attr(mtable,"fit")<-fit
   mtable
 }
 
@@ -121,7 +141,6 @@ jmf.mediationTable <- function(
     else
       paste(paste0(a, sep, dep), a, sep = " * ")
   })
-
   terms <- paste(terms, collapse = " + ")
   lformula <- paste(dep, "~", terms)
   return(lformula)

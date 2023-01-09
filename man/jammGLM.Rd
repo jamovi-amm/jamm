@@ -87,7 +87,7 @@ components in the results tables. \code{'regression'} show the results of all th
 \item{mediatorsTerms}{a list of lists specifying the models for with the
 mediators as dependent variables. Not required in formula is used.}
 
-\item{moderatorsTerms}{a named vector of the form c("med"=c("mod1",mod2")) specifying the moderator(s) of each mediator. 
+\item{moderatorsTerms}{a named list of the form list("med"=c("mod1",mod2"),med2="mod1") specifying the moderator(s) of each mediator. 
 This is required to decide for which variable we need to condition the mediated effects and to single out moderators
 in the path diagram. If not specified, any interaction is considered as any other term in the model}
 

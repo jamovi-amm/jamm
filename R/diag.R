@@ -100,12 +100,12 @@ diag.paths<-function(infos,suggested=F,shiftmed=0) {
       M[i,2]<- rat    
     }
   
-  M[1:nx,1]<-.1
+  M[1:nx,1]<-.15
   
   medsx<-(nx+1):(nx+nm)
   M[medsx,2]<-.columnize(nm,default = wherem)
   M[medsx,1]<-.5
-  M[.nvar,1]<-.90
+  M[.nvar,1]<-.85
   M[.nvar,2]<-ifelse(nx==1 & nm==1,.15,.50)
   if (nm==1)
     return(as.matrix(M))
@@ -180,19 +180,23 @@ diag.paths<-function(infos,suggested=F,shiftmed=0) {
 }
 
 
-diag.plot_mods<-function(plot, moderators) {
+diag.plot_mods<-function(plot, moderators,size,abbrev) {
   
   hbox<-plot$rec[1,4]-plot$rec[1,2]
-  boxwide<-.1
   nvars<-nrow(plot$rect)
   for (j in seq_along(moderators)) {
     mod<-moderators[j]
+    lab<-jmvcore::fromB64(moderators[j])
+    if (abbrev!="0")
+      lab<-abbreviate(lab,minlength = as.numeric(abbrev),strict = T)
+    lab<-gsub("`","",lab)
+    
     coord<-.diag.moderators_coord(nvars,j)
     xleft<-coord["xleft"]
     ytop<-coord["ytop"]
-    diagram::textrect(c(xleft,ytop), radx = boxwide, rady = .06, 
+    diagram::textrect(c(xleft,ytop), radx = size, rady = size*.6, 
              shadow.size =0, adj = c(0.5, 0.5), lwd=2,
-             lab = jmvcore::fromB64(moderators[j]), box.col = "white", 
+             lab = lab, box.col = "white", 
              lcol = "black",  angle = 0)
   }
 }

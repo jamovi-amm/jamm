@@ -17,7 +17,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             contrasts = NULL,
             showRealNames = TRUE,
             showContrastCode = FALSE,
-            bogus = FALSE,
             simpleScale = "mean_sd",
             cvalue = 1,
             percvalue = 25,
@@ -31,7 +30,13 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             mediatorsTerms = list(
                 list()),
             moderatorsTerms = list(
-                list()), ...) {
+                list()),
+            diagram = "conceptual",
+            diag_paths = "est",
+            diag_labsize = "medium",
+            diag_shape = "rectangle",
+            diag_abbrev = "0",
+            diag_offset = FALSE, ...) {
 
             super$initialize(
                 package="jamm",
@@ -133,10 +138,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "showContrastCode",
                 showContrastCode,
                 default=FALSE)
-            private$..bogus <- jmvcore::OptionBool$new(
-                "bogus",
-                bogus,
-                default=FALSE)
             private$..simpleScale <- jmvcore::OptionList$new(
                 "simpleScale",
                 simpleScale,
@@ -216,6 +217,55 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 template=jmvcore::OptionTerms$new(
                     "moderatorsTerms",
                     NULL))
+            private$..diagram <- jmvcore::OptionList$new(
+                "diagram",
+                diagram,
+                options=list(
+                    "conceptual",
+                    "statistical"),
+                default="conceptual")
+            private$..diag_paths <- jmvcore::OptionList$new(
+                "diag_paths",
+                diag_paths,
+                options=list(
+                    "est",
+                    "stand",
+                    "hide"),
+                default="est")
+            private$..diag_labsize <- jmvcore::OptionList$new(
+                "diag_labsize",
+                diag_labsize,
+                options=list(
+                    "small",
+                    "medium",
+                    "large",
+                    "vlarge"),
+                default="medium")
+            private$..diag_shape <- jmvcore::OptionList$new(
+                "diag_shape",
+                diag_shape,
+                options=list(
+                    "rectangle",
+                    "square",
+                    "circle",
+                    "ellipse",
+                    "diamond"),
+                default="rectangle")
+            private$..diag_abbrev <- jmvcore::OptionList$new(
+                "diag_abbrev",
+                diag_abbrev,
+                options=list(
+                    "0",
+                    "5",
+                    "10",
+                    "15",
+                    "20",
+                    "25"),
+                default="0")
+            private$..diag_offset <- jmvcore::OptionBool$new(
+                "diag_offset",
+                diag_offset,
+                default=FALSE)
 
             self$.addOption(private$..dep)
             self$.addOption(private$..mediators)
@@ -228,7 +278,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..contrasts)
             self$.addOption(private$..showRealNames)
             self$.addOption(private$..showContrastCode)
-            self$.addOption(private$..bogus)
             self$.addOption(private$..simpleScale)
             self$.addOption(private$..cvalue)
             self$.addOption(private$..percvalue)
@@ -238,6 +287,12 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..pathOptions)
             self$.addOption(private$..mediatorsTerms)
             self$.addOption(private$..moderatorsTerms)
+            self$.addOption(private$..diagram)
+            self$.addOption(private$..diag_paths)
+            self$.addOption(private$..diag_labsize)
+            self$.addOption(private$..diag_shape)
+            self$.addOption(private$..diag_abbrev)
+            self$.addOption(private$..diag_offset)
         }),
     active = list(
         dep = function() private$..dep$value,
@@ -251,7 +306,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         contrasts = function() private$..contrasts$value,
         showRealNames = function() private$..showRealNames$value,
         showContrastCode = function() private$..showContrastCode$value,
-        bogus = function() private$..bogus$value,
         simpleScale = function() private$..simpleScale$value,
         cvalue = function() private$..cvalue$value,
         percvalue = function() private$..percvalue$value,
@@ -260,7 +314,13 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         tableOptions = function() private$..tableOptions$value,
         pathOptions = function() private$..pathOptions$value,
         mediatorsTerms = function() private$..mediatorsTerms$value,
-        moderatorsTerms = function() private$..moderatorsTerms$value),
+        moderatorsTerms = function() private$..moderatorsTerms$value,
+        diagram = function() private$..diagram$value,
+        diag_paths = function() private$..diag_paths$value,
+        diag_labsize = function() private$..diag_labsize$value,
+        diag_shape = function() private$..diag_shape$value,
+        diag_abbrev = function() private$..diag_abbrev$value,
+        diag_offset = function() private$..diag_offset$value),
     private = list(
         ..dep = NA,
         ..mediators = NA,
@@ -273,7 +333,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..contrasts = NA,
         ..showRealNames = NA,
         ..showContrastCode = NA,
-        ..bogus = NA,
         ..simpleScale = NA,
         ..cvalue = NA,
         ..percvalue = NA,
@@ -282,7 +341,13 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..tableOptions = NA,
         ..pathOptions = NA,
         ..mediatorsTerms = NA,
-        ..moderatorsTerms = NA)
+        ..moderatorsTerms = NA,
+        ..diagram = NA,
+        ..diag_paths = NA,
+        ..diag_labsize = NA,
+        ..diag_shape = NA,
+        ..diag_abbrev = NA,
+        ..diag_offset = NA)
 )
 
 jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
@@ -331,6 +396,7 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(
                     pathmodel = function() private$.items[["pathmodel"]],
+                    statmodel = function() private$.items[["statmodel"]],
                     pathnotes = function() private$.items[["pathnotes"]]),
                 private = list(),
                 public=list(
@@ -347,17 +413,43 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         self$add(jmvcore::Image$new(
                             options=options,
                             name="pathmodel",
-                            title="Model Diagram",
-                            width=600,
-                            height=500,
-                            renderFun=".showDiagram",
+                            title="Conceptual Diagram",
+                            width=800,
+                            height=600,
+                            renderFun=".showConceptualDiagram",
                             clearWith=list(
                                 "dep",
                                 "mediatorsTerms",
                                 "modelTerms",
                                 "moderatorsTerms",
-                                "pathOptions"),
-                            refs="diagram"))
+                                "pathOptions",
+                                "diagram",
+                                "diag_labsize",
+                                "diag_shape",
+                                "diag_abbrev"),
+                            refs="diagram",
+                            visible="(diagram:conceptual)"))
+                        self$add(jmvcore::Image$new(
+                            options=options,
+                            name="statmodel",
+                            title="Statistical Diagram",
+                            width=800,
+                            height=600,
+                            renderFun=".showStatDiagram",
+                            clearWith=list(
+                                "dep",
+                                "mediatorsTerms",
+                                "modelTerms",
+                                "moderatorsTerms",
+                                "pathOptions",
+                                "diagram",
+                                "diag_offset",
+                                "diag_labsize",
+                                "diag_shape",
+                                "diag_abbrev",
+                                "diag_paths"),
+                            refs="diagram",
+                            visible="(diagram:statistical)"))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="pathnotes",
@@ -367,7 +459,7 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 list(
                                     `name`="info", 
                                     `type`="text", 
-                                    `title`="Model diagram notes"))))}))$new(options=options))
+                                    `title`="Diagram notes"))))}))$new(options=options))
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(

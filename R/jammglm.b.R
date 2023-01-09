@@ -7,6 +7,8 @@ jammGLMClass <- R6::R6Class(
     .infos=NULL,
     .paths=NULL,
     .infos64=NULL,
+    .clean_data=NULL,
+    .fit=NULL,
     .cov_condition=conditioning$new(),
     .init=function() {
       ginfo("init")
@@ -22,7 +24,7 @@ jammGLMClass <- R6::R6Class(
       data<-private$.cleandata()
       infos<-private$.prepareDiagram() 
       private$.infos<-infos
-      
+ 
       meds<-lapply(infos$original_medmodels, function(m) {
         m$ind=private$.names64$factorize(m$ind)
         m
@@ -34,13 +36,17 @@ jammGLMClass <- R6::R6Class(
       mods<-lapply(infos$moderators, function(m) {
         private$.names64$factorize(m)
       })
+      
       infos64<-smartMediation$new(meds,full,moderators = mods)
       private$.infos64<-infos64
+      
       if (infos$isImpossible)   return()
       if (infos$isEmpty)        return()
 #      if (infos$hasRequired())  return()
       ## prepare main result table
+      
        table<-self$results$models$main
+       
        if (is.something(infos64$moderators)) {
          modtable<-self$results$models$moderationEffects
          modtable$setVisible(TRUE)
@@ -69,6 +75,7 @@ jammGLMClass <- R6::R6Class(
       ciWidth<-self$options$ciWidth/100
       ciType<-self$options$ciType
       bootN<-self$options$bootN
+
       if (is.null(dep))
         return()
       if (is.null(mediators))
@@ -80,7 +87,10 @@ jammGLMClass <- R6::R6Class(
       if (self$options$simpleScale=="percent" && self$options$percvalue==0)
          return()
       ###############      
+      
       data<-private$.cleandata()
+      private$.clean_data<-data
+
       for (scaling in self$options$scaling) {
         data[[jmvcore::toB64(scaling$var)]]<-lf.scaleContinuous(data[[jmvcore::toB64(scaling$var)]],scaling$type)  
       }
@@ -98,7 +108,16 @@ jammGLMClass <- R6::R6Class(
 #         return()
       mark("first estimate of the model")
       se<-ifelse(ciType=="standard" || ciType=="none",ciType,"bootstrap")
+
+      
+      ## update info table ####
+
+      self$results$info$addRow(rowKey="blank",list(info="",specs="",value=""))
+      self$results$info$addRow(rowKey="n",list(info="Sample size",specs="N",value=dim(data)[1]))
+      
+      ## fill the main tables
       params<-jmf.mediationTable(infos64,data,level = ciWidth,se=se, boot.ci=ciType,bootN=bootN)
+      private$.fit<-attr(params,"fit")
       table<-self$results$models$main
       if (ciType!="none")
           table$setNote("cinote",paste("Confidence intervals computed with method:",NOTES[["ci"]][[ciType]]))
@@ -152,7 +171,6 @@ jammGLMClass <- R6::R6Class(
               ldata[,var]<-condata[,var]
             }
           }
-          mark("estim",lcombs[j])
            tableKeys<-table$rowKeys
            params<-jmf.mediationTable(infos64,ldata,level = ciWidth,se=se, boot.ci=ciType,bootN=bootN)
            for (i in seq_along(params$label)) {
@@ -166,6 +184,7 @@ jammGLMClass <- R6::R6Class(
         }
         }
       }
+      mark(" estimate end")
       
       if ("regression" %in% self$options$tableOptions) 
         regressions.results(infos64,data,self$options,self$results,private$.names64)
@@ -263,7 +282,7 @@ jammGLMClass <- R6::R6Class(
   fullmodel64<-list(dep=dep64,ind=sapply(modelTerms,jmvcore::toB64))
 
   modTerms64<-moderatorsTerms
-    for (i in seq_along(mediators64))  
+  for (i in seq_along(mediators64))  
        for (j in seq_along(moderatorsTerms[[i]]))
          modTerms64[[i]][[j]]<-jmvcore::toB64(moderatorsTerms[[i]][[j]])
        
@@ -281,35 +300,127 @@ jammGLMClass <- R6::R6Class(
   #         }
   ## save the results for showing later      
 # image$setState(list(paths=paths,infos=infos))
+  
   private$.infos<-infos
   private$.paths<-paths
   #### includes possible diagrams notes 
-      notes<-self$results$pathmodelgroup$pathnotes
-      ds.annotate.diagram(infos,paths,notes,self$options,n64)       
-   ds.modelInfo(infos,self,n64)
-   return(infos)      
+  notes<-self$results$pathmodelgroup$pathnotes
+  ds.annotate.diagram(infos,paths,notes,self$options,n64)       
+  ds.modelInfo(infos,self,n64)
+  return(infos)      
       
 },  
 
-.showDiagram=function(image, ggtheme, theme, ...) {
+.showStatDiagram=function(image, ggtheme, theme, ...) {
+  
+  if (is.null(private$.infos))
+    return()
+  if (is.null(self$options$diagram != "statistical"))
+    return()
+  if (private$.infos$isEmpty | private$.infos$isImpossible) 
+    return()
+  if (is.null(private$.fit)) 
+    return()
+  
+  fit<-private$.fit
+  ie<-private$.infos$ieffects
+  pt<-fit@ParTable
+  lhs<-pt$lhs[pt$op!=":="]
+  xcoo<-sapply(unique(lhs), function(x) {
+    max((unlist(lapply(ie, function(xx) which(xx==x)))))
+  })
+  xcoo[!is.finite(xcoo)]<-1
+  mark(xcoo)
+  
+  q<-cbind(seq_along(xcoo),order(xcoo))
+  orig_order<-q[order(q[,2]),1]
+  xcoo<-xcoo[order(xcoo)]
+  if (length(unique(xcoo))==length(xcoo)) {
+          ycoo<-rep(.80,length(xcoo))
+          ycoo[xcoo==min(xcoo)]<-ycoo[xcoo==max(xcoo)]<-.2
+  } else {
+          ycoo<-unlist(lapply(unique(xcoo), function(x) {
+          nvars<-length(xcoo[xcoo==x])
+          1:nvars/(nvars+1)
+          }))
+  }
+  p<-cbind(x=xcoo,y=ycoo)
+  p<-p[orig_order,]
+
+  ## take care of the labels  and nodes size
+  labs<-fit@pta$vnames$ov.num[[1]]
+  nNodes<-length(labs)
+  
+  size<-12
+  if (self$options$diag_labsize=="small") size<-8
+  if (self$options$diag_labsize=="large") size<-18
+  if (self$options$diag_labsize=="vlarge") size<-24
+  size<-size*exp(-nNodes/80)+1
+  labs<-fromb64(labs)
+  
+  if (self$options$diag_abbrev!="0")
+    labs<-abbreviate(labs,minlength = as.numeric(self$options$diag_abbrev),strict = T)
+  labs<-gsub("`","",labs)
+  
+  ## make the plot
+  sp<-semPlot::semPaths(fit, 
+               sizeMan=size,
+               sizeMan2=size/2,
+               edge.label.cex = 1,
+               label.cex=.9,
+               style = "ram",
+               residuals = F,
+               nCharNodes = 0, nCharEdges = 0,
+               layout = p,
+               exoVar=T,
+               nodeLabels = labs,
+               shapeMan=self$options$diag_shape,
+               whatLabels=self$options$diag_paths)
+
+  ## adjust label position and curvature 
+  
+  if (self$options$diag_offset)
+        sp$graphAttributes$Edges$edge.label.position<-rep(.60,length(sp$graphAttributes$Edges$edge.label.position))
+  
+  sp$graphAttributes$Edges$lty[sp$Edgelist$bidirectional]<-2
+  sp$graphAttributes$Edges$curve[sp$Edgelist$bidirectional]<-.6
+  sp$graphAttributes$Edges
+  plot(sp)
+  
+},
+.showConceptualDiagram=function(image, ggtheme, theme, ...) {
 
     if (is.null(private$.infos))
         return()
+    if (is.null(self$options$diagram != "conceptual"))
+        return()
+  
  # mark(length(serialize(image$state, connection=NULL)))
   infos<-private$.infos
   paths<-private$.paths
-  box.size=.1+(max(length(infos$mediators),length(infos$independents))+3)^-8
-  box.text=.80+(infos$nvars)^-2
+
+  size<-12
+  if (self$options$diag_labsize=="small") size<-8
+  if (self$options$diag_labsize=="large") size<-18
+  if (self$options$diag_labsize=="vlarge") size<-24
+  box.size<-(size*exp(-infos$nvars/80)+1)/160
+  box.text=20*box.size
   arr.lenght=1/(infos$nvars-1)
   q<-sapply(jmvcore::decomposeTerms(paths$labs), jmvcore::fromB64)
   labs<-sapply(q, jmvcore::composeTerm)
   labs<-gsub(">","*",labs,fixed=T)  
+  box.text=19*box.size
+  llabs<-sapply(labs, function(x) if (nchar(x)>9) box.text*(9/nchar(x)) else box.text) 
+
+  if (self$options$diag_abbrev!="0")
+    labs<-abbreviate(labs,minlength = as.numeric(self$options$diag_abbrev),strict = T)
+  labs<-gsub("`","",labs)
   ### first we plot the linear models paths diagram
   plot<-diagram::plotmat(paths$paths, pos=paths$pos, 
                   name= labs,box.size = box.size,
-                  box.type = "rect", box.prop=.4, box.cex = box.text , curve=paths$curves,
+                  box.type = "rect", box.prop=.4, box.cex = llabs , curve=paths$curves,
                   endhead=F, arr.type="triangle",arr.length = arr.lenght,
-                  ,arr.pos=.7,arr.col = "gray",lcol = paths$colors,box.lcol=paths$bcolors)
+                  arr.pos=.7,arr.col = "gray",lcol = paths$colors,box.lcol=paths$bcolors)
 
   test<-try({
   ### then we add the moderators
@@ -326,7 +437,7 @@ jammGLMClass <- R6::R6Class(
     return(TRUE)
   }
     
-  diag.plot_mods(plot,infos$moderators)
+  diag.plot_mods(plot,infos$moderators,box.size,self$options$diag_abbrev)
   TRUE
 },
 .marshalFormula= function(formula, data, name) {
