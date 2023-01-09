@@ -304,6 +304,20 @@ options:
             a list of lists specifying the the IV which moderatorate each mediated effect.          
 
 #### diagram
+    - name: missing
+      title: Missing
+      type: List
+      options:
+        - name: listwise
+          title: Listwise
+        - name: ml
+          title: FIML
+      default: listwise
+      description:
+          R: >
+             handle  missing values: `listwise` or `full information max likelihood`.
+
+#### diagram
     - name: diagram
       title: Path Diagram
       type: List

@@ -110,14 +110,26 @@ jammGLMClass <- R6::R6Class(
       se<-ifelse(ciType=="standard" || ciType=="none",ciType,"bootstrap")
 
       
-      ## update info table ####
-
-      self$results$info$addRow(rowKey="blank",list(info="",specs="",value=""))
-      self$results$info$addRow(rowKey="n",list(info="Sample size",specs="N",value=dim(data)[1]))
       
       ## fill the main tables
-      params<-jmf.mediationTable(infos64,data,level = ciWidth,se=se, boot.ci=ciType,bootN=bootN)
+      params<-jmf.mediationTable(infos64,
+                                 data,
+                                 level = ciWidth,
+                                 se=se, 
+                                 boot.ci=ciType,
+                                 bootN=bootN,
+                                 missing=self$options$missing)
       private$.fit<-attr(params,"fit")
+      
+      ## update info table ####
+      
+      self$results$info$addRow(rowKey="blank",list(info="",specs="",value=""))
+      self$results$info$addRow(rowKey="n",
+                               list(info="Sample size",specs="N",
+                                    value=lavaan::lavInspect(private$.fit,"nobs"))
+                               )
+     
+      #####
       table<-self$results$models$main
       if (ciType!="none")
           table$setNote("cinote",paste("Confidence intervals computed with method:",NOTES[["ci"]][[ciType]]))
@@ -172,7 +184,13 @@ jammGLMClass <- R6::R6Class(
             }
           }
            tableKeys<-table$rowKeys
-           params<-jmf.mediationTable(infos64,ldata,level = ciWidth,se=se, boot.ci=ciType,bootN=bootN)
+           params<-jmf.mediationTable(infos64,
+                                      ldata,
+                                      level = ciWidth,
+                                      se=se, 
+                                      boot.ci=ciType,
+                                      bootN=bootN,
+                                      missing=self$options$missing)
            for (i in seq_along(params$label)) {
               row<-params[i,]
               for (name in names(lcombs))
@@ -198,7 +216,9 @@ jammGLMClass <- R6::R6Class(
       covs <- self$options$covs
       mediators<-self$options$mediators
       .warning<-list()
-      dataRaw <- jmvcore::naOmit(self$data)
+      ## now (1.2.0) we allow missing values
+#      dataRaw <- jmvcore::naOmit(self$data)
+      dataRaw<-self$data
       data <- list()
       if ( ! is.null(dep)) {
         if (class(dataRaw[[dep]]) == "factor")
