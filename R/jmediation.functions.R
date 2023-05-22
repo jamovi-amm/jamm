@@ -64,7 +64,7 @@ jmf.mediationSummary <-
   }
 
 jmf.mediationTotal <-
-  function(infos,data,level,missing="listwise") {
+  function(infos,data,level,missing="listwise",boot.ci = NULL) {
         .warning<-list()
         model <- infos$original_fullmodel
         meds<-infos$mediators
@@ -79,11 +79,15 @@ jmf.mediationTotal <-
             else
                     .warning<-append(.warning,"The total effect cannot be estimated")
         }
-        table<-lavaan::parameterestimates(
-          fit,
-          level = level,
-          standardized = T
-        )
+        if (is.null(boot.ci))
+           table<-lavaan::parameterestimates(fit, level = level, standardized = T)
+        else
+          table<-lavaan::parameterestimates(
+            fit,
+            level = level,
+            boot.ci.type = boot.ci,
+            standardized = T
+          )
         table
 }
 
@@ -118,7 +122,7 @@ jmf.mediationTable <- function(
   fit<-jmf.mediationSummary(infos,ldata, se=se,bootN=bootN,missing=missing)
   params<-jmf.mediationInference(fit,level=level,boot.ci =boot.ci)
   params$model<-"med"
-  totals<-jmf.mediationTotal(infos,ldata,level,missing=missing)
+  totals<-jmf.mediationTotal(infos,ldata,level,missing=missing,boot.ci=boot.ci)
   totals$model<-"tot"
   mtable<-rbind(params,totals)
   attr(mtable,"fit")<-fit
