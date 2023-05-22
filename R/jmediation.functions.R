@@ -64,14 +64,18 @@ jmf.mediationSummary <-
   }
 
 jmf.mediationTotal <-
-  function(infos,data,level,missing="listwise",boot.ci = NULL) {
+  function(infos,data,level,missing="listwise",se,bootN=NULL,boot.ci = NULL) {
         .warning<-list()
         model <- infos$original_fullmodel
         meds<-infos$mediators
         ind<-lapply(model$ind, function(x) if(!any(x %in% meds)) x)
         model$ind<-ind
         .formula<-.modelFormula(model,"_t_")
-        fit<-try(lavaan::sem(.formula,data = data,likelihood = "wishart",missing=missing))
+        fit<-try(lavaan::sem(.formula,data = data,
+                              likelihood = "wishart",
+                             missing=missing,
+                             se=se,
+                             bootstrap=bootN))
         if (jmvcore::isError(fit)) {
             msg <- jmvcore::extractErrorMessage(fit)
             if (is.something(grep("definite", msg)))
@@ -122,7 +126,7 @@ jmf.mediationTable <- function(
   fit<-jmf.mediationSummary(infos,ldata, se=se,bootN=bootN,missing=missing)
   params<-jmf.mediationInference(fit,level=level,boot.ci =boot.ci)
   params$model<-"med"
-  totals<-jmf.mediationTotal(infos,ldata,level,missing=missing,boot.ci=boot.ci)
+  totals<-jmf.mediationTotal(infos,ldata,level,missing=missing,se=se,bootN=bootN,boot.ci=boot.ci)
   totals$model<-"tot"
   mtable<-rbind(params,totals)
   attr(mtable,"fit")<-fit
