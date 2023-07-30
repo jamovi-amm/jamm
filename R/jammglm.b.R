@@ -67,6 +67,9 @@ jammGLMClass <- R6::R6Class(
       ginfo("run")
       # collect some option
       dep <- self$options$dep
+      if (is.null(dep))
+        return()
+      
       factors <- self$options$factors
       covs <- self$options$covs
       mediators <- self$options$mediators
@@ -109,6 +112,8 @@ jammGLMClass <- R6::R6Class(
       mark("first estimate of the model")
       se<-ifelse(ciType=="standard" || ciType=="none",ciType,"bootstrap")
 
+      jmvcore::fromB64("XeTQ")
+      jmvcore::fromB64("XeTM")
       
       
       ## fill the main tables
@@ -350,7 +355,6 @@ jammGLMClass <- R6::R6Class(
     max((unlist(lapply(ie, function(xx) which(xx==x)))))
   })
   xcoo[!is.finite(xcoo)]<-1
-  mark(xcoo)
   
   q<-cbind(seq_along(xcoo),order(xcoo))
   orig_order<-q[order(q[,2]),1]
@@ -415,7 +419,6 @@ jammGLMClass <- R6::R6Class(
     if (is.null(self$options$diagram != "conceptual"))
         return()
   
- # mark(length(serialize(image$state, connection=NULL)))
   infos<-private$.infos
   paths<-private$.paths
 
@@ -515,6 +518,7 @@ jammGLMClass <- R6::R6Class(
   
 },
 .formula=function(){
+  if (is.null(self$options$dep)) return()
   
   if (private$.infos$isEstimable()) {
     forms=private$.infos$medFormulas()
@@ -529,6 +533,7 @@ jammGLMClass <- R6::R6Class(
   
 },
 .sourcifyOption = function(option) {
+
         name <- option$name
         value <- option$value
         if (name %in% c('mediators', 'factors', 'dep', 'covs', 'cluster', 'modelTerms','mediatorsTerms'))

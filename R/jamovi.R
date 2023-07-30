@@ -36,7 +36,6 @@ fromb64<- function(x,...) UseMethod(".fromb64")
     return(unlist(sapply(obj, bogusfromb64,ref=ref,USE.NAMES = F)))
   
   int<-strsplit(obj,INTERACTION_SYMBOL,fixed=T)[[1]]
-  mark(int)
   if (length(int)>1)
     return(paste0(unlist(sapply(int,bogusfromb64,ref=ref)),collapse = ":"))
   
