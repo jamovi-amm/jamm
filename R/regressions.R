@@ -75,6 +75,8 @@ regressions.init<-function(infos,data, options, results, names64) {
     medgroups$setTitle("Mediators Models")
   
   for (mod in infos$original_medmodels) {
+    if (!is.something(mod$ind))
+         next
     agroup<-medgroups$addItem(key=mod$dep)
     agroup$setTitle(paste("Dependent variable:",names64$nicenames(mod$dep)))
     amodel<-mod$ind
@@ -136,6 +138,8 @@ regressions.results<-function(infos,data, options, results, names64) {
   medgroups<-results$regressions$mediator_regressions
   
   for (mod in infos$original_medmodels) {
+    if (!is.something(mod$ind))
+        next
     agroup<-medgroups$get(key=mod$dep)
     modelterms<-mod$ind
     modelFormula<-jmvcore::composeFormula(mod$dep,modelterms)

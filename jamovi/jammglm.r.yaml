@@ -21,14 +21,6 @@ items:
        - name: value
          type: text
          title: ""
-    clearWith:
-        - dep
-        - mediators
-        - factors
-        - covs
-        - modelTerms
-        - fixedIntercept
-        - moderatorsTerms
     refs: jamm
 
 

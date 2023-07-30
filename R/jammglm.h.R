@@ -394,14 +394,6 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         `name`="value", 
                         `type`="text", 
                         `title`="")),
-                clearWith=list(
-                    "dep",
-                    "mediators",
-                    "factors",
-                    "covs",
-                    "modelTerms",
-                    "fixedIntercept",
-                    "moderatorsTerms"),
                 refs="jamm"))
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
@@ -948,6 +940,7 @@ jammGLMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 revision = revision,
                 pause = NULL,
                 completeWhenFilled = FALSE,
-                requiresMissings = FALSE)
+                requiresMissings = FALSE,
+                weightsSupport = 'auto')
         }))
 

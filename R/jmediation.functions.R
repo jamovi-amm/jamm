@@ -18,21 +18,25 @@ jmf.mediationSummary <-
     ## correlates the parallel mediators
     
     if (length(infos$mediators)>1) {
-     
       MM<-infos$M[infos$mediators,infos$mediators]
-      MM[lower.tri(MM,diag=TRUE)]<-"NULL"
-      mr<-rownames(MM)
-      mc<-colnames(MM)
-      w<-which(MM=="0",arr.ind=TRUE)
-      if (dim(w)[1]>0) {
-          medcor<-""
-          medcor<-lapply(1:nrow(w), function(i) paste(mr[w[i,1]],"~~",mc[w[i,2]]))
-          medcor<-paste(medcor,collapse ="  ; ")
+      diag(MM)<-"NULL"
+      pair<-list()
+      for (i in 1:dim(MM)[1]) 
+          for (j in 1:dim(MM)[1])
+             if (MM[i,j]==MM[j,i] && MM[j,i]=="0") {
+                 if (i>j) found<-c(colnames(MM)[i],rownames(MM)[j])
+                 else found<-c(colnames(MM)[j],rownames(MM)[i])
+                 pair[[length(pair)+1]]<-found
+             }
+      pair<-unique(pair)
+      if (length(pair)>0) {
+          medcor<-paste(lapply(pair, paste, collapse="~~"),collapse = " ; ")
+          mark("Correlated terms", lapply(pair, jmvcore::fromB64))
           lavformula <- paste(lavformula,medcor, sep=" ; ",collapse =  " ;")
-      }
+      } else
+         mark("No correlated mediators")
     }
-    
-    
+
     ierecoded<-lapply(infos$ieffects, function(x) gsub(":","____",x))
     for (ie in ierecoded) {
       modifiers <- list()
@@ -42,7 +46,7 @@ jmf.mediationSummary <-
       amodifier <- paste(paste0(ie, collapse = "_"), amodifier, sep = ":=")
       lavformula <- paste(lavformula, amodifier, sep = ";")
     }
- 
+
     fit <-
       try(lavaan::sem(lavformula,
                       data = data,
