@@ -48,7 +48,6 @@ jmf.mediationSummary <-
       amodifier <- paste(paste0(ie, collapse = "_"), amodifier, sep = ":=")
       lavformula <- paste(lavformula, amodifier, sep = ";")
     }
-
     fit <-
       try(lavaan::sem(lavformula,
                       data = data,
@@ -67,7 +66,7 @@ jmf.mediationSummary <-
     }
     
     mtable<-lavaan::parameterestimates(fit, level = level, standardized = T)
-    if (!is.null(boot.ci)) {
+    if (se=="bootstrap") {
       paral<-"multicore"
       if (.Platform$OS.type=="windows")
          paral<-"snow"
@@ -113,7 +112,7 @@ jmf.mediationTotal <-
         }
         mtable<-lavaan::parameterestimates(fit, level = level, standardized = T)
 
-        if (!is.null(boot.ci)) {
+        if (se=="bootstrap") {
           
           paral<-"multicore"
           if (.Platform$OS.type=="windows")
