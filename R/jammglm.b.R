@@ -112,9 +112,7 @@ jammGLMClass <- R6::R6Class(
       mark("first estimate of the model")
       se<-ifelse(ciType=="standard" || ciType=="none",ciType,"bootstrap")
 
-      jmvcore::fromB64("XeTQ")
-      jmvcore::fromB64("XeTM")
-      
+
       
       ## fill the main tables
       params<-jmf.mediationTable(infos64,

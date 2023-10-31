@@ -298,10 +298,6 @@ children:
                 optionName: ciType
                 optionPart: bca
               - type: RadioButton
-                name: ciType_bootnorm
-                optionName: ciType
-                optionPart: norm
-              - type: RadioButton
                 name: ciType_none
                 optionName: ciType
                 optionPart: none

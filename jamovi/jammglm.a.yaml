@@ -105,8 +105,6 @@ options:
           title: Bootstrap (BC)
         - name: perc
           title: Bootstrap (Percent)
-        - name: norm
-          title: Bootstrap (Normal)
         - name: none
           title: None
       default: standard

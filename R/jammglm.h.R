@@ -92,7 +92,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     "standard",
                     "bca",
                     "perc",
-                    "norm",
                     "none"),
                 default="standard")
             private$..ciWidth <- jmvcore::OptionNumber$new(
