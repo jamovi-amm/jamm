@@ -3,7 +3,9 @@
 jmf.mediationSummary <-
   function(infos,
            data,
-           se = "standard",
+           se,
+           level,
+           boot.ci=NULL,
            bootN = 1000,
            missing="listwise") {
     models <- infos$original_medmodels
@@ -50,9 +52,8 @@ jmf.mediationSummary <-
     fit <-
       try(lavaan::sem(lavformula,
                       data = data,
-                      se = se,
-                      missing=missing,
-                      bootstrap = bootN))
+                      se = "standard",
+                      missing=missing))
     if (jmvcore::isError(fit)) {
       msg <- jmvcore::extractErrorMessage(fit)
       if (is.something(grep("definite", msg)) || is.something(grep("S.inv", msg))) {
@@ -64,11 +65,35 @@ jmf.mediationSummary <-
       else
         jmvcore::reject(msg)
     }
-    fit
+    
+    mtable<-lavaan::parameterestimates(fit, level = level, standardized = T)
+    if (!is.null(boot.ci)) {
+      paral<-"multicore"
+      if (.Platform$OS.type=="windows")
+         paral<-"snow"
+      bfit<-lavaan::sem(lavformula,
+                  data = data,
+                  se = "bootstrap",
+                  missing=missing,
+                  bootstrap = bootN,
+                  parallel=paral)
+      btable<-lavaan::parameterestimates(
+        bfit,
+        level = level,
+        boot.ci.type = boot.ci,
+        standardized = T
+      )
+      mtable$ci.lower<-btable$ci.lower
+      mtable$ci.upper<-btable$ci.upper
+      
+    }
+    attr(mtable,"fit")<-fit
+    mtable
+
   }
 
 jmf.mediationTotal <-
-  function(infos,data,level,missing="listwise",se,bootN=NULL,boot.ci = NULL) {
+  function(infos,data,level,se,bootN=1000,boot.ci=NULL,missing="listwise") {
         .warning<-list()
         model <- infos$original_fullmodel
         meds<-infos$mediators
@@ -78,8 +103,7 @@ jmf.mediationTotal <-
         fit<-try(lavaan::sem(.formula,data = data,
                               likelihood = "wishart",
                              missing=missing,
-                             se=se,
-                             bootstrap=bootN))
+                             se="standard"))
         if (jmvcore::isError(fit)) {
             msg <- jmvcore::extractErrorMessage(fit)
             if (is.something(grep("definite", msg)))
@@ -87,31 +111,33 @@ jmf.mediationTotal <-
             else
                     .warning<-append(.warning,"The total effect cannot be estimated")
         }
-        if (is.null(boot.ci))
-           table<-lavaan::parameterestimates(fit, level = level, standardized = T)
-        else
-          table<-lavaan::parameterestimates(
-            fit,
+        mtable<-lavaan::parameterestimates(fit, level = level, standardized = T)
+
+        if (!is.null(boot.ci)) {
+          
+          paral<-"multicore"
+          if (.Platform$OS.type=="windows")
+            paral<-"snow"
+          
+          bfit<-lavaan::sem(.formula,data = data,
+                      likelihood = "wishart",
+                      missing=missing,
+                      se="bootstrap",
+                      bootstrap=bootN,
+                      parallel=paral)
+          
+          btable<-lavaan::parameterestimates(
+            bfit,
             level = level,
             boot.ci.type = boot.ci,
             standardized = T
           )
-        table
+          mtable$ci.lower<-btable$ci.lower
+          mtable$ci.upper<-btable$ci.upper
+        }
+        mtable
 }
 
-jmf.mediationInference <- function(fit,
-                                   level = .95,
-                                   boot.ci = NULL) {
-  if (is.null(boot.ci))
-    mtable<-lavaan::parameterestimates(fit, level = level, standardized = T)
-  else
-    mtable<-lavaan::parameterestimates(
-      fit,
-      level = level,
-      boot.ci.type = boot.ci,
-      standardized = T
-    )
-}
 
 jmf.mediationTable <- function(
                 infos,
@@ -127,10 +153,10 @@ jmf.mediationTable <- function(
   models <- infos$original_medmodels
   models[[length(models) + 1]] <- infos$original_fullmodel
   ldata<-.make_var(models,data)
-  fit<-jmf.mediationSummary(infos,ldata, se=se,bootN=bootN,missing=missing)
-  params<-jmf.mediationInference(fit,level=level,boot.ci =boot.ci)
+  params<-jmf.mediationSummary(infos,ldata, se=se,level=level,boot.ci=boot.ci,bootN=bootN,missing=missing)
+  fit<-attr(params,"fit")
   params$model<-"med"
-  totals<-jmf.mediationTotal(infos,ldata,level,missing=missing,se=se,bootN=bootN,boot.ci=boot.ci)
+  totals<-jmf.mediationTotal(infos,ldata,se=se,level=level,boot.ci=boot.ci,bootN=bootN,missing=missing)
   totals$model<-"tot"
   mtable<-rbind(params,totals)
   attr(mtable,"fit")<-fit
