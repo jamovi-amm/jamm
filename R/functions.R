@@ -138,4 +138,42 @@ expand.formula<-function(aform) {
 }
 
 
+#### This function run an expression and returns any warnings or errors without stopping the execution.
+try_hard<-function(exp,max_warn=5) {
+  
+  .results<-list(error=FALSE,warning=list(),message=FALSE,obj=FALSE)
+  
+  .results$obj <- withCallingHandlers(
+    tryCatch(exp, error=function(e) {
+      mark("SOURCE:")
+      mark(conditionCall(e))
+      .results$error<<-conditionMessage(e)
+      NULL
+    }), warning=function(w) {
+      
+      if (length(.results$warning)==max_warn) 
+        .results$warning[[length(.results$warning)+1]]<<-"Additional warnings are present."
+      
+      if (length(.results$warning)<max_warn)
+        .results$warning[[length(.results$warning)+1]]<<-conditionMessage(w)
+      
+      invokeRestart("muffleWarning")
+    }, message = function(m) {
+      .results$message<<-conditionMessage(m)
+      invokeRestart("muffleMessage")
+    })
+  
+  
+  if (!isFALSE(.results$error)) {
+    mark("CALLER:")
+    mark(rlang::enquo(exp))
+    mark("ERROR:")
+    mark(.results$error)
+  }
+  if(length(.results$warning)==0) .results$warning<-FALSE
+  if(length(.results$warning)==1) .results$warning<-.results$warning[[1]]
+  
+  
+  return(.results)
+}
 
