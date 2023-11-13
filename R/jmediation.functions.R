@@ -68,19 +68,15 @@ jmf.mediationSummary <-
     mtable<-lavaan::parameterestimates(fit, level = level, standardized = T)
     
     if (se=="bootstrap") {
-      paral<-"multicore"
-      if (.Platform$OS.type=="windows")
+       paral<-"snow"
+       if (.Platform$OS.type=="windows")
          paral<-"no"
-      
-      bfit<-try_hard(lavaan::sem(lavformula,
-                  data = data,
-                  se = "bootstrap",
-                  missing=missing,
-                  bootstrap = bootN,
-                  parallel=paral))
-    
-     btable<-try_hard(lavaan::parameterestimates(
-        bfit$obj,
+       
+       fit@Options$se<-"bootstrap"
+      .boot<-lavaan::bootstrapLavaan(fit,R=bootN,parallel = paral)
+       fit@boot$coef<-.boot
+      btable<-try_hard(lavaan::parameterestimates(
+        fit,
         level = level,
         boot.ci.type = boot.ci
       ))
@@ -121,7 +117,7 @@ jmf.mediationTotal <-
           
           paral<-"multicore"
           if (.Platform$OS.type=="windows")
-            paral<-"no"
+            paral<-"snow"
           
           bfit<-lavaan::sem(.formula,data = data,
                       likelihood = "wishart",
@@ -129,7 +125,7 @@ jmf.mediationTotal <-
                       se="bootstrap",
                       bootstrap=bootN,
                       parallel=paral)
-          
+
           btable<-lavaan::parameterestimates(
             bfit,
             level = level,
