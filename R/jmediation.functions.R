@@ -71,15 +71,17 @@ jmf.mediationSummary <-
       paral<-"multicore"
       if (.Platform$OS.type=="windows")
          paral<-"no"
-      bfit<-lavaan::sem(lavformula,
+      
+      bfit<-try_hard(lavaan::sem(lavformula,
                   data = data,
                   se = "bootstrap",
                   missing=missing,
                   bootstrap = bootN,
-                  parallel=paral)
-      
+                  parallel=paral))
+    
+    mark(bfit)  
      btable<-try_hard(lavaan::parameterestimates(
-        bfit,
+        bfit$obj,
         level = level,
         boot.ci.type = boot.ci
       ))
