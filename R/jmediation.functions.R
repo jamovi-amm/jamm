@@ -79,7 +79,6 @@ jmf.mediationSummary <-
                   bootstrap = bootN,
                   parallel=paral))
     
-    mark(bfit)  
      btable<-try_hard(lavaan::parameterestimates(
         bfit$obj,
         level = level,
