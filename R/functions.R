@@ -1,15 +1,3 @@
-is.something<- function(x,...) UseMethod(".is.something")
-
-.is.something.default<-function(obj) (!is.null(obj))
-
-.is.something.list<-function(obj) (length(obj)>0)
-
-.is.something.numeric<-function(obj) (length(obj)>0)
-
-.is.something.character<-function(obj) (length(obj)>0)
-
-.is.something.logical<-function(obj) !is.na(obj)
-
 
 
 fill.if<-function(test,ifyes,ifnot) {
@@ -28,29 +16,7 @@ info<-function(what=NULL) {
   }
 }
 
-ginfo<-function(what=NULL,obj=NULL) {
-  if (GAMLj_INFO) {
-    if (!is.null(what))
-      print(what)
-    if (!is.null(obj)) {
-      print(obj)
-      cat("------------\n")
-    }
-  }
-}
 
-mark<-function(what=NULL,obj=NULL) {
-  if (GAMLj_DEBUG) {
-    if (!is.null(what))
-      print(what)
-    else print("you got here")
-    
-    if (!is.null(obj)) {
-      print(obj)
-      print("#### end ###")
-    }
-  }
-}
 
 c.real<-function(...) {
   obj <- c(...)
@@ -138,4 +104,42 @@ expand.formula<-function(aform) {
 }
 
 
+#### This function run an expression and returns any warnings or errors without stopping the execution.
+try_hard<-function(exp,max_warn=5) {
+  
+  .results<-list(error=FALSE,warning=list(),message=FALSE,obj=FALSE)
+  
+  .results$obj <- withCallingHandlers(
+    tryCatch(exp, error=function(e) {
+      mark("SOURCE:")
+      mark(conditionCall(e))
+      .results$error<<-conditionMessage(e)
+      NULL
+    }), warning=function(w) {
+      
+      if (length(.results$warning)==max_warn) 
+        .results$warning[[length(.results$warning)+1]]<<-"Additional warnings are present."
+      
+      if (length(.results$warning)<max_warn)
+        .results$warning[[length(.results$warning)+1]]<<-conditionMessage(w)
+      
+      invokeRestart("muffleWarning")
+    }, message = function(m) {
+      .results$message<<-conditionMessage(m)
+      invokeRestart("muffleMessage")
+    })
+  
+  
+  if (!isFALSE(.results$error)) {
+    mark("CALLER:")
+    mark(rlang::enquo(exp))
+    mark("ERROR:")
+    mark(.results$error)
+  }
+  if(length(.results$warning)==0) .results$warning<-FALSE
+  if(length(.results$warning)==1) .results$warning<-.results$warning[[1]]
+  
+  
+  return(.results)
+}
 

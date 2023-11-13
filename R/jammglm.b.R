@@ -11,7 +11,7 @@ jammGLMClass <- R6::R6Class(
     .fit=NULL,
     .cov_condition=conditioning$new(),
     .init=function() {
-      ginfo("init")
+      jinfo("init")
       Sys.getlocale("LC_NUMERIC")
       private$.names64<-names64$new()
       dep<-self$options$dep
@@ -64,7 +64,7 @@ jammGLMClass <- R6::R6Class(
     },
     .run=function() {
       n64<-private$.names64
-      ginfo("run")
+      jinfo("run")
       # collect some option
       dep <- self$options$dep
       if (is.null(dep))
@@ -251,7 +251,7 @@ jammGLMClass <- R6::R6Class(
       for (factor in factors) {
         ### we need this for Rinterface ####
         if (!("factor" %in% class(dataRaw[[factor]]))) {
-          info(paste("Warning, variable",factor," has been coerced to factor"))
+          jinfo(paste("Warning, variable",factor," has been coerced to factor"))
           dataRaw[[factor]]<-factor(dataRaw[[factor]])
         }
         factor64<-jmvcore::toB64(factor)
@@ -516,6 +516,7 @@ jammGLMClass <- R6::R6Class(
   
 },
 .formula=function(){
+  
   if (is.null(self$options$dep)) return()
   
   if (private$.infos$isEstimable()) {
