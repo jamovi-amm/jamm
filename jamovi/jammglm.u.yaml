@@ -3,8 +3,8 @@ name: jammGLM
 jus: '2.0'
 compilerMode: tame
 events:
-  update: './jamm.events::update'
-  loaded: './jamm.events::loaded'
+  update: ./jamm.events::update
+  loaded: ./jamm.events::loaded
 children:
   - type: VariableSupplier
     name: variablesupplier
@@ -29,7 +29,7 @@ children:
             height: small
             isTarget: true
             events:
-              change: './jamm.events::onChange_mediators'
+              change: ./jamm.events::onChange_mediators
       - type: TargetLayoutBox
         children:
           - type: VariablesListBox
@@ -37,7 +37,7 @@ children:
             height: small
             isTarget: true
             events:
-              change: './jamm.events::onChange_factors'
+              change: ./jamm.events::onChange_factors
       - type: TargetLayoutBox
         children:
           - type: VariablesListBox
@@ -45,7 +45,7 @@ children:
             height: small
             isTarget: true
             events:
-              change: './jamm.events::onChange_covariates'
+              change: ./jamm.events::onChange_covariates
   - type: CollapseBox
     label: Mediators Models
     collapsed: true
@@ -61,8 +61,8 @@ children:
             persistentItems: true
             stretchFactor: 1
             events:
-              update: './jamm.events::onUpdate_mediatorsSupplier'
-              change: './jamm.events::onChange_mediatorsSupplier'
+              update: ./jamm.events::onUpdate_mediatorsSupplier
+              change: ./jamm.events::onChange_mediatorsSupplier
             children:
               - type: TargetLayoutBox
                 transferAction: interactions
@@ -71,8 +71,8 @@ children:
                     name: mediatorsTerms
                     height: large
                     events:
-                      listItemAdded: './jamm.events::onEvent_nothing'
-                      listItemRemoved: './jamm.events::onEvent_nothing'
+                      listItemAdded: ./jamm.events::onEvent_nothing
+                      listItemRemoved: ./jamm.events::onEvent_nothing
                     selectable: true
                     template:
                       type: LayoutBox
@@ -92,7 +92,7 @@ children:
                           height: auto
                           ghostText: drag variables here
                           events:
-                            change: './jamm.events::onEvent_mediatorToTerms'
+                            change: ./jamm.events::onEvent_mediatorToTerms
                           template:
                             type: TermLabel
   - type: CollapseBox
@@ -107,8 +107,8 @@ children:
         stretchFactor: 1
         format: term
         events:
-          update: './jamm.events::onUpdate_modelSupplier'
-          change: './jamm.events::onChange_modelSupplier'
+          update: ./jamm.events::onUpdate_modelSupplier
+          change: ./jamm.events::onChange_modelSupplier
         children:
           - type: TargetLayoutBox
             transferAction: interactions
@@ -119,7 +119,7 @@ children:
                 isTarget: true
                 itemDropBehaviour: emptyspace
                 events:
-                  change: './jamm.events::onChange_modelTerms'
+                  change: ./jamm.events::onChange_modelTerms
                 template:
                   type: TermLabel
   - type: CollapseBox
@@ -138,8 +138,8 @@ children:
             persistentItems: true
             stretchFactor: 1
             events:
-              update: './jamm.events::onUpdate_moderatorsSupplier'
-              change: './jamm.events::onChange_moderatorsSupplier'
+              update: ./jamm.events::onUpdate_moderatorsSupplier
+              change: ./jamm.events::onChange_moderatorsSupplier
             children:
               - type: TargetLayoutBox
                 transferAction: interactions
@@ -148,8 +148,8 @@ children:
                     name: moderatorsTerms
                     height: large
                     events:
-                      listItemAdded: './jamm.events::onEvent_nothing'
-                      listItemRemoved: './jamm.events::onEvent_nothing'
+                      listItemAdded: ./jamm.events::onEvent_nothing
+                      listItemRemoved: ./jamm.events::onEvent_nothing
                     selectable: true
                     templateName: linreg-block-template
                     template:
@@ -170,7 +170,7 @@ children:
                           height: auto
                           ghostText: drag variables here
                           events:
-                            change: './jamm.events::onEvent_moderatorChanged'
+                            change: ./jamm.events::onEvent_moderatorChanged
                           template:
                             type: TermLabel
   - type: CollapseBox
@@ -285,30 +285,37 @@ children:
             margin: large
             style: list
             children:
-              - type: RadioButton
-                name: ciType_standard
-                optionName: ciType
-                optionPart: standard
-              - type: RadioButton
-                name: ciType_bootperc
-                optionName: ciType
-                optionPart: perc
-              - type: RadioButton
-                name: ciType_bootbca
-                optionName: ciType
-                optionPart: bca
-              - type: RadioButton
-                name: ciType_none
-                optionName: ciType
-                optionPart: none
-              - type: TextBox
-                name: ciWidth
-                label: Interval
-                suffix: '%'
-                format: number
-              - type: TextBox
-                name: bootN
-                format: number
+              - type: Label
+                label: Parameters
+                children:
+                  - type: CheckBox
+                    name: ci_b
+                  - type: CheckBox
+                    name: ci_beta
+                    enable: (tableOptions_beta)
+              - type: Label
+                label: Method
+                children:
+                  - type: RadioButton
+                    name: ciType_standard
+                    optionName: ciType
+                    optionPart: standard
+                  - type: RadioButton
+                    name: ciType_bootperc
+                    optionName: ciType
+                    optionPart: perc
+                  - type: RadioButton
+                    name: ciType_bootbca
+                    optionName: ciType
+                    optionPart: bca
+                  - type: TextBox
+                    name: ciWidth
+                    label: Interval
+                    suffix: '%'
+                    format: number
+                  - type: TextBox
+                    name: bootN
+                    format: number
           - type: Label
             label: Display in tables
             margin: large
@@ -339,7 +346,6 @@ children:
                 name: missing_fiml
                 optionName: missing
                 optionPart: ml
-
   - type: CollapseBox
     label: Path Diagram
     collapsed: true
@@ -365,49 +371,48 @@ children:
                 optionPart: statistical
           - type: LayoutBox
             style: inline
-            children: 
-                  - type: Label
-                    label: Path model
-                    style: list
-                    children:
-                          - name: pathOptions_suggested
-                            type: CheckBox
-                            optionPart: suggested
-                            optionName: pathOptions
-                            enable: '(diagram:conceptual)'
-
-                  - type: Label
-                    label: Paths
-                    margin: large
-                    style: list
-                    children:
-                          - type: RadioButton
-                            name: diag_paths_est
-                            optionName: diag_paths
-                            optionPart: est
-                            enable: '(diagram:statistical)'
-                          - type: RadioButton
-                            name: diag_paths_stand
-                            optionName: diag_paths
-                            optionPart: stand
-                            enable: '(diagram:statistical)'
-                          - type: RadioButton
-                            name: diag_paths_hide
-                            optionName: diag_paths
-                            optionPart: hide
-                            enable: '(diagram:statistical)'
-                          - type: CheckBox
-                            name: diag_offset
-                            enable: '(diagram:statistical)'
-                  - type: Label
-                    label: Nodes
-                    margin: large
-                    style: list
-                    children:
-                          - type: ComboBox
-                            name: diag_labsize
-                          - type: ComboBox
-                            name: diag_shape
-                            enable: '(diagram:statistical)'
-                          - type: ComboBox
-                            name: diag_abbrev
+            children:
+              - type: Label
+                label: Path model
+                style: list
+                children:
+                  - name: pathOptions_suggested
+                    type: CheckBox
+                    optionPart: suggested
+                    optionName: pathOptions
+                    enable: (diagram:conceptual)
+              - type: Label
+                label: Paths
+                margin: large
+                style: list
+                children:
+                  - type: RadioButton
+                    name: diag_paths_est
+                    optionName: diag_paths
+                    optionPart: est
+                    enable: (diagram:statistical)
+                  - type: RadioButton
+                    name: diag_paths_stand
+                    optionName: diag_paths
+                    optionPart: stand
+                    enable: (diagram:statistical)
+                  - type: RadioButton
+                    name: diag_paths_hide
+                    optionName: diag_paths
+                    optionPart: hide
+                    enable: (diagram:statistical)
+                  - type: CheckBox
+                    name: diag_offset
+                    enable: (diagram:statistical)
+              - type: Label
+                label: Nodes
+                margin: large
+                style: list
+                children:
+                  - type: ComboBox
+                    name: diag_labsize
+                  - type: ComboBox
+                    name: diag_shape
+                    enable: (diagram:statistical)
+                  - type: ComboBox
+                    name: diag_abbrev

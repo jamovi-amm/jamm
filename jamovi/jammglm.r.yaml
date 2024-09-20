@@ -125,16 +125,25 @@ items:
                     - name: ci.lower
                       type: number
                       title: Lower
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ci_b)
                     - name: ci.upper
                       type: number
                       title: Upper
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
-
+                      visible: (ci_b)
                     - name: std.all
                       type: number
                       title: β
                       visible: (tableOptions:beta)
+                    - name: beta.ci.lower
+                      type: number
+                      title: Lower
+                      visible: (ci_beta)
+                    - name: beta.ci.upper
+                      type: number
+                      title: Upper
+                      visible: (ci_beta)
+
+
                     - name: z
                       title: "z"
                       type: number
@@ -175,15 +184,23 @@ items:
                     - name: ci.lower
                       type: number
                       title: Lower
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ci_b)
                     - name: ci.upper
                       type: number
                       title: Upper
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ci_b)
                     - name: std.all
                       type: number
                       title: β
                       visible: (tableOptions:beta)
+                    - name: beta.ci.lower
+                      type: number
+                      title: Lower
+                      visible: (ci_beta)
+                    - name: beta.ci.upper
+                      type: number
+                      title: Upper
+                      visible: (ci_beta)
                     - name: z
                       title: "z"
                       type: number

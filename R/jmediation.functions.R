@@ -7,6 +7,7 @@ jmf.mediationSummary <-
            level,
            boot.ci=NULL,
            bootN = 1000,
+           ci_std=FALSE,
            missing="listwise") {
     models <- infos$original_medmodels
     models[[length(models) + 1]] <- infos$original_fullmodel
@@ -48,8 +49,7 @@ jmf.mediationSummary <-
       amodifier <- paste(paste0(ie, collapse = "_"), amodifier, sep = ":=")
       lavformula <- paste(lavformula, amodifier, sep = ";")
     }
-    fit <-
-      try(lavaan::sem(lavformula,
+    fit <-try(lavaan::sem(lavformula,
                       data = data,
                       se = "standard",
                       missing=missing))
@@ -65,12 +65,16 @@ jmf.mediationSummary <-
         jmvcore::reject(msg)
     }
     
-    mtable<-lavaan::parameterestimates(fit, level = level, standardized = T)
-    
+    mtable <- lavaan::parameterestimates(fit, level = level, standardized = T)
+    ztable <- lavaan::standardizedSolution(fit, level = level, se=TRUE,ci=TRUE)
+    mtable$beta.ci.lower<-ztable$ci.lower
+    mtable$beta.ci.upper<-ztable$ci.upper
+
     if (se=="bootstrap") {
-       paral<-"snow"
+      
+       paral<-"multicore"
        if (.Platform$OS.type=="windows")
-         paral<-"no"
+         paral<-"snow"
        
        fit@Options$se<-"bootstrap"
       .boot<-lavaan::bootstrapLavaan(fit,R=bootN,parallel = paral)
@@ -112,6 +116,9 @@ jmf.mediationTotal <-
                     .warning<-append(.warning,"The total effect cannot be estimated")
         }
         mtable<-lavaan::parameterestimates(fit, level = level, standardized = T)
+        ztable <- lavaan::standardizedSolution(fit, level = level, se=TRUE,ci=TRUE)
+        mtable$beta.ci.lower<-ztable$ci.lower
+        mtable$beta.ci.upper<-ztable$ci.upper
 
         if (se=="bootstrap") {
           
@@ -119,24 +126,24 @@ jmf.mediationTotal <-
           if (.Platform$OS.type=="windows")
             paral<-"snow"
           
-          bfit<-lavaan::sem(.formula,data = data,
-                      likelihood = "wishart",
-                      missing=missing,
-                      se="bootstrap",
-                      bootstrap=bootN,
-                      parallel=paral)
-
-          btable<-lavaan::parameterestimates(
-            bfit,
+          fit@Options$se<-"bootstrap"
+         .boot<-lavaan::bootstrapLavaan(fit,R=bootN,parallel = paral)
+          fit@boot$coef<-.boot
+          btable<-try_hard(lavaan::parameterestimates(
+            fit,
             level = level,
-            boot.ci.type = boot.ci,
-            standardized = T
-          )
-          mtable$ci.lower<-btable$ci.lower
-          mtable$ci.upper<-btable$ci.upper
+            boot.ci.type = boot.ci
+          ))
+          if (!isFALSE(btable$error))
+            stop(btable$error)
+          else {
+            mtable$ci.lower<-btable$obj$ci.lower
+            mtable$ci.upper<-btable$obj$ci.upper
+          }
         }
+        attr(mtable,"fit")<-fit
         mtable
-}
+  }
 
 
 jmf.mediationTable <- function(

@@ -143,14 +143,27 @@ mr.initConditionalTable<-function(infos,resultsTable,n64,cov_condition,ciType,ci
     
     resultsTable$getColumn('ci.lower')$setSuperTitle(jmvcore::format('{}% C.I. (a)', ciWidth))
     resultsTable$getColumn('ci.upper')$setSuperTitle(jmvcore::format('{}% C.I. (a)', ciWidth))
+
+    if ("beta.ci.lower" %in% names(resultsTable$columns)) {
+        resultsTable$getColumn('beta.ci.lower')$setSuperTitle(jmvcore::format('\u03b2 {}% C.I. (a)', ciWidth))
+        resultsTable$getColumn('beta.ci.upper')$setSuperTitle(jmvcore::format('\u03b2 {}% C.I. (a)', ciWidth))
+    }
+    
+    
     add<-ifelse(ciType=="standard" || ciType=="none","",". This may take a while")
     .note<-paste0(NOTES[["ci"]][[ciType]],add)
     resultsTable$setNote("cinote",paste("(a) Confidence intervals computed with method:",.note))
 }
 
 mr.initTable<-function(infos,resultsTable,n64,ciType,ciWidth,tableOptions) {
+  
   resultsTable$getColumn('ci.lower')$setSuperTitle(jmvcore::format('{}% C.I. (a)', ciWidth))
   resultsTable$getColumn('ci.upper')$setSuperTitle(jmvcore::format('{}% C.I. (a)', ciWidth))
+  
+  if ("beta.ci.lower" %in% names(resultsTable$columns)) {
+    resultsTable$getColumn('beta.ci.lower')$setSuperTitle(jmvcore::format('\u03b2 {}% C.I. (a)', ciWidth))
+    resultsTable$getColumn('beta.ci.upper')$setSuperTitle(jmvcore::format('\u03b2 {}% C.I. (a)', ciWidth))
+  }
   ierecoded<-lapply(infos$ieffects, function(x) gsub(":","____",x))
   components<-list()
   for (i in seq_along(ierecoded)) {

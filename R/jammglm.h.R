@@ -13,6 +13,8 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             modelTerms = NULL,
             ciType = "standard",
             ciWidth = 95,
+            ci_b = TRUE,
+            ci_beta = TRUE,
             bootN = 1000,
             contrasts = NULL,
             showRealNames = TRUE,
@@ -91,8 +93,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 options=list(
                     "standard",
                     "bca",
-                    "perc",
-                    "none"),
+                    "perc"),
                 default="standard")
             private$..ciWidth <- jmvcore::OptionNumber$new(
                 "ciWidth",
@@ -100,6 +101,14 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 min=50,
                 max=99.9,
                 default=95)
+            private$..ci_b <- jmvcore::OptionBool$new(
+                "ci_b",
+                ci_b,
+                default=TRUE)
+            private$..ci_beta <- jmvcore::OptionBool$new(
+                "ci_beta",
+                ci_beta,
+                default=TRUE)
             private$..bootN <- jmvcore::OptionNumber$new(
                 "bootN",
                 bootN,
@@ -281,6 +290,8 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..modelTerms)
             self$.addOption(private$..ciType)
             self$.addOption(private$..ciWidth)
+            self$.addOption(private$..ci_b)
+            self$.addOption(private$..ci_beta)
             self$.addOption(private$..bootN)
             self$.addOption(private$..contrasts)
             self$.addOption(private$..showRealNames)
@@ -310,6 +321,8 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         modelTerms = function() private$..modelTerms$value,
         ciType = function() private$..ciType$value,
         ciWidth = function() private$..ciWidth$value,
+        ci_b = function() private$..ci_b$value,
+        ci_beta = function() private$..ci_beta$value,
         bootN = function() private$..bootN$value,
         contrasts = function() private$..contrasts$value,
         showRealNames = function() private$..showRealNames$value,
@@ -338,6 +351,8 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..modelTerms = NA,
         ..ciType = NA,
         ..ciWidth = NA,
+        ..ci_b = NA,
+        ..ci_beta = NA,
         ..bootN = NA,
         ..contrasts = NA,
         ..showRealNames = NA,
@@ -518,17 +533,27 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `name`="ci.lower", 
                                     `type`="number", 
                                     `title`="Lower", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                    `visible`="(ci_b)"),
                                 list(
                                     `name`="ci.upper", 
                                     `type`="number", 
                                     `title`="Upper", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                    `visible`="(ci_b)"),
                                 list(
                                     `name`="std.all", 
                                     `type`="number", 
                                     `title`="\u03B2", 
                                     `visible`="(tableOptions:beta)"),
+                                list(
+                                    `name`="beta.ci.lower", 
+                                    `type`="number", 
+                                    `title`="Lower", 
+                                    `visible`="(ci_beta)"),
+                                list(
+                                    `name`="beta.ci.upper", 
+                                    `type`="number", 
+                                    `title`="Upper", 
+                                    `visible`="(ci_beta)"),
                                 list(
                                     `name`="z", 
                                     `title`="z", 
@@ -577,17 +602,27 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `name`="ci.lower", 
                                     `type`="number", 
                                     `title`="Lower", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                    `visible`="(ci_b)"),
                                 list(
                                     `name`="ci.upper", 
                                     `type`="number", 
                                     `title`="Upper", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                    `visible`="(ci_b)"),
                                 list(
                                     `name`="std.all", 
                                     `type`="number", 
                                     `title`="\u03B2", 
                                     `visible`="(tableOptions:beta)"),
+                                list(
+                                    `name`="beta.ci.lower", 
+                                    `type`="number", 
+                                    `title`="Lower", 
+                                    `visible`="(ci_beta)"),
+                                list(
+                                    `name`="beta.ci.upper", 
+                                    `type`="number", 
+                                    `title`="Upper", 
+                                    `visible`="(ci_beta)"),
                                 list(
                                     `name`="z", 
                                     `title`="z", 

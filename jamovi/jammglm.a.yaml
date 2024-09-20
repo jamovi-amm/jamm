@@ -105,8 +105,6 @@ options:
           title: Bootstrap (BC)
         - name: perc
           title: Bootstrap (Percent)
-        - name: none
-          title: None
       default: standard
       description:
           R: >
@@ -123,6 +121,24 @@ options:
           R: >
             a number between 50 and 99.9 (default: 95) specifying the confidence
             interval width for the parameter estimates
+
+
+    - name: ci_b
+      title: Unstandardized (b)
+      type: Bool
+      default: true
+      description:
+          R: >
+            whether to compute confidence intervals for unstandardized coefficients 
+
+    - name: ci_beta
+      title: Standardized (beta)
+      type: Bool
+      default: true
+      description:
+          R: >
+            whether to compute confidence intervals for standardized coefficients (betas) 
+
 
     - name: bootN
       title: Bootstrap Rep.
