@@ -103,7 +103,7 @@ ds.initModelInfo <- function(self) {
     infoTable$addRow(rowKey = "gs1",
                      list(
                        info = "Get started",
-                       specs = "",
+                       specs = " ",
                        value = "Select the dependent variable"
                      ))
     goon<-FALSE
@@ -112,7 +112,7 @@ ds.initModelInfo <- function(self) {
     infoTable$addRow(rowKey = "gs2",
                      list(
                        info = "Get started",
-                       specs = "",
+                       specs = " ",
                        value = "Select at least one mediator"
                      ))
     goon<-FALSE
@@ -124,7 +124,7 @@ ds.initModelInfo <- function(self) {
       rowKey = "gs3",
       list(
         info = "Get Started",
-        specs = "",
+        specs = " ",
         value = "Select at least one factor or covariate as independent variable"
       )
     )
