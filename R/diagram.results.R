@@ -150,12 +150,12 @@ ds.modelInfo <- function(infos, self, n64) {
   if (infos$hasSuggested())
     infoTable$addRow(
       rowKey = "sug",
-      list(info = "Overal Model", value = "The model is not a full-fledged mediational model")
+      list(info = "Overal Model", specs=" ",value = "The model is not a full-fledged mediational model")
     )
   
   if (infos$hasRequired()) {
     infoTable$addRow(rowKey = "req",
-                     list(info = "Overal Model", value = "The mediational model is incomplete"))
+                     list(info = "Overal Model",specs=" ", value = "The mediational model is incomplete"))
   }
   
   if (infos$isEstimable()) {
