@@ -397,6 +397,9 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     active = list(
         model = function() private$..model,
         info = function() private$.items[["info"]],
+        extrainfo = function() private$.items[["extrainfo"]],
+        issues = function() private$.items[["issues"]],
+        infotab = function() private$.items[["infotab"]],
         models = function() private$.items[["models"]],
         regressions = function() private$.items[["regressions"]],
         pathgroup = function() private$.items[["pathgroup"]]),
@@ -409,9 +412,23 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 name="",
                 title="GLM Mediation Analysis")
             private$..model <- NULL
-            self$add(jmvcore::Table$new(
+            self$add(jmvcore::Html$new(
                 options=options,
                 name="info",
+                title="Introduction"))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="extrainfo",
+                title="Extra Info",
+                visible=FALSE))
+            self$add(jmvcore::Html$new(
+                options=options,
+                name="issues",
+                title="Issues",
+                visible=FALSE))
+            self$add(jmvcore::Table$new(
+                options=options,
+                name="infotab",
                 title="Models Info",
                 columns=list(
                     list(
@@ -465,7 +482,7 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             columns=list(
                                 list(
                                     `name`="lhs", 
-                                    `title`="Variable", 
+                                    `title`="Pred.Variable", 
                                     `type`="text"),
                                 list(
                                     `name`="r2", 
@@ -1016,7 +1033,8 @@ jammGLMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 revision = revision,
                 pause = NULL,
                 completeWhenFilled = FALSE,
-                requiresMissings = FALSE)
+                requiresMissings = FALSE,
+                weightsSupport = 'auto')
         }))
 
 #' GLM Mediation Model
@@ -1075,7 +1093,10 @@ jammGLMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$model} \tab \tab \tab \tab \tab The underlying \code{lavaan} object \cr
-#'   \code{results$info} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$info} \tab \tab \tab \tab \tab a html \cr
+#'   \code{results$extrainfo} \tab \tab \tab \tab \tab a html \cr
+#'   \code{results$issues} \tab \tab \tab \tab \tab a html \cr
+#'   \code{results$infotab} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$models$r2} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$models$interactions} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$models$coefficients} \tab \tab \tab \tab \tab a table \cr
@@ -1091,9 +1112,9 @@ jammGLMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
 #'
-#' \code{results$info$asDF}
+#' \code{results$infotab$asDF}
 #'
-#' \code{as.data.frame(results$info)}
+#' \code{as.data.frame(results$infotab)}
 #'
 #' @export
 jammGLM <- function(

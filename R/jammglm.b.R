@@ -22,7 +22,7 @@ jammGLMClass <- R6::R6Class(
             private$.ready<-readiness(self$options)
             if (!private$.ready$ready) {
                   if(private$.ready$report)
-                      self$results$info$addRow("info",list(info="Setup",specs=private$.ready$reason))
+                      self$results$infotab$addRow("info",list(info="Setup",specs=private$.ready$reason))
                 return()
             }
             ### prepare R6 classes that do the work ####
@@ -31,9 +31,9 @@ jammGLMClass <- R6::R6Class(
             plot_machine<-Plotter$new(self$options,data_machine,lav_machine,self$results$pathgroup)
             
             ### fill the info table ###
-            j.init_table(self$results$info,lav_machine$tab_info)
-            j.init_table_append(self$results$info,lav_machine$models())
-            j.init_table_append(self$results$info,lav_machine$tab_indirect)
+            j.init_table(self$results$infotab,lav_machine$tab_info)
+            j.init_table_append(self$results$infotab,lav_machine$models())
+            j.init_table_append(self$results$infotab,lav_machine$tab_indirect)
 
 
             j.init_table(self$results$models$r2,lav_machine$tab_r2,ci=T,ciwidth=self$options$ciWidth)
@@ -104,14 +104,14 @@ jammGLMClass <- R6::R6Class(
             warns<-lav_machine$warnings
             if (is.something(warns[["main"]]))
                 for (i in seq_along(warns[["main"]]))
-                      self$results$info$setNote(i,warns[["main"]][[i]])
+                      self$results$infotab$setNote(i,warns[["main"]][[i]])
 
             if (is.something(lav_machine$errors)) {
                     stop(paste(lav_machine$errors,collapse = "; "))
             } 
 
             ## fit info
-            j.fill_table(self$results$info,lav_machine$tab_info)
+            j.fill_table(self$results$infotab,lav_machine$tab_info)
             
             ## interactions
             j.fill_table(self$results$models$interactions,lav_machine$tab_interactions)

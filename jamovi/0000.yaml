@@ -19,6 +19,7 @@ analyses:
     menuSubgroup: jAMM
     menuTitle: GLM Mediation Model
     description: GLM mediation model
+    category: analyses
 datasets:
   - name: coopmedmod
     path: coopmedmod.csv
