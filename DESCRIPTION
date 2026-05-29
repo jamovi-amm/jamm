@@ -11,4 +11,4 @@ LazyData: true
 Imports: jmvcore (>= 0.8.0), diagram, gridExtra, lavaan, semPlot, parallel, snow
 Depends: jmvcore
 Exports: jammGLM
-RoxygenNote: 7.2.3
+Config/roxygen2/version: 8.0.0
