@@ -1,31 +1,6 @@
 
-.regression_table<-function(modelFormula,data,ciWidth) {
-     
-     estimates <- try({
-       model<-stats::lm(modelFormula, data=data)
-       smr<-summary(model)
-       res<-as.data.frame(smr$coefficients)
-       res$df<-smr$df[2]
-       ci<-confint(model,level = ciWidth)
-       res<-cbind(res,ci)
-       colnames(res)<-c("estimate","se","t","p","df","cilow","cihig")
-       res
-        })
-     if (jmvcore::isError(estimates)) {
-           msg<-jmvcore::extractErrorMessage(estimates)
-           msg<-names64$translate(msg)
-           jmvcore::reject(msg, code='error')
-     }
+.regression_tables<-function(modelFormula,data,ciWidth) {
 
-     toscale<-all.vars(as.formula(modelFormula))
-     zdata<-as.data.frame(scale(data[,toscale]))
-     beta<-stats::lm(modelFormula, data=zdata)
-     estimates$beta<-beta$coefficients
-     estimates[-1,]
-}
-
-.regression_tables<-function(modelFormula,data,names64,ciWidth) {
-  
   estimates <- try({
     model<-stats::lm(modelFormula, data=data)
     smr<-summary(model)
@@ -40,10 +15,9 @@
   })
   if (jmvcore::isError(estimates)) {
     msg<-jmvcore::extractErrorMessage(estimates)
-    msg<-names64$translate(msg)
     jmvcore::reject(msg, code='error')
   }
-  
+
   toscale<-all.vars(as.formula(modelFormula))
   zdata<-as.data.frame(scale(data[,toscale]))
   beta<-stats::lm(modelFormula, data=zdata)
@@ -51,123 +25,152 @@
   list(estimates[-1,],anov)
 }
 
+### expandTerms() marks factor dummies as "var<FACTOR_SYMBOL>level" (see Syntax$.factorlist());
+### strip that back to the "var<level>" convention used elsewhere (e.g. models$contrastCodeTable)
+### for a readable row label.
+.term_label<-function(term) {
+  jmvcore::stringifyTerm(gsub(FACTOR_SYMBOL,"",term,fixed=TRUE))
+}
 
-regressions.init<-function(infos,data, options, results, names64) {
+
+### Declares the (empty) rows for the "individual regressions" tables.
+### Filled with numbers later by regressions.results(), once the data are estimated.
+### Works off self$options (dep/mediators/mediatorsTerms/modelTerms) plus lav_machine
+### (the Estimate/Syntax instance), which is used to expand any factor term into one
+### row per contrast dummy - matching what stats::lm() will actually produce.
+regressions.init<-function(options, results, lav_machine) {
+
+  if (!("regression" %in% options$tableOptions))
+    return()
 
   results$regressions$setTitle("Regressions Results")
-  #initial model
+
+  dep<-options$dep
+  mediators<-options$mediators
+  modelTerms<-options$modelTerms
+  mediatorsTerms<-options$mediatorsTerms
+
+  ## "total effects" model: the full model with any mediator-related term removed
+  totalterms<-Filter(function(term) length(intersect(mediators,term))==0, modelTerms)
+  totalterms<-lav_machine$expandTerms(totalterms)
+
   agroup<-results$regressions$overall
   atable<-agroup$regression
-  mod<-infos$original_fullmodel
-  atable$setTitle(paste("Total effects predicting:",names64$nicenames(mod$dep)))
-  amodel<-remove_a_from_b(infos$mediators,mod$ind)
-  anames<-names64$nicenames(amodel)
-  alabels<-names64$nicelabels(amodel)
-  for (i in seq_along(amodel)) {
-    term<-jmvcore::stringifyTerm(anames[[i]])
-    label<-jmvcore::stringifyTerm(alabels[[i]])
-    atable$addRow(rowKey=paste0(amodel[i]),list("source"=term,"label"=label))
+  atable$setTitle(paste("Total effects predicting:",dep))
+  for (term in totalterms) {
+    key<-paste(term,collapse=":")
+    label<-.term_label(term)
+    atable$addRow(rowKey=key,list(source=label,label=label))
   }
 
-  ### mediators model
+  ### mediators models
   medgroups<-results$regressions$mediator_regressions
-  if (length(infos$mediators)>1)
+  if (length(mediators)>1)
     medgroups$setTitle("Mediators Models")
-  
-  for (mod in infos$original_medmodels) {
-    agroup<-medgroups$addItem(key=mod$dep)
-    agroup$setTitle(paste("Dependent variable:",names64$nicenames(mod$dep)))
-    amodel<-mod$ind
-    anames<-names64$nicenames(amodel)
-    alabels<-names64$nicelabels(amodel)
-    atable<-agroup$regression
-    for (i in seq_along(amodel)) {
-      term<-jmvcore::stringifyTerm(anames[[i]])
-      label<-jmvcore::stringifyTerm(alabels[[i]])
-      atable$addRow(rowKey=paste0(amodel[i]),list("source"=term,"label"=label))
-    }
-    
-    
-  }
-  
-  
-  ### full model  
-  fullgroup<-results$regressions$full
-  fullrtable<-fullgroup$regression  
-  fullrtable$setTitle(paste("Full model predicting",names64$nicenames(infos$original_fullmodel$dep)))
-  fullmodel<-infos$original_fullmodel$ind
-  fullnames<-names64$nicenames(fullmodel)
-  fulllabels<-names64$nicelabels(fullmodel)
 
-  for (i in seq_along(fullmodel)) {
-    term<-jmvcore::stringifyTerm(fullnames[[i]])
-    label<-jmvcore::stringifyTerm(fulllabels[[i]])
-    fullrtable$addRow(rowKey=paste0(fullmodel[i]),list("source"=term,"label"=label))
+  for (i in seq_along(mediators)) {
+    med<-mediators[i]
+    terms_i<-lav_machine$expandTerms(mediatorsTerms[[i]])
+    agroup<-medgroups$addItem(key=med)
+    agroup$setTitle(paste("Dependent variable:",med))
+    atable<-agroup$regression
+    for (term in terms_i) {
+      key<-paste(term,collapse=":")
+      label<-.term_label(term)
+      atable$addRow(rowKey=key,list(lhs=med,rhs=label))
+    }
+  }
+
+  ### full model
+  fullterms<-lav_machine$expandTerms(modelTerms)
+  fullgroup<-results$regressions$full
+  fullrtable<-fullgroup$regression
+  fullrtable$setTitle(paste("Full model predicting",dep))
+  for (term in fullterms) {
+    key<-paste(term,collapse=":")
+    label<-.term_label(term)
+    fullrtable$addRow(rowKey=key,list(lhs=dep,rhs=label))
   }
 
 }
 
-regressions.results<-function(infos,data, options, results, names64) {
+### Fills the "individual regressions" tables declared by regressions.init().
+### `data` must already be the b64-renamed, cleaned data frame produced by
+### Datamatic$cleandata() (same data the main mediation model is estimated on).
+### `lav_machine` builds the B64/factor-dummy-aware formulas so the fit is
+### consistent with the main mediation model.
+regressions.results<-function(options, data, results, lav_machine) {
+
+  if (!("regression" %in% options$tableOptions))
+    return()
 
   ciWidth<-options$ciWidth/100
 
-  ## initial model
-  agroup<-results$regressions$overall
-  atable<-agroup$regression
-  # here we have to deduce the total model because infos does not compute it
-  # it is the full model without mediators
-  mod<-infos$original_fullmodel
-  modelterms<-remove_a_from_b(infos$mediators,mod$ind)
-  modelFormula<-jmvcore::composeFormula(mod$dep,modelterms)
-  tables<-.regression_tables(modelFormula,data,names64,ciWidth) 
-  rtable<-tables[[1]] 
-  atable<-tables[[2]]
+  dep<-options$dep
+  mediators<-options$mediators
+  modelTerms<-options$modelTerms
+  mediatorsTerms<-options$mediatorsTerms
 
+  ## total effects
+  totalterms<-Filter(function(term) length(intersect(mediators,term))==0, modelTerms)
+  modelFormula<-lav_machine$modelFormula64(dep,totalterms)
+  totalterms<-lav_machine$expandTerms(totalterms)
+  tables<-.regression_tables(modelFormula,data,ciWidth)
+  rtable<-tables[[1]]
+  anov<-tables[[2]]
+  anov$dep<-dep
+
+  agroup<-results$regressions$overall
   outtable<-agroup$regression
-  for (i in seq_along(modelterms)) {
-    outtable$setRow(rowKey=paste0(modelterms[i]),rtable[i,])
+  for (i in seq_along(totalterms)) {
+    key<-paste(totalterms[[i]],collapse=":")
+    outtable$setRow(rowKey=key,rtable[i,])
   }
-  outtable<-agroup$anova
-      outtable$addRow(rowKey=1,atable)
-  
-  
-    
-  ### mediators model
+  agroup$anova$addRow(rowKey=1,anov)
+
+
+  ### mediators models
   medgroups<-results$regressions$mediator_regressions
-  
-  for (mod in infos$original_medmodels) {
-    agroup<-medgroups$get(key=mod$dep)
-    modelterms<-mod$ind
-    modelFormula<-jmvcore::composeFormula(mod$dep,modelterms)
-    tables<-.regression_tables(modelFormula,data,names64,ciWidth)
-    rtable<-tables[[1]] 
-    atable<-tables[[2]]
-    
+
+  for (i in seq_along(mediators)) {
+    med<-mediators[i]
+    terms_i<-mediatorsTerms[[i]]
+    modelFormula<-lav_machine$modelFormula64(med,terms_i)
+    terms_i<-lav_machine$expandTerms(terms_i)
+    tables<-.regression_tables(modelFormula,data,ciWidth)
+    rtable<-tables[[1]]
+    anov<-tables[[2]]
+    anov$lhs<-med
+
+    agroup<-medgroups$get(key=med)
     outtable<-agroup$regression
-    for (i in seq_along(modelterms)) {
-      outtable$setRow(rowKey=paste0(modelterms[i]),rtable[i,])
+    for (j in seq_along(terms_i)) {
+      key<-paste(terms_i[[j]],collapse=":")
+      row<-rtable[j,]
+      row$lhs<-med
+      row$rhs<-.term_label(terms_i[[j]])
+      outtable$setRow(rowKey=key,row)
     }
-    outtable<-agroup$anova
-    outtable$addRow(rowKey=1,atable)
-    
-    
-  }  
-  
-  ## full models  
-  modelterms<-infos$original_fullmodel$ind
-  modelFormula<-jmvcore::composeFormula(infos$original_fullmodel$dep,modelterms)
-  tables<-.regression_tables(modelFormula,data,names64,ciWidth) 
-  rtable<-tables[[1]] 
-  atable<-tables[[2]]
-  
+    agroup$anova$addRow(rowKey=1,anov)
+  }
+
+  ## full model
+  modelFormula<-lav_machine$modelFormula64(dep,modelTerms)
+  fullterms<-lav_machine$expandTerms(modelTerms)
+  tables<-.regression_tables(modelFormula,data,ciWidth)
+  rtable<-tables[[1]]
+  anov<-tables[[2]]
+  anov$lhs<-dep
+
   fullgroup<-results$regressions$full
   outtable<-fullgroup$regression
-  for (i in seq_along(modelterms)) {
-    outtable$setRow(rowKey=paste0(modelterms[i]),rtable[i,])
+  for (i in seq_along(fullterms)) {
+    key<-paste(fullterms[[i]],collapse=":")
+    row<-rtable[i,]
+    row$lhs<-dep
+    row$rhs<-.term_label(fullterms[[i]])
+    outtable$setRow(rowKey=key,row)
   }
-  outtable<-fullgroup$anova
-  outtable$addRow(rowKey=1,atable)
-  
+  fullgroup$anova$addRow(rowKey=1,anov)
+
 }
-  
-  

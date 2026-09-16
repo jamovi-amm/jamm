@@ -65,6 +65,7 @@ Syntax <- R6::R6Class(
                 self$factorinfo<-factorinfo
                 self$lav_terms<-lapply(self$endogenousTerms, function(alist) private$.factorlist(alist,factorinfo))
                 names(factorinfo)<-tob64(names(factorinfo))
+                private$.factorinfo64<-factorinfo
                 private$.lav_terms<-lapply(tob64(self$endogenousTerms), function(alist) private$.factorlist(alist,factorinfo))
                 private$.lav_moderators<-unlist(lapply(tob64(self$moderators), function(alist) private$.factorlist(alist,factorinfo)))
                 
@@ -85,19 +86,37 @@ Syntax <- R6::R6Class(
                 
                 ### here we update to build a lavaanify structure
 
-                private$.make_structure()  
-                private$.check_ols()
-                private$.make_tables()  
+                private$.make_structure()
+                private$.make_tables()
                 
                 }, # here initialize ends
                models=function() {
-                  lapply(seq_along(self$endogenousTerms), 
+                  lapply(seq_along(self$endogenousTerms),
                        function(i) list(info="Model",
                                         value=as.character(jmvcore::constructFormula(dep=self$endogenous[i],
                                                                                      self$endogenousTerms[[i]])))
                 )
+              },
+              ### builds a `dep ~ terms` formula string using the actual B64-named, factor-dummy-expanded
+              ### columns that exist in the cleaned data (same convention as private$.lav_terms), so callers
+              ### (e.g. regressions.R) can fit plain lm() models consistently with the main mediation model.
+              modelFormula64=function(dep,terms) {
+                dep64<-tob64(dep)
+                terms64<-self$expandTerms(terms,b64=TRUE)
+                jmvcore::composeFormula(dep64,terms64)
+              },
+              ### expands a list of (plain-name) terms so that any term mentioning a factor becomes
+              ### one term per contrast dummy (matching how many rows a fitted lm() will actually produce).
+              ### b64=TRUE additionally B64-encodes everything, giving the exact column names present
+              ### in the cleaned data (same convention as private$.lav_terms / Datamatic$cleandata()).
+              expandTerms=function(terms,b64=FALSE) {
+                if (b64)
+                  terms<-lapply(tob64(terms), function(t) private$.factorlist(list(t),private$.factorinfo64))
+                else
+                  terms<-lapply(terms, function(t) private$.factorlist(list(t),self$factorinfo))
+                unlist(terms,recursive=FALSE)
               }
-              
+
           ),   # End public
           active=list(
            ### inherited warnings and errors are overriden to check specific message to change, and then passed to super 
@@ -139,7 +158,8 @@ Syntax <- R6::R6Class(
             .lav_varcov=NULL,
             .lav_moderators=NULL,
             .indirect_names=NULL,
-            
+            .factorinfo64=NULL,
+
 
             ### collapse the informations in the private lists of terms and constraints and produce a lavaan syntax string
             .lavaan_syntax=function() {
@@ -497,32 +517,13 @@ Syntax <- R6::R6Class(
               names(self$total_names)<-totals
               self$direct_names<-direct_names
             },
+            ## NOTE: the "individual regressions" tables (Total effects / Full model /
+            ## per-mediator regressions) are populated directly from self$options and the
+            ## cleaned data in R/regressions.R (regressions.init/regressions.results),
+            ## called from jammGLMClass$.init()/.run(). This method (and the ols_* fields
+            ## above) is no longer used.
             .check_ols=function() {
-              
-              if (!("regression" %in% self$options$tableOptions))
-                 return()
-              deps<-unlist(c(self$options$mediators,self$options$dep))
-              
-              self$ols_total<-lapply(deps, function(x) {
-                  x
-              })
-              self$ols_mediators<-lapply(self$options$mediators, function(x) {
-                x
-              })
-              
-              names(self$ols_mediators)<-deps
-              
-              ols_med1<-lapply(self$options$mediators, function(x) {
-                x
-              })
-              names(self$ols_mediators)<-self$options$mediators
-              
-              ols_med2<-lapply(self$options$mediatorsTerms, function(x) {
-                 x
-              })
-
-              self$ols_full<-self$options$modelTerms
-
+              invisible(NULL)
             }
             
             

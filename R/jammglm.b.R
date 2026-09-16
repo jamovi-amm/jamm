@@ -46,21 +46,8 @@ jammGLMClass <- R6::R6Class(
 
 
 
-            ### prepare regressions ###
-            if ("regression" %in% self$options$tableOptions) {
-                maingroup<-self$results$regressions$mediator_regressions
-                tablename<-"anova"
-                for (atab in names(lav_machine$ols_r2)) {
-                    alist<-lav_machine$ols_r2[[atab]]
-                    agroup<-maingroup$addItem(key=atab)
-                    atable<-agroup[[tablename]]
-                    for (i in seq_along(alist)) {
-                        atable$addRow(i,alist[i])
-                    }
-                }
-                
-                
-            }
+            ### prepare regressions (Total effects / Full model / per-mediator regressions) ###
+            regressions.init(self$options,self$results,lav_machine)
 
             
             
@@ -123,7 +110,10 @@ jammGLMClass <- R6::R6Class(
 
             j.fill_table(self$results$models$r2,lav_machine$tab_r2)
             j.add_warnings(self$results$models$r2,lav_machine,"r2")
-            
+
+            ### fill regressions (Total effects / Full model / per-mediator regressions) ###
+            regressions.results(self$options,data,self$results,lav_machine)
+
 
 
 
@@ -193,41 +183,57 @@ jammGLMClass <- R6::R6Class(
 
         },
         .marshalFormula= function(formula, data, name) {
-            return()
-            endogenous<-list()
-            endogenousTerms<-list()
-            j<-0
-            for (i in seq_along(formula)) {
-                if (lgrep("<|>|==|~~",formula[[i]]))
-                    warning("Constraints and defined parameters are ignored in `formula`. Please use `constraints` option")
-                else {
-                    j<-j+1
-                    line<-as.formula(formula[[i]])
-                    endogenous[[j]]<-as.character(line[[2]])
-                    endogenousTerms[[j]]<-jmvcore::decomposeFormula(expand.formula(as.formula(line)))
-                }
-            }
-            exogenous<-setdiff(unique(unlist(endogenousTerms)),endogenous)
-            allvars<-unlist(c(endogenous,exogenous))
-            if (name=="endogenous")
-                return(endogenous)
-            if (name=="endogenousTerms")
-                return(endogenousTerms)
-            if (name=="exogenous")
-                return(exogenous)
 
-            data<-data[0,allvars]
-            
-            if (name=="covs") {
-                return(allvars[(!sapply(data, is.factor))])
+            formula<-lapply(formula,expand.formula)
+
+            if (name=="simpleScale")
+                return("mean_sd")
+            deps<-sapply(formula, function(f) jmvcore::marshalFormula(f,data,from = "lhs"))
+            ivs<-unique(unlist(sapply(formula, function(f) jmvcore::marshalFormula(f,data,from = "rhs"))))
+            factors<-unique(unlist(sapply(formula, function(f) jmvcore::marshalFormula(f,data,from = "rhs",permitted = "factor"))))
+            covs<-setdiff(ivs,factors)
+            dep<-setdiff(deps,ivs)
+            meds<-intersect(deps,ivs)
+
+            if (name=="dep") {
+                if (length(dep)>1)
+                    jmvcore::reject("The models in formula imply more than one dependent variable. Please refine your models")
+                return(dep)
             }
             if (name=="factors") {
-                data<-data[0,allvars]
-                return(allvars[(sapply(data, is.factor))])
+                return(factors)
             }
-            
-            
-            
+            if (name=="covs") {
+                return(covs)
+            }
+
+            if (name=="mediators") {
+                if (length(meds)==0)
+                    jmvcore::reject("The models in formula imply no mediator. Please refine your models")
+                return(meds)
+            }
+            if (name=="mediatorsTerms") {
+                medsterms<-lapply(formula, function(f) {
+                    .dep<-jmvcore::marshalFormula(f,data,from = "lhs")
+                    res<-NULL
+                    if (.dep %in% meds)
+                        res<-jmvcore::marshalFormula(f,data,from = "rhs",type = "terms")
+                    res
+                })
+                medsterms<-medsterms[-which(sapply(medsterms, is.null))]
+                return(medsterms)
+            }
+
+            if (name=="modelTerms") {
+                for (f in formula) {
+                    .dep<-jmvcore::marshalFormula(f,data,from = "lhs")
+                    .vars<-jmvcore::marshalFormula(f,data,from = "rhs")
+                    .ivs<-unique(unlist(.vars))
+                    if (.dep==dep & length(intersect(meds,.ivs))>0)
+                        return(jmvcore::marshalFormula(f,data,from = "rhs",type = "terms"))
+                }
+            }
+
         },
         
         .formula = function() {
