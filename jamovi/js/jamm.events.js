@@ -27,6 +27,9 @@ const events = {
     },
 
     onChange_modelSupplier: function(ui) {
+       // Supplier refreshes during restoration must not edit saved options.
+       if (this.workspace.initializing)
+           return;
        fromSupplierToModelTerms(ui,this);
     },
     onUpdate_modelSupplier: function(ui) {
@@ -34,6 +37,9 @@ const events = {
     },
 
     onChange_mediatorsSupplier: function(ui) {
+       // Only genuine supplier edits should propagate to the regressions.
+       if (this.workspace.initializing)
+           return;
        log("mediatorsSupplier has changed");
        fromSupplierToMediatorsTerms(ui, this);
        fromMediatorsToModelTerms(ui, this);
@@ -44,12 +50,17 @@ const events = {
             log("mediatorsSupplier update");
             let factorsList = this.cloneArray(ui.factors.value(), []);
             let covariatesList = this.cloneArray(ui.covs.value(), []);
-            var variablesList = factorsList.concat(covariatesList);
+            // Match updateSuppliers so opening this control does not remove mediators.
+            let mediatorsList = this.cloneArray(ui.mediators.value(), []);
+            var variablesList = factorsList.concat(covariatesList).concat(mediatorsList);
             ui.mediatorsSupplier.setValue(this.valuesToItems(variablesList, FormatDef.variable));
 
     },
 
     onChange_moderatorsSupplier: function(ui) {
+          // Restoring controls must leave the saved moderator specification intact.
+          if (this.workspace.initializing)
+              return;
           updateModeratorsTerms(ui, this);
           fromSupplierToModeratorsTerms(ui,this);
     },
@@ -77,12 +88,19 @@ const events = {
     },
 
     onEvent_moderatorChanged: function(ui) {
+        // Ignore notifications emitted while restoring the saved controls.
+        if (this.workspace.initializing)
+            return;
         console.log("moderators have changed");
         fromModeratorsToOthers(ui,this);
    },
   
 
     onEvent_mediatorToTerms: function(ui) {
+      // Rebinding a saved term list is not an edit to its regression equation.
+      if (this.workspace.initializing ||
+          findChangesMulti("mediatorsTerms", this.cloneArray(ui.mediatorsTerms.value(), []), this, false).index < 0)
+          return;
       log("mediators terms changed");
       
     unflashMGridOptionListControl(ui.moderatorsTerms,ui.modeNote);
@@ -100,30 +118,32 @@ const events = {
 
 
 var initializeAll = function(ui, context) {
-    
-    updateSuppliers(ui,context);
-//    updateMediatorsTerms(ui, context);
-//    updateModeratorsTerms(ui, context);
- 
-    var modelSupplierList = context.cloneArray(context.itemsToValues(ui.modelSupplier.value(), []));
-    context.workspace.modelSupplierList=modelSupplierList;
-    var mediatorsSupplierList = context.cloneArray(context.itemsToValues(ui.mediatorsSupplier.value(), []));
-    context.workspace.mediatorsSupplierList=mediatorsSupplierList;
+    // Seed change tracking before supplier updates can emit change events.
+    var factors = context.cloneArray(ui.factors.value(), []);
+    var covariates = context.cloneArray(ui.covs.value(), []);
+    var mediators = context.cloneArray(ui.mediators.value(), []);
+    var components = factors.concat(covariates).concat(mediators);
+    context.workspace.modelSupplierList = context.cloneArray(components);
+    context.workspace.mediatorsSupplierList = context.cloneArray(components);
+    context.workspace.moderatorsSupplierList = factors.concat(covariates);
+    context.workspace.mediatorsTerms = context.cloneArray(ui.mediatorsTerms.value(), []);
+    context.workspace.moderatorsTerms = context.cloneArray(ui.moderatorsTerms.value(), []);
+    context.workspace.impliedModelTerms = impliedModelTerms(ui, context);
 
-    /// fix the mediatots terms 
-    var mediators= context.cloneArray(ui.mediators.value(), []);
-
-    var mediatorsTerms= context.cloneArray(ui.mediatorsTerms.value(), []);
-    context.workspace.mediatorsTerms=mediatorsTerms;
-
-    var moderatorsTerms= context.cloneArray(ui.moderatorsTerms.value(), []);
-    context.workspace.moderatorsTerms=moderatorsTerms;
-    
-    // this is for hiding the labels used for warnings 
+    // Saved outcome terms are authoritative, even if defaults would differ.
+    context.workspace.initializing = true;
+    try {
+       updateSuppliers(ui,context);
+       labelize(ui.mediatorsTerms, mediators, "Mediator");
+       labelize(ui.moderatorsTerms, mediators, "Mediator");
+       // Hide the labels used for warnings.
        ui.bogus.$el[0].remove();
        ui.modeNote.$el[0].style.visibility="hidden";
        ui.modeNote.$el[0].style.color="red";
-    
+    }
+    finally {
+       context.workspace.initializing = false;
+    }
 };
 
 
@@ -150,6 +170,9 @@ var fromSupplierToMediatorsTerms= function(ui,context) {
 
      var mediatorsSupplierList = context.cloneArray(context.itemsToValues(ui.mediatorsSupplier.value()),[]);
      var diff = context.findChanges("mediatorsSupplierList",mediatorsSupplierList,context);
+     // Supplier initialization and repeated notifications are not model edits.
+     if (diff.added.length === 0 && diff.removed.length === 0)
+         return;
      var mediators = context.cloneArray(ui.mediators.value(),[]);
      var mediatorsTerms = context.cloneArray(ui.mediatorsTerms.value(),[]);
      var moderatorsTerms = context.cloneArray(ui.moderatorsTerms.value(),[]);
@@ -177,9 +200,10 @@ var fromSupplierToMediatorsTerms= function(ui,context) {
     if (diff.removed.length>0)
         light = removeFromMultiList(diff.removed,light,context,1);
     log(light)
+    // Store first so synchronous control notifications see the new baseline.
+    storeComponent("mediatorsTerms",context.cloneArray(light),context);
     ui.mediatorsTerms.setValue(light);    
     labelize(ui.mediatorsTerms,mediators, "Mediator");  
-    storeComponent("mediatorsTerms",light,context);
 };
 
 
@@ -351,8 +375,23 @@ var fromModeratorsToOthers = function(ui,context) {
 };
 
 var  fromMediatorsToModelTerms = function(ui,context) {
-    
      log("fromMediatorsToModelTerms");
+     if (context.workspace.initializing)
+         return;
+
+     // Add only newly implied terms; preserve outcome-only terms and intentional omissions.
+     var implied = impliedModelTerms(ui, context);
+     var previous = context.cloneArray(context.workspace.impliedModelTerms, []);
+     var added = removeFromList(previous, implied, context, 0);
+     context.workspace.impliedModelTerms = context.cloneArray(implied);
+     if (added.length > 0) {
+         var modelTerms = context.cloneArray(ui.modelTerms.value(), []);
+         ui.modelTerms.setValue(addToList(added, modelTerms, context));
+     }
+};
+
+// Calculate defaults separately so they can be compared without replacing saved terms.
+var impliedModelTerms = function(ui,context) {
      var mediators = context.cloneArray(ui.mediators.value(),[]);
      var mediatorsTerms = flatMulti(context.cloneArray(ui.mediatorsTerms.value(),[]),context);
      var modelTerms = [];
@@ -364,7 +403,7 @@ var  fromMediatorsToModelTerms = function(ui,context) {
            meds=meds.concat(ameds);
      }
     modelTerms=addToList(unique(meds),modelTerms,context);
-    ui.modelTerms.setValue(modelTerms);
+    return modelTerms;
 
 };
 
