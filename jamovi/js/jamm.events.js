@@ -381,7 +381,9 @@ var  fromMediatorsToModelTerms = function(ui,context) {
 
      // Add only newly implied terms; preserve outcome-only terms and intentional omissions.
      var implied = impliedModelTerms(ui, context);
-     var previous = context.cloneArray(context.workspace.impliedModelTerms, []);
+     // Supplier events can arrive before initialization creates this snapshot.
+     // Default before cloning: jamovi's cloneArray cannot JSON-clone undefined.
+     var previous = context.cloneArray(context.workspace.impliedModelTerms === undefined ? [] : context.workspace.impliedModelTerms, []);
      var added = removeFromList(previous, implied, context, 0);
      context.workspace.impliedModelTerms = context.cloneArray(implied);
      if (added.length > 0) {

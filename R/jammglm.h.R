@@ -969,7 +969,16 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "mediatorsTerms",
                                 "modelTerms",
                                 "moderatorsTerms",
-                                "pathOptions"),
+                                "pathOptions",
+                                "meddiagram",
+                                "diagram",
+                                "diag_paths",
+                                "diag_resid",
+                                "diag_labsize",
+                                "diag_rotate",
+                                "diag_type",
+                                "diag_shape",
+                                "diag_abbrev"),
                             refs="diagram"))
                         self$add(jmvcore::Table$new(
                             options=options,
@@ -993,6 +1002,9 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 width=700,
                                 height=500,
                                 clearWith=list(
+                                    "pathOptions",
+                                    "meddiagram",
+                                    "diagram",
                                     "diag_resid",
                                     "diag_paths",
                                     "diag_labsize",
