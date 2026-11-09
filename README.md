@@ -35,6 +35,12 @@ Providers return row data, not jamovi result objects. `Runner$estimate()` delega
 model estimation to `Estimate`; regression helpers return nested ANOVA and
 coefficient data, with each equation fitted only once per estimation.
 
+The generated `R/jammglm.h.R` contains the options, results, and analysis-base R6
+classes. `R/jammglm.f.R` maintains the public `jammGLM()` R interface and its
+documentation. As in GAMLj, `export: false` in `jamovi/jammglm.a.yaml` prevents
+the jamovi compiler from generating a duplicate interface in the header;
+the function remains exported through its roxygen declaration and `NAMESPACE`.
+
 ## Conditional mediation effects
 
 When moderators are specified, the indirect, direct, total, and optional component
@@ -49,6 +55,13 @@ fit the model. Conditional effects are lavaan-defined parameters, so their stand
 errors and confidence intervals use the selected delta-method or bootstrap
 procedure. Standardized effects use the predictor-to-outcome SD ratio at each
 condition. Models without moderators retain their existing output.
+
+# Tests
+
+Run the R tests from the package directory with `devtools::test()` (requires
+`testthat`). Tests use the bundled `coopmedmod` dataset to compare simple and
+moderated mediation results against independent regression calculations,
+including conditional indirect and total effects at three moderator levels.
 
 # Install
 

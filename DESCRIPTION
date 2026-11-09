@@ -8,7 +8,9 @@ Description: A suite for estimation of mediational models, including multiple me
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
-Imports: jmvcore (>= 0.8.0), diagram, gridExtra, lavaan, diagram
+Imports: jmvcore (>= 0.8.0), diagram, gridExtra, lavaan (>= 0.7-3)
 Depends: jmvcore
+Suggests: testthat (>= 3.0.0)
+Config/testthat/edition: 3
 Exports: jammGLM
 RoxygenNote: 7.1.1

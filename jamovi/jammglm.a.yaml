@@ -4,7 +4,8 @@ title: GLM Mediation Model
 menuGroup: medmod
 version: '1.0.5'
 jas: '1.2'
-export: true
+# The R interface is maintained in R/jammglm.f.R, as in GAMLj.
+export: false
 completeWhenFilled: false
 description:
     main: GLM mediation model

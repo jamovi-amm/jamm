@@ -78,7 +78,9 @@ Estimate <- R6::R6Class("Estimate",
                         .lav_regressions=NULL,
                           
                          .lavaan_estimate=function(data) {
-                           
+                           # Always define the argument, even when no bootstrap
+                           # is requested and lavaan normally leaves it unevaluated.
+                           bootci <- "perc"
                            if (self$options$ciType=="standard") {
                              ci<-TRUE
                              se="standard"
