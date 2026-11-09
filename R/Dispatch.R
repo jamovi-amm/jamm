@@ -6,8 +6,9 @@
 #### warnings and error are passed only to visible tables.
 #### errors are passed directly to the jamovi object. If option final=TRUE, a `stop()` is issued
 
-Dispatch <- R6::R6Class(
-            "Dispatch",
+# Keep result dispatch separate from the model Dispatch class in R6Generic.R.
+TableDispatch <- R6::R6Class(
+            "TableDispatch",
             class=TRUE, 
             cloneable=FALSE, ## should improve performance https://r6.r-lib.org/articles/Performance.html ###
             public=list(

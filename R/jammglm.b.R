@@ -1,279 +1,286 @@
-### This class takes care of passing all information from lavaan tables definitions and estimations  from jamovi input
-### to jamovi results tables. It wokrs using Syntax R6 class, Estimate R6 class, and Plotter R6 class.
-### Syntax R6 class gets all input options and defines the tables required for showing the results. Estimate R6 class inherit from Syntax
-### all properties of the tables and fill them with the actual results estimated with lavaan() function.
-### Estimate inherit from Syntax, so only one instance of Estimate is defined. Here is called lav_machine
-### Filling the results tables is handle by function in jamovi.R (functions starting with j.)
-### Data are handled by a Datamatic R6 class, which does all transformations and checking required.
-
-
 jammGLMClass <- R6::R6Class(
     "jammGLMClass",
-    inherit = jammGLMBase,    private = list(
-        .factors=NULL,
-        .lav_machine=NULL,
-        .data_machine=NULL,
-        .plot_machine=NULL,
-        .model=NULL,
-        .ready=NULL,
+    inherit = jammGLMBase,
+    private = list(
+        .data_machine = NULL,
+        .runner_machine = NULL,
+        .plotter_machine = NULL,
+        .ready = NULL,
+        .time = NULL,
+        .smartObjs = list(),
         .init = function() {
-            ginfo("init")
-            ### check that we have enough information to run ####
-            private$.ready<-readiness(self$options)
+            jinfo("MODULE: jAMM  #### phase init  ####")
+            private$.time <- Sys.time()
+
+            private$.ready <- readiness(self$options)
             if (!private$.ready$ready) {
-                  if(private$.ready$report)
-                      self$results$infotab$addRow("info",list(info="Setup",specs=private$.ready$reason))
+                if (private$.ready$report) {
+                    self$results$infotab$addRow("info", list(info = "Setup", specs = private$.ready$reason))
+                }
                 return()
             }
-            ### prepare R6 classes that do the work ####
-            data_machine<-Datamatic$new(self$options,self$data)
-            lav_machine<-Estimate$new(self$options,data_machine)
-            plot_machine<-Plotter$new(self$options,data_machine,lav_machine,self$results$pathgroup)
-            
-            ### fill the info table ###
-            j.init_table(self$results$infotab,lav_machine$tab_info)
-            j.init_table_append(self$results$infotab,lav_machine$models())
-            j.init_table_append(self$results$infotab,lav_machine$tab_indirect)
 
+            # Set up the R6 workhorse classes, retaining jAMM's data API.
+            dispatch_message_cleaner(self)
+            data_machine <- Datamatic$new(self$options, self$data)
+            runner_machine <- Runner$new(self, data_machine)
+            private$.smartObjs <- list()
 
-            j.init_table(self$results$models$r2,lav_machine$tab_r2,ci=T,ciwidth=self$options$ciWidth)
+            # Information table.
+            aSmartObj <- SmartTable$new(self$results$infotab, runner_machine)
+            ladd(private$.smartObjs) <- aSmartObj
 
-            #### parameter estimates table ####
-            j.init_table(self$results$models$interactions,lav_machine$tab_interactions,ci=T,ciwidth=self$options$ciWidth)
-            
-            #### parameter estimates table ####
-            j.init_table(self$results$models$coefficients,lav_machine$tab_coefficients,ci=T,ciwidth=self$options$ciWidth)
+            # R-squared table.
+            aSmartObj <- SmartTable$new(self$results$models$r2, runner_machine)
+            aSmartObj$ci("", self$options$ciWidth)
+            ladd(private$.smartObjs) <- aSmartObj
 
+            # Interactions start hidden and are activated when table data exist.
+            aSmartObj <- SmartTable$new(self$results$models$interactions, runner_machine)
+            aSmartObj$activateOnData <- TRUE
+            aSmartObj$ci("", self$options$ciWidth)
+            ladd(private$.smartObjs) <- aSmartObj
 
+            # Indirect and total effects.
+            self$results$models$coefficients$getColumn("condition")$setVisible(length(unlist(self$options$moderatorsTerms)) > 0)
+            aSmartObj <- SmartTable$new(self$results$models$coefficients, runner_machine)
+            aSmartObj$ci("", self$options$ciWidth)
+            ladd(private$.smartObjs) <- aSmartObj
 
-            ### prepare regressions (Total effects / Full model / per-mediator regressions) ###
-            regressions.init(self$options,self$results,lav_machine)
+            # Contrast definitions start hidden when no factors are specified.
+            aSmartObj <- SmartTable$new(self$results$models$contrastCodeTable, runner_machine)
+            aSmartObj$activateOnData <- TRUE
+            ladd(private$.smartObjs) <- aSmartObj
 
-            
-            
-            
-            
-            
-            
-            # #### contrast tables ####
-             if (length(self$options$factors)>0) {
-                for (factor in self$options$factors) {
-                 clabs<-data_machine$contrasts_labels[[factor]]
-                 for (i in seq_along(clabs)) {
-                       clab<-clabs[[i]]
-                       self$results$models$contrastCodeTable$addRow(paste0(factor,i),list(rname=paste0(factor,i),clab=clab))
-                 }
-                 self$results$models$contrastCodeTable$setVisible(TRUE)    
-             }
-             }
-            
+            if ("regression" %in% self$options$tableOptions) {
+                self$results$regressions$setTitle("Regressions Results")
+                if (length(self$options$mediators) > 1) {
+                    self$results$regressions$mediator_regressions$setTitle("Mediators Models")
+                }
 
-            private$.lav_machine<-lav_machine
-            private$.data_machine<-data_machine
-            plot_machine$initPlots()
-            private$.plot_machine<-plot_machine 
-            
-            
-        },
-    
-        .run = function() {
-            ginfo("run")
-            ### check that we have enough information to run ####
-            if (!private$.ready$ready)
-                return()
+                # Total-effects ANOVA and regression tables.
+                aSmartObj <- SmartTable$new(self$results$regressions$overall$anova, runner_machine)
+                ladd(private$.smartObjs) <- aSmartObj
 
-            ### clean the data and prepare things ###
-            lav_machine<-private$.lav_machine
-            data<-private$.data_machine$cleandata(self$data,lav_machine$interactions)
+                aSmartObj <- SmartTable$new(self$results$regressions$overall$regression, runner_machine)
+                aSmartObj$title <- paste("Total effects predicting:", self$options$dep)
+                ladd(private$.smartObjs) <- aSmartObj
 
-            lav_machine$estimate(data)
+                # Each mediator owns a group containing ANOVA and coefficients.
+                aSmartObj <- SmartArray$new(self$results$regressions$mediator_regressions, runner_machine)
+                ladd(private$.smartObjs) <- aSmartObj
+                mediatorsSmartObj <- aSmartObj
 
-            warns<-lav_machine$warnings
-            if (is.something(warns[["main"]]))
-                for (i in seq_along(warns[["main"]]))
-                      self$results$infotab$setNote(i,warns[["main"]][[i]])
+                # Full-model ANOVA and regression tables.
+                aSmartObj <- SmartTable$new(self$results$regressions$full$anova, runner_machine)
+                ladd(private$.smartObjs) <- aSmartObj
 
-            if (is.something(lav_machine$errors)) {
-                    stop(paste(lav_machine$errors,collapse = "; "))
-            } 
-
-            ## fit info
-            j.fill_table(self$results$infotab,lav_machine$tab_info)
-            
-            ## interactions
-            j.fill_table(self$results$models$interactions,lav_machine$tab_interactions)
-            
-            
-            
-            ### parameters estimates ####
-            j.fill_table(self$results$models$coefficients,lav_machine$tab_coefficients)
-
-            j.fill_table(self$results$models$r2,lav_machine$tab_r2)
-            j.add_warnings(self$results$models$r2,lav_machine,"r2")
-
-            ### fill regressions (Total effects / Full model / per-mediator regressions) ###
-            regressions.results(self$options,data,self$results,lav_machine)
-
-
-
-
-            ## diagrams
-            private$.plot_machine$preparePlots()   
-            if (is.something(private$.plot_machine$warnings$diagram)) {
-                 for (i in seq_along(private$.plot_machine$warnings$diagram))
-                        self$results$pathgroup$notes$addRow(i,list(message=private$.plot_machine$warnings$diagram[[i]]))
-                  self$results$pathgroup$notes$setVisible(TRUE)
+                aSmartObj <- SmartTable$new(self$results$regressions$full$regression, runner_machine)
+                aSmartObj$title <- paste("Full model predicting", self$options$dep)
+                ladd(private$.smartObjs) <- aSmartObj
             }
-            
-            self$results$.setModel(lav_machine$model)
-        },
- 
-        .showDiagram=function(image,ggtheme, theme, ...) {
-            if (self$options$diagram==FALSE) 
-                return()
-            if (!is.something(image$state$semModel))
-                 return()
-            options<-private$.plot_machine$semPathsOptions
-            res<-try_hard(
-            semPlot::semPaths(object = image$state$semModel,
-                              layout =options$layout,
-                              residuals = options$residuals,
-                              rotation = options$rotation,
-                              intercepts = options$intercepts,
-                              nodeLabels= options$nodeLabels,
-                              whatLabels=options$whatLabels,
-                              sizeMan = options$sizeMan,
-                              sizeMan2=options$sizeMan2,
-                              curve=options$curve,
-                              shapeMan=options$shapeMan,
-                              edge.label.cex =options$edge.label.cex)
-            )
-            note<-FALSE
-            
-            if (!isFALSE(res$error)) {
-                if  (length(grep("Circle layout only supported",res$error,fixed = T))>0) {
-                    res$error<-PLOT_WARNS[["nocircle"]]
-                    note<-TRUE
-                } 
-                if  (length(grep("graph_from_edgelist",res$error,fixed = T))>0) {
-                    res$error<-PLOT_WARNS[["nocircle"]]
-                    note<-TRUE
-                } 
-                if  (length(grep("subscript out of",res$error,fixed = T))>0) {
-                    res$error<-PLOT_WARNS[["fail"]]
-                    note<-TRUE
+
+            # Initialize all registered wrappers, as in GAMLj.
+            private$.smartObjs <- init_smart_tables(private$.smartObjs)
+            if ("regression" %in% self$options$tableOptions) {
+                for (index in seq_along(mediatorsSmartObj$childrenObjs)) {
+                    mediatorsSmartObj$childrenObjs[[index]]$title <- paste("Dependent variable:", self$options$mediators[[index]])
                 }
             }
-            
-            
-            
+
+            private$.data_machine <- data_machine
+            private$.runner_machine <- runner_machine
+
+            # Keep the existing jAMM diagram pipeline separate from table dispatch.
+            plotter_machine <- Plotter$new(self$options, data_machine, runner_machine$estimator, self$results$pathgroup)
+            plotter_machine$initPlots()
+            private$.plotter_machine <- plotter_machine
+
+            jinfo("INIT TIME:", Sys.time() - private$.time, " secs")
+        },
+        .run = function() {
+            runnow <- Sys.time()
+            jinfo("MODULE: jAMM  #### phase run ####")
+
+            if (!private$.ready$ready) {
+                return()
+            }
+
+            data <- private$.data_machine$cleandata(self$data, private$.runner_machine$estimator$interactions)
+            private$.runner_machine$estimate(data)
+
+            # Run tables through SmartTabs, never by calling the providers here.
+            for (smarttab in private$.smartObjs) {
+                smarttab$runTable()
+            }
+
+            # Preserve the existing diagram preparation and warning reporting.
+            private$.plotter_machine$preparePlots()
+            if (is.something(private$.plotter_machine$warnings$diagram)) {
+                for (index in seq_along(private$.plotter_machine$warnings$diagram)) {
+                    self$results$pathgroup$notes$addRow(index, list(message = private$.plotter_machine$warnings$diagram[[index]]))
+                }
+                self$results$pathgroup$notes$setVisible(TRUE)
+            }
+
+            self$results$.setModel(private$.runner_machine$estimator$model)
+
+            jinfo("MODULE: jAMM  #### phase end ####")
+            jinfo("RUN TIME:", Sys.time() - runnow, " secs")
+            jinfo("TIME:", Sys.time() - private$.time, " secs")
+        },
+        # This callback matches pathmodel's renderFun, not the semPlot images.
+        .showModelDiagram = function(image, ggtheme, theme, ...) {
+            if (!self$options$meddiagram || is.null(image$state$modelDiagram)) {
+                return()
+            }
+            plot_model_diagram(image$state$modelDiagram)
+            return(TRUE)
+        },
+        .showDiagram = function(image, ggtheme, theme, ...) {
+            if (self$options$diagram == FALSE) {
+                return()
+            }
+            if (!is.something(image$state$semModel)) {
+                return()
+            }
+            options <- private$.plotter_machine$semPathsOptions
+            res <- try_hard(
+                semPlot::semPaths(
+                    object = image$state$semModel,
+                    layout = options$layout,
+                    residuals = options$residuals,
+                    rotation = options$rotation,
+                    intercepts = options$intercepts,
+                    nodeLabels = options$nodeLabels,
+                    whatLabels = options$whatLabels,
+                    sizeMan = options$sizeMan,
+                    sizeMan2 = options$sizeMan2,
+                    curve = options$curve,
+                    shapeMan = options$shapeMan,
+                    edge.label.cex = options$edge.label.cex
+                )
+            )
+            note <- FALSE
+
             if (!isFALSE(res$error)) {
-                 self$results$pathgroup$notes$addRow("err",list(message=res$error))
-                 note<-TRUE
+                if (length(grep("Circle layout only supported", res$error, fixed = TRUE)) > 0) {
+                    res$error <- PLOT_WARNS[["nocircle"]]
+                    note <- TRUE
+                }
+                if (length(grep("graph_from_edgelist", res$error, fixed = TRUE)) > 0) {
+                    res$error <- PLOT_WARNS[["nocircle"]]
+                    note <- TRUE
+                }
+                if (length(grep("subscript out of", res$error, fixed = TRUE)) > 0) {
+                    res$error <- PLOT_WARNS[["fail"]]
+                    note <- TRUE
+                }
+            }
+
+            if (!isFALSE(res$error)) {
+                self$results$pathgroup$notes$addRow("err", list(message = res$error))
+                note <- TRUE
             }
             if (!isFALSE(res$warning)) {
-                self$results$pathgroup$notes$addRow("war",list(message=res$warning))
-                note<-TRUE
+                self$results$pathgroup$notes$addRow("war", list(message = res$warning))
+                note <- TRUE
             }
 
-            if (note)
+            if (note) {
                 self$results$pathgroup$notes$setVisible(TRUE)
+            }
 
             return(TRUE)
-
         },
-        .marshalFormula= function(formula, data, name) {
+        .marshalFormula = function(formula, data, name) {
+            formula <- lapply(formula, expand.formula)
 
-            formula<-lapply(formula,expand.formula)
-
-            if (name=="simpleScale")
+            if (name == "simpleScale") {
                 return("mean_sd")
-            deps<-sapply(formula, function(f) jmvcore::marshalFormula(f,data,from = "lhs"))
-            ivs<-unique(unlist(sapply(formula, function(f) jmvcore::marshalFormula(f,data,from = "rhs"))))
-            factors<-unique(unlist(sapply(formula, function(f) jmvcore::marshalFormula(f,data,from = "rhs",permitted = "factor"))))
-            covs<-setdiff(ivs,factors)
-            dep<-setdiff(deps,ivs)
-            meds<-intersect(deps,ivs)
+            }
+            deps <- sapply(formula, function(equation) jmvcore::marshalFormula(equation, data, from = "lhs"))
+            ivs <- unique(unlist(sapply(formula, function(equation) jmvcore::marshalFormula(equation, data, from = "rhs"))))
+            factors <- unique(unlist(sapply(formula, function(equation) jmvcore::marshalFormula(equation, data, from = "rhs", permitted = "factor"))))
+            covs <- setdiff(ivs, factors)
+            dep <- setdiff(deps, ivs)
+            meds <- intersect(deps, ivs)
 
-            if (name=="dep") {
-                if (length(dep)>1)
+            if (name == "dep") {
+                if (length(dep) > 1) {
                     jmvcore::reject("The models in formula imply more than one dependent variable. Please refine your models")
+                }
                 return(dep)
             }
-            if (name=="factors") {
+            if (name == "factors") {
                 return(factors)
             }
-            if (name=="covs") {
+            if (name == "covs") {
                 return(covs)
             }
 
-            if (name=="mediators") {
-                if (length(meds)==0)
+            if (name == "mediators") {
+                if (length(meds) == 0) {
                     jmvcore::reject("The models in formula imply no mediator. Please refine your models")
+                }
                 return(meds)
             }
-            if (name=="mediatorsTerms") {
-                medsterms<-lapply(formula, function(f) {
-                    .dep<-jmvcore::marshalFormula(f,data,from = "lhs")
-                    res<-NULL
-                    if (.dep %in% meds)
-                        res<-jmvcore::marshalFormula(f,data,from = "rhs",type = "terms")
-                    res
+            if (name == "mediatorsTerms") {
+                medsterms <- lapply(formula, function(equation) {
+                    response <- jmvcore::marshalFormula(equation, data, from = "lhs")
+                    terms <- NULL
+                    if (response %in% meds) {
+                        terms <- jmvcore::marshalFormula(equation, data, from = "rhs", type = "terms")
+                    }
+                    terms
                 })
-                medsterms<-medsterms[-which(sapply(medsterms, is.null))]
+                medsterms <- medsterms[-which(sapply(medsterms, is.null))]
                 return(medsterms)
             }
 
-            if (name=="modelTerms") {
-                for (f in formula) {
-                    .dep<-jmvcore::marshalFormula(f,data,from = "lhs")
-                    .vars<-jmvcore::marshalFormula(f,data,from = "rhs")
-                    .ivs<-unique(unlist(.vars))
-                    if (.dep==dep & length(intersect(meds,.ivs))>0)
-                        return(jmvcore::marshalFormula(f,data,from = "rhs",type = "terms"))
+            if (name == "modelTerms") {
+                for (equation in formula) {
+                    response <- jmvcore::marshalFormula(equation, data, from = "lhs")
+                    variables <- jmvcore::marshalFormula(equation, data, from = "rhs")
+                    predictors <- unique(unlist(variables))
+                    if (response == dep & length(intersect(meds, predictors)) > 0) {
+                        return(jmvcore::marshalFormula(equation, data, from = "rhs", type = "terms"))
+                    }
                 }
             }
-
         },
-        
         .formula = function() {
-            if (!is.something(private$.lav_machine))
-                  return("")
-            paste0("list(",paste(sapply(private$.lav_machine$models(),function(m) paste0('"',m$value,'"')),collapse = ","),")")
-            
+            if (is.null(private$.runner_machine)) {
+                return("")
+            }
+            models <- private$.runner_machine$estimator$models()
+            paste0("list(", paste(sapply(models, function(model) paste0('"', model$value, '"')), collapse = ","), ")")
         },
-        
         .sourcifyOption = function(option) {
-            
             name <- option$name
             value <- option$value
-            
-            if (!is.something(value))
-                return('')
-            
-            if (option$name %in% c('factors', 'endogenous', 'covs', 'endogenousTerms'))
-                return('')
-            
-            if (name =='scaling') {
-                vec<-sourcifyList(option,"none")
+
+            if (!is.something(value)) {
+                return("")
+            }
+            if (name %in% c("factors", "endogenous", "covs", "endogenousTerms")) {
+                return("")
+            }
+            if (name == "scaling") {
+                vec <- sourcifyList(option, "none")
                 return(vec)
             }
-            if (name =='contrasts') {
-                vec<-sourcifyList(option,"simple")
+            if (name == "contrasts") {
+                vec <- sourcifyList(option, "simple")
                 return(vec)
             }
-            if (name =='varcov') {
-                vec<-lapply(self$options$varcov, function(v) c(v$i1,v$i2))
-                vec=paste0("varcov=list(",paste(vec,collapse = ","),")",collapse = "")
+            if (name == "varcov") {
+                vec <- lapply(self$options$varcov, function(covariance) c(covariance$i1, covariance$i2))
+                vec <- paste0("varcov=list(", paste(vec, collapse = ","), ")", collapse = "")
                 return(vec)
             }
-            
+
             super$.sourcifyOption(option)
         }
-        
-        
-        
-        
-        
-        )
+    )
 )

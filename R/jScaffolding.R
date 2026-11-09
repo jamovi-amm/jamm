@@ -86,7 +86,7 @@ Scaffold <- R6::R6Class("Scaffold",
                             .storage=NULL,
                             .dispatcher=NULL,
                             .create_dispatcher=function() {
-                                private$.dispatcher<-Dispatch$new(self$analysis$results)
+                                private$.dispatcher<-TableDispatch$new(self$analysis$results)
                             }
                           ) #end of private
 ) ## end of class

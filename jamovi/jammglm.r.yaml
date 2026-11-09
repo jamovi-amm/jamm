@@ -144,7 +144,20 @@ items:
                      - fixedIntercept
                      - simpleScale
                      - ciType
+                     - mediatorsTerms
+                     - moderatorsTerms
+                     - scaling
+                     - cvalue
+                     - percvalue
+                     - simpleScaleLabels
+                     - tableOptions
+                     - data
             columns:
+                    - name: condition
+                      title: Moderator levels
+                      type: text
+                      visible: false
+                      combineBelow: true
                     - name: type
                       title: "Type"
                       type: text

@@ -50,6 +50,7 @@ Syntax <- R6::R6Class(
               
               initialize=function(options,datamatic) {
                 super$initialize(options=options,vars=unlist(c(options$dep,options$mediators,options$factors,options$covs)))
+                private$.conditional_datamatic <- datamatic
                 self$contrasts_names<-datamatic$contrasts_names
                 self$moderators<-unlist(options$moderatorsTerms)
                 
@@ -88,8 +89,25 @@ Syntax <- R6::R6Class(
 
                 private$.make_structure()
                 private$.make_tables()
+                self$prepareConditional()
                 
                 }, # here initialize ends
+               # Initialization supplies row labels; estimation replaces placeholder
+               # moderator values with values computed from complete-case data.
+               prepareConditional=function(data = NULL) {
+                 if (length(self$moderators) == 0)
+                   return(invisible(NULL))
+                 private$.conditional_effects <- conditional_effects(
+                   self$options, private$.conditional_datamatic,
+                   private$.lav_structure, private$.indirect_names, data)
+                 if (length(private$.conditional_effects) == 0)
+                   return(invisible(NULL))
+                 private$.lav_defined <- vapply(private$.conditional_effects, function(effect) {
+                   paste(effect$parameter, ":=", effect$expression)
+                 }, character(1))
+                 private$.make_structure()
+                 private$.make_tables()
+               },
                models=function() {
                   lapply(seq_along(self$endogenousTerms),
                        function(i) list(info="Model",
@@ -148,6 +166,8 @@ Syntax <- R6::R6Class(
            
           ),
           private=list(
+            .conditional_datamatic=NULL,
+            .conditional_effects=list(),
             .lav_terms=NULL,
             .lav_structure=NULL,
             .lav_constraints=NULL,
@@ -227,13 +247,14 @@ Syntax <- R6::R6Class(
               
               # deal with interactions
               if (is.something(self$moderators)) {
-                sel<-grep(private$.lav_moderators,.lav_structure$rhs,fixed = T)
                 sel<-grep(INTERACTION_SYMBOL,.lav_structure$rhs,fixed = TRUE)
                 self$tab_interactions<-.lav_structure[sel,]
                 self$tab_interactions<-self$tab_interactions[self$tab_interactions$op=="~",]
                 self$tab_interactions$lhs<-fromb64(self$tab_interactions$lhs,self$vars)
                 self$tab_interactions$rhs<-fromb64(self$tab_interactions$rhs,self$vars)
-                sel<-grep(private$.lav_moderators,.lav_structure$rhs,invert = TRUE)
+                # Moderator factors expand into several contrast columns.
+                # Match all their main effects, not just the first grep pattern.
+                sel<-!(.lav_structure$rhs %in% private$.lav_moderators)
                 .lav_structure<-.lav_structure[sel,]
 
               }
@@ -286,6 +307,20 @@ Syntax <- R6::R6Class(
                 arow$effect<-self$total_names[[i]]
                 self$tab_coefficients[[length(self$tab_coefficients)+1]]<-arow
                 }
+
+              # Conditional parameters are estimated by lavaan itself, so delta
+              # method and bootstrap intervals include all path covariances.
+              if (length(private$.conditional_effects) > 0) {
+                self$tab_coefficients <- lapply(private$.conditional_effects, function(effect) {
+                  row <- .lav_structure[.lav_structure$lhs == effect$parameter & .lav_structure$op == ":=", ]
+                  row$type <- effect$type
+                  row$effect <- effect$effect
+                  row$condition <- effect$condition
+                  if ("est" %in% names(row))
+                    row$std.all <- row$est * effect$scale
+                  row
+                })
+              }
               
               
               

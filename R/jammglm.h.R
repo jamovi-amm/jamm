@@ -17,7 +17,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             contrasts = NULL,
             showRealNames = TRUE,
             showContrastCode = FALSE,
-            bogus = FALSE,
             simpleScale = "mean_sd",
             cvalue = 1,
             percvalue = 25,
@@ -38,7 +37,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             diag_resid = FALSE,
             diag_labsize = "medium",
             diag_rotate = "1",
-            diag_type = "circle",
+            diag_type = "mediation",
             diag_shape = "rectangle",
             diag_abbrev = "0", ...) {
 
@@ -141,10 +140,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..showContrastCode <- jmvcore::OptionBool$new(
                 "showContrastCode",
                 showContrastCode,
-                default=FALSE)
-            private$..bogus <- jmvcore::OptionBool$new(
-                "bogus",
-                bogus,
                 default=FALSE)
             private$..simpleScale <- jmvcore::OptionList$new(
                 "simpleScale",
@@ -268,12 +263,13 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "diag_type",
                 diag_type,
                 options=list(
+                    "mediation",
                     "circle",
                     "circle2",
                     "tree2",
                     "tree",
                     "spring"),
-                default="circle")
+                default="mediation")
             private$..diag_shape <- jmvcore::OptionList$new(
                 "diag_shape",
                 diag_shape,
@@ -307,7 +303,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..contrasts)
             self$.addOption(private$..showRealNames)
             self$.addOption(private$..showContrastCode)
-            self$.addOption(private$..bogus)
             self$.addOption(private$..simpleScale)
             self$.addOption(private$..cvalue)
             self$.addOption(private$..percvalue)
@@ -339,7 +334,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         contrasts = function() private$..contrasts$value,
         showRealNames = function() private$..showRealNames$value,
         showContrastCode = function() private$..showContrastCode$value,
-        bogus = function() private$..bogus$value,
         simpleScale = function() private$..simpleScale$value,
         cvalue = function() private$..cvalue$value,
         percvalue = function() private$..percvalue$value,
@@ -370,7 +364,6 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..contrasts = NA,
         ..showRealNames = NA,
         ..showContrastCode = NA,
-        ..bogus = NA,
         ..simpleScale = NA,
         ..cvalue = NA,
         ..percvalue = NA,
@@ -564,8 +557,22 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 "contrasts",
                                 "fixedIntercept",
                                 "simpleScale",
-                                "ciType"),
+                                "ciType",
+                                "mediatorsTerms",
+                                "moderatorsTerms",
+                                "scaling",
+                                "cvalue",
+                                "percvalue",
+                                "simpleScaleLabels",
+                                "tableOptions",
+                                "data"),
                             columns=list(
+                                list(
+                                    `name`="condition", 
+                                    `title`="Moderator levels", 
+                                    `type`="text", 
+                                    `visible`=FALSE, 
+                                    `combineBelow`=TRUE),
                                 list(
                                     `name`="type", 
                                     `title`="Type", 
@@ -1073,8 +1080,6 @@ jammGLMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   names of the contrasts variables
 #' @param showContrastCode \code{TRUE} or \code{FALSE} (default), provide
 #'   contrast coefficients tables
-#' @param bogus \code{a bogus option to define a label without visible
-#'   children}
 #' @param simpleScale \code{'mean_sd'} (default), \code{'custom'} , or
 #'   \code{'custom_percent'}. Use to condition the covariates (if any)
 #' @param cvalue offset value for conditioning
@@ -1098,7 +1103,8 @@ jammGLMBase <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
 #'   diagram
 #' @param diag_labsize Choose the diagram labels
 #' @param diag_rotate Choose the diagram labels
-#' @param diag_type Choose the diagram labels
+#' @param diag_type Choose the path diagram layout, including a mediation-like
+#'   layout
 #' @param diag_shape Choose the diagram labels
 #' @param diag_abbrev Choose the diagram labels
 #' @param formula (optional) the formula to use, see the examples
@@ -1142,7 +1148,6 @@ jammGLM <- function(
     contrasts = NULL,
     showRealNames = TRUE,
     showContrastCode = FALSE,
-    bogus = FALSE,
     simpleScale = "mean_sd",
     cvalue = 1,
     percvalue = 25,
@@ -1163,7 +1168,7 @@ jammGLM <- function(
     diag_resid = FALSE,
     diag_labsize = "medium",
     diag_rotate = "1",
-    diag_type = "circle",
+    diag_type = "mediation",
     diag_shape = "rectangle",
     diag_abbrev = "0",
     formula) {
@@ -1241,7 +1246,6 @@ jammGLM <- function(
         contrasts = contrasts,
         showRealNames = showRealNames,
         showContrastCode = showContrastCode,
-        bogus = bogus,
         simpleScale = simpleScale,
         cvalue = cvalue,
         percvalue = percvalue,

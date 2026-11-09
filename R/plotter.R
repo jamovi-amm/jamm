@@ -19,7 +19,11 @@ Plotter <- R6::R6Class(
             private$.plotgroup$diagrams$get(key = "0")$setTitle("")
       },
       preparePlots=function(image, ggtheme, theme, ...) {
-        
+        # The conceptual model is independent of the fitted semPlot diagram.
+        # Prepare it before the path-diagram guard, including model-only requests.
+        if (self$options$meddiagram)
+          private$.prepareModelDiagram()
+
         if (!self$options$diagram)
           return()
         
@@ -86,7 +90,7 @@ Plotter <- R6::R6Class(
         }
         
         self$semPathsOptions<-list(
-                      layout = layout,
+                      layout = private$.layout(sm),
                       residuals = self$options$diag_resid,
                       rotation = rotation ,
                       intercepts = F
@@ -110,6 +114,59 @@ Plotter <- R6::R6Class(
     .datamatic=FALSE,
     .plotgroup=NULL,
     .operator=NULL,
+    .layout=function(semModel) {
+      if (self$options$diag_type != "mediation")
+        return(self$options$diag_type)
+
+      # Pathj uses indirect-effect chains to place nodes by mediation stage.
+      # jAMM instead exposes fitted regressions, including expanded contrasts
+      # and interactions, so derive the same stages from their directed paths.
+      variables <- semModel@Vars$name
+      parameters <- as.data.frame(private$.operator$model@ParTable,
+                                  stringsAsFactors = FALSE)
+      regressions <- parameters[parameters$op == "~" &
+        parameters$lhs %in% variables & parameters$rhs %in% variables,
+        c("lhs", "rhs")]
+      stages <- stats::setNames(rep(1, length(variables)), variables)
+      remaining <- variables
+      while (length(remaining) > 0) {
+        ready <- remaining[vapply(remaining, function(variable) {
+          !any(regressions$rhs[regressions$lhs == variable] %in% remaining)
+        }, logical(1))]
+        # A feedback loop has no left-to-right mediation ordering.
+        if (length(ready) == 0)
+          return("tree")
+        for (variable in ready) {
+          parents <- regressions$rhs[regressions$lhs == variable]
+          if (length(parents) > 0)
+            stages[[variable]] <- max(stages[parents]) + 1
+        }
+        remaining <- setdiff(remaining, ready)
+      }
+
+      # Match Pathj's triangular single-chain layout and spread parallel nodes
+      # vertically; keep rows in semPlot's node order, not the sorted stages.
+      vertical <- rep(.8, length(variables))
+      if (length(unique(stages)) == length(stages)) {
+        vertical[stages == min(stages) | stages == max(stages)] <- .2
+      } else {
+        for (stage in unique(stages)) {
+          members <- which(stages == stage)
+          vertical[members] <- seq_along(members) / (length(members) + 1)
+        }
+      }
+      cbind(x = unname(stages), y = vertical)
+    },
+    .prepareModelDiagram=function() {
+      # Store only plot data in image state so saved analyses can render again.
+      state <- model_diagram_data(self$options)
+      private$.plotgroup$pathmodel$setState(list(modelDiagram = state))
+      notes <- private$.plotgroup$pathnotes
+      notes$deleteRows()
+      notes$setVisible(length(state$notes) > 0)
+      for (index in seq_along(state$notes))
+        notes$addRow(index, list(info = state$notes[[index]]))
+    },
     .semPaths=function(options) {
       ### we need this because semPaths does not work with do.call() in windows
         res<-try_hard({
@@ -136,4 +193,3 @@ Plotter <- R6::R6Class(
 
   ) # end of private
 ) # end of class
-    

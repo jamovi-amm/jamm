@@ -62,6 +62,18 @@ bogusfromb64<-function(obj,ref=NULL) fromb64(obj,ref=ref)
 
 ######### tables #########
 
+# Normalize backend rows for SmartTabs, including empty data frames and named vectors.
+table_rows <- function(rows) {
+    if (is.null(rows) || length(rows) == 0)
+        return(NULL)
+    if (is.data.frame(rows)) {
+        if (nrow(rows) == 0)
+            return(NULL)
+        return(lapply(seq_len(nrow(rows)), function(index) as.list(rows[index, , drop = FALSE])))
+    }
+    lapply(rows, as.list)
+}
+
 
 j.init_table<-function(table,obj,ci=FALSE,ciroot="",ciformat="{}% Confidence Intervals",ciwidth,indent=NULL) {
   

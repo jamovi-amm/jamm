@@ -1,3 +1,85 @@
+# Build the conceptual diagram directly from the specified regression terms.
+# Unlike the old smartMediation backend, this needs no estimation or UI objects.
+model_diagram_data <- function(options) {
+  mediators <- jmvcore::toB64(options$mediators)
+  dependent <- jmvcore::toB64(options$dep)
+  moderators <- unique(jmvcore::toB64(unlist(options$moderatorsTerms)))
+  outcomes <- c(mediators, dependent)
+  equations <- c(options$mediatorsTerms, list(options$modelTerms))
+  sources <- vector("list", length(outcomes))
+  moderated <- list()
+
+  for (equation in seq_along(outcomes)) {
+    for (term in equations[[equation]]) {
+      variables <- jmvcore::toB64(term)
+      termModerators <- intersect(variables, moderators)
+      predictors <- setdiff(variables, moderators)
+      if (length(predictors) == 0)
+        next()
+      source <- paste(predictors, collapse = ":")
+      sources[[equation]] <- unique(c(sources[[equation]], source))
+      for (moderator in termModerators) {
+        moderated[[length(moderated) + 1]] <- list(
+          moderator = moderator, from = source, to = outcomes[[equation]])
+      }
+    }
+  }
+
+  independents <- setdiff(unique(unlist(sources)), outcomes)
+  variables <- c(independents, outcomes)
+  paths <- matrix("0", length(variables), length(variables),
+                  dimnames = list(variables, variables))
+
+  # Suggested paths are visual guidance only; never change the fitted model.
+  paths[outcomes, independents] <- "S"
+  paths[dependent, mediators] <- "S"
+  for (equation in seq_along(outcomes))
+    paths[outcomes[[equation]], sources[[equation]]] <- "P"
+
+  infos <- list(M = paths, vars = variables, nvars = length(variables),
+                mediators = mediators, independents = independents,
+                isImpossible = FALSE)
+  suggested <- "suggested" %in% options$pathOptions
+  diagram <- diag.paths(infos, suggested = suggested, shiftmed = .01)
+  diagram$labels <- vapply(strsplit(variables, ":", fixed = TRUE),
+                          function(term) paste(jmvcore::fromB64(term), collapse = " * "),
+                          character(1))
+  diagram$moderators <- moderators
+  diagram$moderated <- lapply(moderated, function(path) {
+    list(from = match(path$from, variables), to = match(path$to, variables),
+         moderator = match(path$moderator, moderators))
+  })
+  diagram$nindependents <- length(independents)
+  diagram$nmediators <- length(mediators)
+  diagram$notes <- character()
+  if (suggested && any(paths == "S"))
+    diagram$notes <- c(diagram$notes, "Green paths indicate suggested coefficients")
+  if (length(moderators) > 0)
+    diagram$notes <- c(diagram$notes, "Moderators main effects are not shown")
+  if (length(independents) > 1)
+    diagram$notes <- c(diagram$notes, "Covariances among IV are estimated but not shown")
+  if (any(options$factors %in% unlist(c(options$mediatorsTerms, options$modelTerms))))
+    diagram$notes <- c(diagram$notes,
+      "Categorical independent variables are shown with one rectangle; their effects are estimated using contrast variables")
+  diagram
+}
+
+# Rendering uses image state alone, including when jamovi reopens a saved file.
+plot_model_diagram <- function(state) {
+  nvariables <- length(state$labels)
+  plot <- diagram::plotmat(
+    state$paths, pos = state$pos, name = state$labels,
+    box.size = .1 + (max(state$nmediators, state$nindependents) + 3)^-8,
+    box.type = "rect", box.prop = .4, box.cex = .80 + nvariables^-2,
+    curve = state$curves, endhead = FALSE, arr.type = "triangle",
+    arr.length = 1 / (nvariables - 1), arr.pos = .7, arr.col = "gray",
+    lcol = state$colors, box.lcol = state$bcolors)
+  for (path in state$moderated)
+    diag.plot_mod_arr(plot, path$from, path$to, path$moderator)
+  diag.plot_mods(plot, state$moderators)
+  invisible(plot)
+}
+
 .diag.moderators_coord<-function(j) {
   
   M<-list(c(xleft=.00,ytop=.99),

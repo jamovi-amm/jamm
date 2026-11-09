@@ -18,7 +18,9 @@ Estimate <- R6::R6Class("Estimate",
                             self$ciwidth<-options$ciWidth/100
                           },
                           estimate=function(data) {
-                            
+                            # Build conditional definitions on the same data and
+                            # scale used to fit the regression interactions.
+                            self$prepareConditional(data)
                             private$.lavaan_estimate(data)
                             private$.ols_estimate(data)
                             

@@ -89,7 +89,7 @@ const events = {
 
     onEvent_moderatorChanged: function(ui) {
         // Ignore notifications emitted while restoring the saved controls.
-        if (this.workspace.initializing)
+        if (this.workspace.initializing || this.workspace.revertingModerators)
             return;
         console.log("moderators have changed");
         fromModeratorsToOthers(ui,this);
@@ -103,7 +103,6 @@ const events = {
           return;
       log("mediators terms changed");
       
-    unflashMGridOptionListControl(ui.moderatorsTerms,ui.modeNote);
     fromMediatorsTerms(ui,this);
     fromMediatorsToModelTerms(ui,this);
     },
@@ -136,10 +135,6 @@ var initializeAll = function(ui, context) {
        updateSuppliers(ui,context);
        labelize(ui.mediatorsTerms, mediators, "Mediator");
        labelize(ui.moderatorsTerms, mediators, "Mediator");
-       // Hide the labels used for warnings.
-       ui.bogus.$el[0].remove();
-       ui.modeNote.$el[0].style.visibility="hidden";
-       ui.modeNote.$el[0].style.color="red";
     }
     finally {
        context.workspace.initializing = false;
@@ -223,7 +218,6 @@ var fromMediatorsTerms= function(ui,context) {
        }
         ui.mediatorsTerms.setValue(mediatorsTerms);
         ui.moderatorsTerms.setValue(moderatorsTerms);
-        isRoomForModerators(ui,context)
 };
 var fromSupplierToModeratorsTerms= function(ui,context) {
 
@@ -268,79 +262,42 @@ var updateModeratorsTerms= function(ui,context) {
 };
 
 
-var isRoomForModerators = function(ui,context) {
-    console.log("checkRoomForModerators");
-    var mediators = context.cloneArray(ui.mediators.value(),[]);
-    var moderatorsTerms = context.cloneArray(ui.moderatorsTerms.value(),[]);
-    var mediatorsTerms = context.cloneArray(ui.mediatorsTerms.value(),[]);
-    var moderators = flatMulti(moderatorsTerms,context);
-     
-
-     var diff = findChangesMulti("moderatorsTerms",moderatorsTerms,context,false);
-
-    // here we check if there are enough predictors in the mediator model to 
-    // define one moderator
-    var noroom = false;
-    for (var j = 0; j < mediators.length; j++)  { 
-       var meds = mediatorsTerms[j];
-           meds = removeFromList(moderators,meds,context);
-           if (meds.length===0) {
-              flashMGridOptionListControl(ui.moderatorsTerms,ui.modeNote);
-              noroom = true;
-      }
-    }
-      // if there's no room (noroom==true) for an additional moderator, we remove it 
-      // from the new list and left the old list saved in the workspace (see findChangesMulti(...,false) )
-      var removeAdded= diff.index>-1 && noroom===true;
-          if (removeAdded) {
-            var moderatorsTest= context.cloneArray(moderatorsTerms);
-            moderatorsTest[diff.index] = removeFromList(diff.changes[diff.index].added,moderatorsTest[diff.index],context);
-            ui.moderatorsTerms.setValue(moderatorsTest);
-      }
-   return !removeAdded;
-};
-
-
 var fromModeratorsToOthers = function(ui,context) {
     console.log("from moderators to others");
     var mediators = context.cloneArray(ui.mediators.value(),[]);
     var moderatorsTerms = context.cloneArray(ui.moderatorsTerms.value(),[]);
     var mediatorsTerms = context.cloneArray(ui.mediatorsTerms.value(),[]);
     var modelTerms = context.cloneArray(ui.modelTerms.value(),[]);
-    var moderators = flatMulti(moderatorsTerms,context);
-     
-
-     var diff = findChangesMulti("moderatorsTerms",moderatorsTerms,context,false);
-
-    // here we check if there are enough predictors in the mediator model to 
-    // define one moderator
-    var noroom = false;
-    for (var j = 0; j < mediators.length; j++)  { 
-       var meds = mediatorsTerms[j];
-           var medstest = removeFromList(moderators,meds,context);
-           if (medstest.length===0) {
-              flashMGridOptionListControl(ui.moderatorsTerms,ui.modeNote);
-              noroom = true;
-      }
+    // Reserve at least one independent variable across all moderator blocks.
+    // This is a global role check, not the old per-mediator predictor check.
+    var predictors = context.cloneArray(ui.factors.value(), []).concat(
+        context.cloneArray(ui.covs.value(), []));
+    var selected = [];
+    moderatorsTerms.forEach(function(block) {
+        normalize(block).forEach(function(term) {
+            selected = selected.concat(term);
+        });
+    });
+    var pending = findChangesMulti("moderatorsTerms",moderatorsTerms,context,false);
+    var hasAdditions = pending.changes.some(function(change) { return change.added.length > 0; });
+    if (predictors.length > 0 && hasAdditions && predictors.every(function(predictor) {
+        return selected.indexOf(predictor) > -1;
+    })) {
+        // Reject the transfer before it can add interactions to either model.
+        // Preserve removals made in the same edit, and suppress rollback events.
+        moderatorsTerms = moderatorsTerms.map(function(block, index) {
+            return removeFromList(pending.changes[index].added, block, context, 0);
+        });
+        context.workspace.revertingModerators = true;
+        try {
+            ui.moderatorsTerms.setValue(moderatorsTerms);
+        } finally {
+            context.workspace.revertingModerators = false;
+        }
     }
-      // if there's no room (noroom==true) for an additional moderator, we remove it 
-      // from the new list and left the old list saved in the workspace (see findChangesMulti(...,false) )
-      var removeAdded= diff.index>-1 && noroom===true;
-          if (removeAdded) {
-            var moderatorsTest= context.cloneArray(moderatorsTerms);
-            moderatorsTest[diff.index] = removeFromList(diff.changes[diff.index].added,moderatorsTest[diff.index],context);
-            ui.moderatorsTerms.setValue(moderatorsTest);
-      }
-
-      // if nothing happens, we spread the moderators. However, we need
-      // to check diff again, bacause we did not save moderatorsTerms before
-      // to avoid a loop that would unflash the warning no matter what.
-      // 
-      if (removeAdded===false) {
-
-         var diff2 = findChangesMulti("moderatorsTerms",moderatorsTerms,context,true);
-         if (diff2.index > -1) {
-           unflashMGridOptionListControl(ui.moderatorsTerms,ui.modeNote);
+    // Save the baseline before updating controls that can emit change events.
+    var diff = findChangesMulti("moderatorsTerms",moderatorsTerms,context,true);
+         if (diff.index > -1) {
           // add interactions to mediators and full model terms if there are new moderators
            for (var i = 0; i < diff.changes[diff.index].added.length; i++) {
              var newTerm=diff.changes[diff.index].added[i];
@@ -369,8 +326,6 @@ var fromModeratorsToOthers = function(ui,context) {
           ui.modelTerms.setValue(modelTerms);
       
       }
-
-  } 
 
 };
 
@@ -689,26 +644,6 @@ var log=function(obj) {
 var dlog=function(obj) {
     if (DEBUG)
       console.log(obj);
-};
-
-var flashMGridOptionListControl = function(widget,note=false) {
-        var i =widget.getSelectedRowIndices();
-        if (i.length==0) i=0;
-        widget.controls[i].controls[1].$el[0].style.backgroundColor="#ffcccc";
-        widget.controls[i].controls[1].$el[0].style.borderColor="red";
-        if (note!==false)
-           note.$el[0].style.visibility="visible";
-        
-
-};
-
-var unflashMGridOptionListControl = function(widget,note=false) {
-        var i =widget.getSelectedRowIndices();
-        if (i.length==0) i=0;
-        widget.controls[i].controls[1].$el[0].style.backgroundColor="white";
-        widget.controls[i].controls[1].$el[0].style.borderColor="rgb(46,138,199)";
-        if (note!==false)
-           note.$el[0].style.visibility="hidden";
 };
 
 var   cleanInteractions= function(quantum,cosmos,context){

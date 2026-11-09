@@ -3,8 +3,8 @@ name: jammGLM
 jus: '2.0'
 compilerMode: tame
 events:
-  update: './jamm.events::update'
-  loaded: './jamm.events::loaded'
+  update: ./jamm.events::update
+  loaded: ./jamm.events::loaded
 children:
   - type: VariableSupplier
     name: variablesupplier
@@ -29,7 +29,7 @@ children:
             height: small
             isTarget: true
             events:
-              change: './jamm.events::onChange_mediators'
+              change: ./jamm.events::onChange_mediators
       - type: TargetLayoutBox
         children:
           - type: VariablesListBox
@@ -37,7 +37,7 @@ children:
             height: small
             isTarget: true
             events:
-              change: './jamm.events::onChange_factors'
+              change: ./jamm.events::onChange_factors
       - type: TargetLayoutBox
         children:
           - type: VariablesListBox
@@ -45,7 +45,7 @@ children:
             height: small
             isTarget: true
             events:
-              change: './jamm.events::onChange_covariates'
+              change: ./jamm.events::onChange_covariates
   - type: CollapseBox
     label: Mediators Models
     collapsed: true
@@ -61,8 +61,8 @@ children:
             persistentItems: true
             stretchFactor: 1
             events:
-              update: './jamm.events::onUpdate_mediatorsSupplier'
-              change: './jamm.events::onChange_mediatorsSupplier'
+              update: ./jamm.events::onUpdate_mediatorsSupplier
+              change: ./jamm.events::onChange_mediatorsSupplier
             children:
               - type: TargetLayoutBox
                 transferAction: interactions
@@ -71,8 +71,8 @@ children:
                     name: mediatorsTerms
                     height: large
                     events:
-                      listItemAdded: './jamm.events::onEvent_nothing'
-                      listItemRemoved: './jamm.events::onEvent_nothing'
+                      listItemAdded: ./jamm.events::onEvent_nothing
+                      listItemRemoved: ./jamm.events::onEvent_nothing
                     selectable: true
                     templateName: linreg-block-template
                     template:
@@ -93,7 +93,7 @@ children:
                           height: auto
                           ghostText: drag variables here
                           events:
-                            change: './jamm.events::onEvent_mediatorToTerms'
+                            change: ./jamm.events::onEvent_mediatorToTerms
                           template:
                             type: TermLabel
   - type: CollapseBox
@@ -108,8 +108,8 @@ children:
         stretchFactor: 1
         format: term
         events:
-          update: './jamm.events::onUpdate_modelSupplier'
-          change: './jamm.events::onChange_modelSupplier'
+          update: ./jamm.events::onUpdate_modelSupplier
+          change: ./jamm.events::onChange_modelSupplier
         children:
           - type: TargetLayoutBox
             transferAction: interactions
@@ -120,7 +120,7 @@ children:
                 isTarget: true
                 itemDropBehaviour: emptyspace
                 events:
-                  change: './jamm.events::onChange_modelTerms'
+                  change: ./jamm.events::onChange_modelTerms
                 template:
                   type: TermLabel
   - type: CollapseBox
@@ -139,8 +139,8 @@ children:
             persistentItems: true
             stretchFactor: 1
             events:
-              update: './jamm.events::onUpdate_moderatorsSupplier'
-              change: './jamm.events::onChange_moderatorsSupplier'
+              update: ./jamm.events::onUpdate_moderatorsSupplier
+              change: ./jamm.events::onChange_moderatorsSupplier
             children:
               - type: TargetLayoutBox
                 transferAction: interactions
@@ -149,8 +149,8 @@ children:
                     name: moderatorsTerms
                     height: large
                     events:
-                      listItemAdded: './jamm.events::onEvent_nothing'
-                      listItemRemoved: './jamm.events::onEvent_nothing'
+                      listItemAdded: ./jamm.events::onEvent_nothing
+                      listItemRemoved: ./jamm.events::onEvent_nothing
                     selectable: true
                     templateName: linreg-block-template
                     template:
@@ -171,18 +171,9 @@ children:
                           height: auto
                           ghostText: drag variables here
                           events:
-                            change: './jamm.events::onEvent_moderatorChanged'
+                            change: ./jamm.events::onEvent_moderatorChanged
                           template:
                             type: TermLabel
-      - type: Label
-        name: modeNote
-        margin: small
-        label: >-
-          There are not enough independent variables in the mediator model to
-          define a moderator
-        children:
-          - type: CheckBox
-            name: bogus
   - type: CollapseBox
     label: Factors Coding
     collapsed: true
@@ -336,7 +327,6 @@ children:
                 type: CheckBox
                 optionName: tableOptions
                 optionPart: beta
-
               - name: tableOptions_regression
                 type: CheckBox
                 optionName: tableOptions
@@ -357,19 +347,18 @@ children:
             stretchFactor: 1
             style: inline
             children:
-                - type: CheckBox
-                  name: meddiagram
-                - type: Label
-                  label: Diagram Options
-                  margin: large
-                  style: list
-                  children:
-                    - name: pathOptions_suggested
-                      type: CheckBox
-                      optionPart: suggested
-                      optionName: pathOptions
-                      enable: (meddiagram)
-
+              - type: CheckBox
+                name: meddiagram
+              - type: Label
+                label: Diagram Options
+                margin: large
+                style: list
+                children:
+                  - name: pathOptions_suggested
+                    type: CheckBox
+                    optionPart: suggested
+                    optionName: pathOptions
+                    enable: (meddiagram)
           - type: LayoutBox
             margin: large
             stretchFactor: 1
@@ -425,7 +414,7 @@ children:
                     enable: (diagram)
                   - type: ComboBox
                     name: diag_rotate
-                    enable: (diagram)
+                    enable: (diagram && !diag_type:mediation)
               - type: Label
                 label: Nodes
                 margin: large

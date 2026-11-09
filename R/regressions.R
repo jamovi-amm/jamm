@@ -1,4 +1,3 @@
-
 .regression_tables<-function(modelFormula,data,ciWidth) {
 
   estimates <- try({
@@ -25,152 +24,28 @@
   list(estimates[-1,],anov)
 }
 
-### expandTerms() marks factor dummies as "var<FACTOR_SYMBOL>level" (see Syntax$.factorlist());
-### strip that back to the "var<level>" convention used elsewhere (e.g. models$contrastCodeTable)
-### for a readable row label.
+# Match the factor-dummy labels used in the main model and contrasts table.
 .term_label<-function(term) {
   jmvcore::stringifyTerm(gsub(FACTOR_SYMBOL,"",term,fixed=TRUE))
 }
 
-
-### Declares the (empty) rows for the "individual regressions" tables.
-### Filled with numbers later by regressions.results(), once the data are estimated.
-### Works off self$options (dep/mediators/mediatorsTerms/modelTerms) plus lav_machine
-### (the Estimate/Syntax instance), which is used to expand any factor term into one
-### row per contrast dummy - matching what stats::lm() will actually produce.
-regressions.init<-function(options, results, lav_machine) {
-
-  if (!("regression" %in% options$tableOptions))
-    return()
-
-  results$regressions$setTitle("Regressions Results")
-
-  dep<-options$dep
-  mediators<-options$mediators
-  modelTerms<-options$modelTerms
-  mediatorsTerms<-options$mediatorsTerms
-
-  ## "total effects" model: the full model with any mediator-related term removed
-  totalterms<-Filter(function(term) length(intersect(mediators,term))==0, modelTerms)
-  totalterms<-lav_machine$expandTerms(totalterms)
-
-  agroup<-results$regressions$overall
-  atable<-agroup$regression
-  atable$setTitle(paste("Total effects predicting:",dep))
-  for (term in totalterms) {
-    key<-paste(term,collapse=":")
-    label<-.term_label(term)
-    atable$addRow(rowKey=key,list(source=label,label=label))
-  }
-
-  ### mediators models
-  medgroups<-results$regressions$mediator_regressions
-  if (length(mediators)>1)
-    medgroups$setTitle("Mediators Models")
-
-  for (i in seq_along(mediators)) {
-    med<-mediators[i]
-    terms_i<-lav_machine$expandTerms(mediatorsTerms[[i]])
-    agroup<-medgroups$addItem(key=med)
-    agroup$setTitle(paste("Dependent variable:",med))
-    atable<-agroup$regression
-    for (term in terms_i) {
-      key<-paste(term,collapse=":")
-      label<-.term_label(term)
-      atable$addRow(rowKey=key,list(lhs=med,rhs=label))
-    }
-  }
-
-  ### full model
-  fullterms<-lav_machine$expandTerms(modelTerms)
-  fullgroup<-results$regressions$full
-  fullrtable<-fullgroup$regression
-  fullrtable$setTitle(paste("Full model predicting",dep))
-  for (term in fullterms) {
-    key<-paste(term,collapse=":")
-    label<-.term_label(term)
-    fullrtable$addRow(rowKey=key,list(lhs=dep,rhs=label))
-  }
-
+# Return layouts, not jamovi tables; SmartArray dispatches each child payload.
+regression_layout <- function(dep, terms, estimator, total = FALSE) {
+    rows <- lapply(estimator$expandTerms(terms), function(term) {
+        label <- .term_label(term)
+        if (total) list(source = label, label = label) else list(lhs = dep, rhs = label)
+    })
+    anova <- if (total) list(dep = dep) else list(lhs = dep)
+    list(anova = list(anova), regression = rows)
 }
 
-### Fills the "individual regressions" tables declared by regressions.init().
-### `data` must already be the b64-renamed, cleaned data frame produced by
-### Datamatic$cleandata() (same data the main mediation model is estimated on).
-### `lav_machine` builds the B64/factor-dummy-aware formulas so the fit is
-### consistent with the main mediation model.
-regressions.results<-function(options, data, results, lav_machine) {
-
-  if (!("regression" %in% options$tableOptions))
-    return()
-
-  ciWidth<-options$ciWidth/100
-
-  dep<-options$dep
-  mediators<-options$mediators
-  modelTerms<-options$modelTerms
-  mediatorsTerms<-options$mediatorsTerms
-
-  ## total effects
-  totalterms<-Filter(function(term) length(intersect(mediators,term))==0, modelTerms)
-  modelFormula<-lav_machine$modelFormula64(dep,totalterms)
-  totalterms<-lav_machine$expandTerms(totalterms)
-  tables<-.regression_tables(modelFormula,data,ciWidth)
-  rtable<-tables[[1]]
-  anov<-tables[[2]]
-  anov$dep<-dep
-
-  agroup<-results$regressions$overall
-  outtable<-agroup$regression
-  for (i in seq_along(totalterms)) {
-    key<-paste(totalterms[[i]],collapse=":")
-    outtable$setRow(rowKey=key,rtable[i,])
-  }
-  agroup$anova$addRow(rowKey=1,anov)
-
-
-  ### mediators models
-  medgroups<-results$regressions$mediator_regressions
-
-  for (i in seq_along(mediators)) {
-    med<-mediators[i]
-    terms_i<-mediatorsTerms[[i]]
-    modelFormula<-lav_machine$modelFormula64(med,terms_i)
-    terms_i<-lav_machine$expandTerms(terms_i)
-    tables<-.regression_tables(modelFormula,data,ciWidth)
-    rtable<-tables[[1]]
-    anov<-tables[[2]]
-    anov$lhs<-med
-
-    agroup<-medgroups$get(key=med)
-    outtable<-agroup$regression
-    for (j in seq_along(terms_i)) {
-      key<-paste(terms_i[[j]],collapse=":")
-      row<-rtable[j,]
-      row$lhs<-med
-      row$rhs<-.term_label(terms_i[[j]])
-      outtable$setRow(rowKey=key,row)
-    }
-    agroup$anova$addRow(rowKey=1,anov)
-  }
-
-  ## full model
-  modelFormula<-lav_machine$modelFormula64(dep,modelTerms)
-  fullterms<-lav_machine$expandTerms(modelTerms)
-  tables<-.regression_tables(modelFormula,data,ciWidth)
-  rtable<-tables[[1]]
-  anov<-tables[[2]]
-  anov$lhs<-dep
-
-  fullgroup<-results$regressions$full
-  outtable<-fullgroup$regression
-  for (i in seq_along(fullterms)) {
-    key<-paste(fullterms[[i]],collapse=":")
-    row<-rtable[i,]
-    row$lhs<-dep
-    row$rhs<-.term_label(fullterms[[i]])
-    outtable$setRow(rowKey=key,row)
-  }
-  fullgroup$anova$addRow(rowKey=1,anov)
-
+# Preserve the existing B64/factor-aware fitting, returning values for SmartTabs.
+regression_values <- function(dep, terms, estimator, data, ciWidth, total = FALSE) {
+    formula <- estimator$modelFormula64(dep, terms)
+    tables <- .regression_tables(formula, data, ciWidth)
+    layout <- regression_layout(dep, terms, estimator, total)
+    rows <- lapply(seq_along(layout$regression), function(index) {
+        c(layout$regression[[index]], as.list(tables[[1]][index, , drop = FALSE]))
+    })
+    list(anova = list(c(layout$anova[[1]], tables[[2]])), regression = rows)
 }

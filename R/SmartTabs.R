@@ -276,6 +276,14 @@ SmartTable <- R6::R6Class("SmartTable",
                             .column_title=list(),
                             .hideOn=NULL,
                             .debug=FALSE,
+                            .decodeMessage=function(message) {
+                              # Decode known variable identifiers, not an entire plain-text warning.
+                              refs<-private$.estimator$vars
+                              if (is.null(refs)) refs<-character()
+                              if (exists("fromb64"))
+                                  return(fromb64(message,ref=refs))
+                              message
+                            },
                             .getData=function(when) {
                               
                               ## check in which phase we are
@@ -300,19 +308,18 @@ SmartTable <- R6::R6Class("SmartTable",
                                 warning<-output$warning
                                 
                                 if (!isFALSE(error)) {
-                                  dispatch<-Dispatch$new(self)
+                                  dispatch<-TableDispatch$new(self)
                                   private$.debug_msg("ERROR",fun,error)
-                                  if (exists("fromb64")) error<-fromb64(error)
+                                  error<-private$.decodeMessage(error)
                                   error<-dispatch$translate(error)
                                   self$table$setError(error)
                                   private$.error<-TRUE
                                    return()
                                 }
                                 if (!isFALSE(warning)) {
-                                    dispatch<-Dispatch$new(self)
+                                    dispatch<-TableDispatch$new(self)
                                     warning<-lapply(warning, function(x) {
-                                        if (exists("fromb64")) 
-                                             x<-fromb64(x)
+                                        x<-private$.decodeMessage(x)
                                         dispatch$translate(x)
                                     })
                                     

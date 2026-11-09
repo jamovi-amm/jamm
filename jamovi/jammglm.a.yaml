@@ -185,15 +185,6 @@ options:
 
 
 
-    - name: bogus
-      type: Bool
-      default: false
-      description:
-          R: >
-            `a bogus option to define a label without visible children`
-
-
-
     - name: simpleScale
       title: Covariates conditioning
       type: List
@@ -394,6 +385,8 @@ options:
       title: Type
       type: List
       options:
+        - name: "mediation"
+          title: Mediation-like
         - name: "circle"
           title: Circle
         - name: "circle2"
@@ -406,10 +399,10 @@ options:
         - name: "spring"
           title: Spring
 
-      default: "circle"
+      default: "mediation"
       description:
           R: >
-             Choose the diagram labels
+             Choose the path diagram layout, including a mediation-like layout
 
     - name: diag_shape
       title: Shapes

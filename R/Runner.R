@@ -1,29 +1,66 @@
-## This class takes care of estimating the models and return the results. It inherit from Initer, and defines the same tables
-## defined by Initer, but it fills them with the results. It also adds a few tables not defined in Initer
-## Any function that produce a table goes here
-
-Runner <- R6::R6Class("Runner",
+# Estimation is separate from the run_* data providers dispatched by SmartTabs.
+Runner <- R6::R6Class(
+    "Runner",
     inherit = Initer,
     cloneable = FALSE,
-    class = TRUE,
     public = list(
-        run = function() {
-          
-            ## we stop if initier is not ok
-            if (!self$ok) return()
-            jinfo("jAMM: Runner: estimations")
-            ### self$selector is the selector initialized in Initier
-
-
+        data = NULL,
+        estimate = function(data) {
+            self$data <- data
+            private$.regressions <- list()
+            self$estimator$estimate(data)
+            if (is.something(self$estimator$errors))
+                stop(paste(self$estimator$errors, collapse = "; "))
         },
-        run_infotab= function() {
-
+        run_infotab = function() {
+            # SmartTable catches warnings and attaches them to the owning table.
+            for (message in self$estimator$warnings[["main"]])
+                warning(message, call. = FALSE)
+            c(table_rows(self$estimator$tab_info), table_rows(self$estimator$models()),
+              table_rows(self$estimator$tab_indirect))
+        },
+        run_models_r2 = function() {
+            for (message in self$estimator$warnings[["r2"]])
+                warning(message, call. = FALSE)
+            table_rows(self$estimator$tab_r2)
+        },
+        run_models_interactions = function() {
+            table_rows(self$estimator$tab_interactions)
+        },
+        run_models_coefficients = function() {
+            table_rows(self$estimator$tab_coefficients)
+        },
+        run_models_contrastCodeTable = function() {
+            self$init_models_contrastCodeTable()
+        },
+        run_regressions_overall_anova = function() {
+            private$.regression_values("overall", self$options$dep, private$.total_terms(), total = TRUE)$anova
+        },
+        run_regressions_overall_regression = function() {
+            private$.regression_values("overall", self$options$dep, private$.total_terms(), total = TRUE)$regression
+        },
+        run_regressions_mediator_regressions = function() {
+            rows <- lapply(seq_along(self$options$mediators), function(index) {
+                private$.regression_values(paste0("mediator_", index), self$options$mediators[[index]],
+                                           self$options$mediatorsTerms[[index]])
+            })
+            stats::setNames(rows, self$options$mediators)
+        },
+        run_regressions_full_anova = function() {
+            private$.regression_values("full", self$options$dep, self$options$modelTerms)$anova
+        },
+        run_regressions_full_regression = function() {
+            private$.regression_values("full", self$options$dep, self$options$modelTerms)$regression
         }
-        
-    ), # end of public 
-
+    ),
     private = list(
-      
-
-    ) # end of private
-) # end of class
+        .regressions = list(),
+        .regression_values = function(key, dep, terms, total = FALSE) {
+            # ANOVA and coefficient providers share one fit per equation.
+            if (is.null(private$.regressions[[key]]))
+                private$.regressions[[key]] <- regression_values(dep, terms, self$estimator,
+                                                               self$data, self$options$ciWidth / 100, total)
+            private$.regressions[[key]]
+        }
+    )
+)
