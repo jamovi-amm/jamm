@@ -1,5 +1,5 @@
 # Build the conceptual diagram directly from the specified regression terms.
-# Unlike the old smartMediation backend, this needs no estimation or UI objects.
+# This needs no estimation or UI objects.
 model_diagram_data <- function(options) {
   mediators <- jmvcore::toB64(options$mediators)
   dependent <- jmvcore::toB64(options$dep)
@@ -80,20 +80,6 @@ plot_model_diagram <- function(state) {
   invisible(plot)
 }
 
-.diag.moderators_coord<-function(j) {
-  
-  M<-list(c(xleft=.00,ytop=.99),
-          c(xleft=.80,ytop=.99),
-          c(xleft=.00,ytop=.20),
-          c(xleft=.80,ytop=.20))
-  m<-(j %% 4)
-  if (m==0) m=4
-  r<-(j %/% 4)
-  line<-M[[m]]  
-  line["xlef"]<-line["xlef"]+.1*r  
-  line
-}
-
 .columnize<-function(n,space=.80,default=.5) {
   if (n==1)
     return(default)
@@ -106,22 +92,6 @@ plot_model_diagram <- function(state) {
   }
   res
 }
-
-.paths<-function(infos,val="") {
-  M<-matrix(0,nrow=infos$nvars,ncol=infos$nvars)
-  colnames(M)<-rownames(M)<-infos$vars
-  for (f in infos$models) {
-    d<-which(infos$vars==f$dep)
-    i<-which(infos$vars %in% f$ind)
-    M[d,i]<-val
-  }
-  M
-}
-
-
-
-
-
 
 diag.paths<-function(infos,suggested=F,shiftmed=0) {
 
@@ -164,7 +134,6 @@ diag.paths<-function(infos,suggested=F,shiftmed=0) {
               pos=POS,labs=LABS))
   
 }
-
 
 .positions<-function(infos,shiftmed=0) {
   nx<-length(infos$independents)
@@ -211,7 +180,6 @@ diag.paths<-function(infos,suggested=F,shiftmed=0) {
   }
   as.matrix(M)
 }
-
 
 .curves<-function(infos) {
   nm<-length(infos$mediators)
@@ -261,7 +229,6 @@ diag.paths<-function(infos,suggested=F,shiftmed=0) {
   line
 }
 
-
 diag.plot_mods<-function(plot, moderators) {
   
   hbox<-plot$rec[1,4]-plot$rec[1,2]
@@ -303,5 +270,4 @@ diag.plot_mod_arr<-function(plot,from,to,modindex) {
   arr.lenght=1/(nvars-1)
   shape::Arrows(xleft,ytop,tx,ty,arr.type="triangle",arr.width = .1, arr.length = arr.lenght,arr.col = "gray")
 }
-
 

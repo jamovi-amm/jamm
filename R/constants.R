@@ -1,6 +1,3 @@
-j_DEBUG=T
-j_INFO=T
-
 ERROR_TABLE="issues"
 
 INTERACTION_SYMBOL="__XX__XX__"

@@ -110,7 +110,6 @@ Plotter <- R6::R6Class(
       
   ), # end of public
   private = list(
-    .diagrams=NULL,
     .datamatic=FALSE,
     .plotgroup=NULL,
     .operator=NULL,
@@ -166,29 +165,6 @@ Plotter <- R6::R6Class(
       notes$setVisible(length(state$notes) > 0)
       for (index in seq_along(state$notes))
         notes$addRow(index, list(info = state$notes[[index]]))
-    },
-    .semPaths=function(options) {
-      ### we need this because semPaths does not work with do.call() in windows
-        res<-try_hard({
-        semPlot::semPaths(object = options$object,
-                      layout =options$layout,
-                      residuals = options$residuals,
-                      rotation = options$rotation,
-                      intercepts = options$intercepts,
-                      nodeLabels= options$nodeLabels,
-                      whatLabels=options$whatLabels,
-                      sizeMan = options$sizeMan,
-                      sizeMan2=options$sizeMan2,
-                      curve=options$curve,
-                      shapeMan=options$shapeMan,
-                      edge.label.cex =options$edge.label.cex,
-                      DoNotPlot=TRUE)
-
-      })
-      if (is.something(res$error))
-          self$warnings<-list(topic="diagram",message=res$error)
-      
-      return(res)
     }
 
   ) # end of private

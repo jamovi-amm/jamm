@@ -22,7 +22,6 @@ Estimate <- R6::R6Class("Estimate",
                             # scale used to fit the regression interactions.
                             self$prepareConditional(data)
                             private$.lavaan_estimate(data)
-                            private$.ols_estimate(data)
                             
                             # fit indices
                             alist<-list()
@@ -75,7 +74,6 @@ Estimate <- R6::R6Class("Estimate",
                         }
                         ), ## end public
                         private=list(
-                        .lav_regressions=NULL,
                           
                          .lavaan_estimate=function(data) {
                            # Always define the argument, even when no bootstrap
@@ -132,21 +130,7 @@ Estimate <- R6::R6Class("Estimate",
                            private$.make_tables()
                            self$computeR2(data)
                            ginfo("Estimation is done...")
-                         },
-                         .ols_estimate=function(data) {
-                           if (!("regression" %in% self$options$tableOptions)) {
-                             .lav_regressions=NULL
-                             return()
-                             
-                           }
-                             
-                           res<-lapply(private$.lav_models, function(mod) {
-                             summary(lm(mod,data))
-                           })
-                           
-                           
-                           
-                           }
+                         }
                 
                 
               ) #end of private 

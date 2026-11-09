@@ -81,12 +81,6 @@ const events = {
 
     },
 
-    onChange_plotsSupplier: function(ui) {
-    },
-    
-    onChange_simpleSupplier: function(ui) {
-    },
-
     onEvent_moderatorChanged: function(ui) {
         // Ignore notifications emitted while restoring the saved controls.
         if (this.workspace.initializing || this.workspace.revertingModerators)
@@ -511,37 +505,6 @@ var flatMulti = function(cosmos,context) {
   return unique(light);
 };
 
-var combineOne = function(values, mod, context) {
-        if (mod===undefined)
-            return(values);
-        var list = unique(values.concat([mod]));
-        for (var i = 0; i < values.length; i++) {
-            var newValue = context.clone(mod);
-            var value = values[i];
-            if (context.listContains(value,newValue[0],FormatDef.term)===false)
-                   if (FormatDef.term.isEqual(newValue,value)===false) {
-                      if (Array.isArray(value)) 
-                          newValue = newValue.concat(value);
-                      else
-                         newValue.push(value);   
-            list.push(newValue);
-            }
-        }
-        return unique(list);
-};
-
-var getInteractions = function(aList,context,order=2) {
-  
-  var iList = context.getCombinations(aList);
-  for (var i = 0; i < iList.length; i++ )
-          if (iList[i].length===1 || iList[i].length>order) {
-              iList.splice(i, 1);
-               i -= 1;
-          }
- return(iList);
-  
-};
-
 var normalize = function(cosmos) {
 
   if (cosmos===undefined)
@@ -637,11 +600,6 @@ var storeComponent = function(id,cosmos,context) {
 };
 
 var log=function(obj) {
-    if (DEBUG)
-      console.log(obj);
-};
-
-var dlog=function(obj) {
     if (DEBUG)
       console.log(obj);
 };

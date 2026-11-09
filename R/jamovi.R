@@ -2,10 +2,8 @@ tob64<- function(x,...) UseMethod(".tob64")
 
 .tob64.default<-function(obj,ref=NULL) {
 
-
   if (is.null(obj))
       return()
-
 
   if (is.null(ref)) {
     obj<-jmvcore::toB64(obj)
@@ -25,7 +23,6 @@ tob64<- function(x,...) UseMethod(".tob64")
 bogustob64<-function(obj,ref) tob64(obj,ref)
 
 fromb64<- function(x,...) UseMethod(".fromb64")
-
 
 .fromb64.default<-function(obj,ref=NULL) {
   
@@ -72,101 +69,4 @@ table_rows <- function(rows) {
         return(lapply(seq_len(nrow(rows)), function(index) as.list(rows[index, , drop = FALSE])))
     }
     lapply(rows, as.list)
-}
-
-
-j.init_table<-function(table,obj,ci=FALSE,ciroot="",ciformat="{}% Confidence Intervals",ciwidth,indent=NULL) {
-  
-  if (is.null(obj))
-    return()
-
-  square<-length(dim(obj))>1
-  if (ci) {
-    l<-paste0(ciroot,"ci.lower")
-    u<-paste0(ciroot,"ci.upper")
-    table$getColumn(l)$setSuperTitle(jmvcore::format(ciformat, ciwidth))
-    table$getColumn(u)$setSuperTitle(jmvcore::format(ciformat, ciwidth))
-  }
-  if (square)
-     for (i in seq_len(nrow(obj))) {
-         table$addRow(rowKey=i,obj[i,])
-     }
-  else
-    for (i in seq_along(obj)) 
-      table$addRow(rowKey=i,obj[[i]])
-
-  if (!is.null(indent)) {
-    trows<-1:i
-    rows<-trows[indent]
-    for (j in rows)
-      table$addFormat(rowKey=j,col=1,jmvcore::Cell.INDENTED)
-  }
-  table$setVisible(TRUE)
-
-}
-j.init_table_append<-function(table,obj, indent=NULL) {
-  
-  last<-table$rowCount
-  for (i in seq_along(obj)) 
-    table$addRow(rowKey=last+i,obj[[i]])
-  
-  if (!is.null(indent)) {
-    trows<-1:i
-    rows<-trows[indent]
-    for (j in rows)
-      table$addFormat(rowKey=last+j,col=1,jmvcore::Cell.INDENTED)
-  }
-  
-}
-
-
-j.fill_table<-function(table,obj, fixNA=TRUE,append=FALSE,spaceby=NULL,start=1) {
-
-  if (!is.something(obj))
-    return()
-  
-  last<-start-1
-  if (append)  last<-table$rowCount
-  
-  FUNC<-function(i,w) table$setRow(rowNo=i,w)
-  if (append)   FUNC<-function(i,w) table$addRow(rowKey=i,w)
-
-  square<-(length(dim(obj))>1)
-  if (square)
-           for (i in seq_len(nrow(obj))) {
-              t<-obj[i,]
-              if (fixNA) 
-                  t[which(is.na(t))]<-""
-              FUNC(i+last,t)
-           }
-   else 
-     for (i in seq_along(obj)) {
-       t<-obj[[i]]
-       if (fixNA) 
-         t[which(is.na(t))]<-""
-       FUNC(i+last,t)
-   }
-  if (is.something(spaceby)) {
-    col<-obj[,spaceby]
-    rows<-unlist(lapply(unique(col),function(x) min(which(col==x))))
-    for (j in rows)
-      table$addFormat(rowNo=j+last,col=1,jmvcore::Cell.BEGIN_GROUP)
-    
-  }
-  table$setVisible(TRUE)
-}
-
-j.add_warnings<-function(atable,adispatch,atopic) {
-  
-  if (!is.something(adispatch$warnings[[atopic]]))
-       return()
-  
-  if (atable$rowCount==0)
-        atable$setError(paste(adispatch$warnings[[atopic]],collapse = "; "))
-  else
-      for (i in seq_along(adispatch$warnings[[atopic]]))
-               atable$setNote(i,adispatch$warnings[[atopic]][[i]])
-
-  atable$setVisible(TRUE)
-  
 }

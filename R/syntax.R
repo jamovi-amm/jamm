@@ -43,10 +43,6 @@ Syntax <- R6::R6Class(
               indirect_names=NULL,
               direct_names=NULL,
               total_names=NULL,
-              ols_r2=NULL,
-              ols_mediators=NULL,
-              ols_full=NULL,
-              ols_total=NULL,
               
               initialize=function(options,datamatic) {
                 super$initialize(options=options,vars=unlist(c(options$dep,options$mediators,options$factors,options$covs)))
@@ -81,9 +77,6 @@ Syntax <- R6::R6Class(
                 ## check and build indirect effect
                 private$.indirect()
                 private$.total()
-                
-                ### check and build lavaan directives to free covariances
-                private$.check_varcov()
                 
                 ### here we update to build a lavaanify structure
 
@@ -175,7 +168,6 @@ Syntax <- R6::R6Class(
             .lav_models=NULL,
             .lav_indirect=NULL,
             .lav_total=NULL,
-            .lav_varcov=NULL,
             .lav_moderators=NULL,
             .indirect_names=NULL,
             .factorinfo64=NULL,
@@ -196,10 +188,6 @@ Syntax <- R6::R6Class(
                   if (is.something(private$.lav_total)) {
                     f<-paste(f,";")
                     f<-paste(f,private$.lav_total,collapse = " ; ")
-                  }
-                  if (is.something(private$.lav_varcov)) {
-                    f<-paste(f,";")
-                    f<-paste(f,private$.lav_varcov,collapse = " ; ")
                   }
                   
                   f
@@ -390,24 +378,6 @@ Syntax <- R6::R6Class(
                             
 
             },
-            .check_varcov=function() {
-              
-              # not used at the moment
-              return()
-              
-              ## here we check for possible correlations among parallel mediators
-              med<-tob64(self$options$mediators)
-              if (length(med)==1)
-                   return()
-              medpairs<-ordered_pairs(med)
-              tab<-private$.lav_structure[private$.lav_structure$op=="~",]
-              tab<-tab[tab$lhs %in% med & tab$rhs %in% med,c("lhs","rhs")] 
-              cov<-remove_pair(medpairs,tab)
-              synt<-lapply(cov, paste,collapse="~~")
-              private$.lav_varcov<-NULL
-
-
-            },
             .factorlist=function(terms,factorslen) {
               .terms<-list()
               for (f in names(factorslen)) {
@@ -551,14 +521,6 @@ Syntax <- R6::R6Class(
               self$total_names<-total_names
               names(self$total_names)<-totals
               self$direct_names<-direct_names
-            },
-            ## NOTE: the "individual regressions" tables (Total effects / Full model /
-            ## per-mediator regressions) are populated directly from self$options and the
-            ## cleaned data in R/regressions.R (regressions.init/regressions.results),
-            ## called from jammGLMClass$.init()/.run(). This method (and the ols_* fields
-            ## above) is no longer used.
-            .check_ols=function() {
-              invisible(NULL)
             }
             
             
