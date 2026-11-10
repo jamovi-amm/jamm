@@ -149,6 +149,7 @@ children:
                     name: moderatorsTerms
                     height: large
                     events:
+                      change: ./jamm.events::onEvent_moderatorChanged
                       listItemAdded: ./jamm.events::onEvent_nothing
                       listItemRemoved: ./jamm.events::onEvent_nothing
                     selectable: true

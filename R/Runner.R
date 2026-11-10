@@ -6,11 +6,20 @@ Runner <- R6::R6Class(
     public = list(
         data = NULL,
         estimate = function(data) {
+            self$ok <- TRUE
             self$data <- data
             private$.regressions <- list()
             self$estimator$estimate(data)
-            if (is.something(self$estimator$errors))
-                stop(paste(self$estimator$errors, collapse = "; "))
+            if (is.something(self$estimator$errors)) {
+                # Report through Scaffold and retain lavaan's diagnostic details.
+                self$ok <- FALSE
+                self$warning <- list(
+                    topic = "issues",
+                    message = paste("Model cannot be estimated:", paste(self$estimator$errors, collapse = "; ")),
+                    head = "error"
+                )
+                return(invisible(NULL))
+            }
         },
         run_infotab = function() {
             # SmartTable catches warnings and attaches them to the owning table.
@@ -32,6 +41,9 @@ Runner <- R6::R6Class(
         },
         run_models_contrastCodeTable = function() {
             self$init_models_contrastCodeTable()
+        },
+        run_models_contrastCodeTables = function() {
+            self$init_models_contrastCodeTables()
         },
         run_regressions_overall_anova = function() {
             private$.regression_values("overall", self$options$dep, private$.total_terms(), total = TRUE)$anova

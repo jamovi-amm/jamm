@@ -36,6 +36,10 @@
 #'   mediators as dependent variables.
 #' @param moderatorsTerms a list of lists specifying the the IV which
 #'   moderatorate each mediated effect.
+#'   Categorical moderators include each factor level and an Average setting
+#'   at the equal-level contrast centroid (zero for centered factor coding).
+#'   Indirect effects at Average are products of the centered-factor slopes,
+#'   not averages of the level-specific indirect effects.
 #' @param meddiagram \code{TRUE} or \code{FALSE} (default), produce a path
 #'   diagram
 #' @param diagram \code{TRUE} or \code{FALSE} (default), produce a path

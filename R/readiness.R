@@ -32,6 +32,16 @@ readiness <- function(options) {
     return(result)
   }
 
+  # UI restoration or direct R calls must not bypass the predictor-role rule.
+  predictors <- unique(c(options$factors, options$covs))
+  moderators <- unique(unlist(options$moderatorsTerms))
+  if (length(setdiff(predictors, moderators)) == 0) {
+    result$ready <- FALSE
+    result$report <- TRUE
+    result$reason <- "At least one independent variable must remain outside the moderators"
+    return(result)
+  }
+
   if (length(options$modelTerms)==0) {
     result$ready <- FALSE
     result$report <- TRUE

@@ -307,7 +307,7 @@ options:
     - name: meddiagram
       title: Model Diagram
       type: Bool
-      default: false
+      default: true
       description:
           R: >
             `TRUE` or `FALSE` (default), produce a path diagram

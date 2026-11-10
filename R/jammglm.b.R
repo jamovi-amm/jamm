@@ -45,11 +45,17 @@ jammGLMClass <- R6::R6Class(
             self$results$models$coefficients$getColumn("condition")$setVisible(length(unlist(self$options$moderatorsTerms)) > 0)
             aSmartObj <- SmartTable$new(self$results$models$coefficients, runner_machine)
             aSmartObj$ci("", self$options$ciWidth)
+            aSmartObj$spaceBy <- "condition"
             ladd(private$.smartObjs) <- aSmartObj
 
             # Contrast definitions start hidden when no factors are specified.
             aSmartObj <- SmartTable$new(self$results$models$contrastCodeTable, runner_machine)
             aSmartObj$activateOnData <- TRUE
+            ladd(private$.smartObjs) <- aSmartObj
+
+            # Expand the optional coefficient matrices through SmartTabs, as in GAMLj.
+            aSmartObj <- SmartArray$new(self$results$models$contrastCodeTables, runner_machine)
+            aSmartObj$expandOnInit <- TRUE
             ladd(private$.smartObjs) <- aSmartObj
 
             if ("regression" %in% self$options$tableOptions) {
@@ -108,6 +114,9 @@ jammGLMClass <- R6::R6Class(
 
             data <- private$.data_machine$cleandata(self$data, private$.runner_machine$estimator$interactions)
             private$.runner_machine$estimate(data)
+            # Failed fits are reported in Issues, without running dependent output.
+            if (!private$.runner_machine$ok)
+                return()
 
             # Run tables through SmartTabs, never by calling the providers here.
             for (smarttab in private$.smartObjs) {

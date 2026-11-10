@@ -208,6 +208,27 @@ items:
                            title: 'Contrast'
                            type: text
 
+          - name: contrastCodeTables
+            title: Contrast Coefficients
+            type: Array
+            visible: (showContrastCode)
+            items: (factors)
+            clearWith:
+                - factors
+                - contrasts
+                - showContrastCode
+                - data
+            template:
+                title: $key
+                type: Table
+                columns:
+                    - name: cname
+                      title: Name
+                      type: text
+                    - name: clab
+                      title: Contrast
+                      type: text
+
 
   - name: regressions
     type: Group

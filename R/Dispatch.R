@@ -17,6 +17,10 @@ TableDispatch <- R6::R6Class(
                         initialize=function(results) { 
                           
                                   self$tables<-results
+                                  # Decode variable references, never entire prose messages.
+                                  private$.vars <- as.character(unlist(c(
+                                    results$options$dep, results$options$mediators,
+                                    results$options$factors, results$options$covs)))
                                   if (".interface" %in% names(results$options))
                                            self$interface<-results$options$.interface
                            
@@ -68,7 +72,7 @@ TableDispatch <- R6::R6Class(
                                 if (is.null(obj$message))
                                   return()
                                 
-                                if (exists("fromb64")) obj$message<-fromb64(obj$message)
+                                if (exists("fromb64")) obj$message<-fromb64(obj$message, ref = private$.vars)
                                 
                                 if (inherits(table,"Html")) {
                                   if (self$interface=="R") {
@@ -116,7 +120,7 @@ TableDispatch <- R6::R6Class(
                                     return()
           
                                obj$message<-self$translate(obj$message)
-                               if (exists("fromb64")) obj$message<-fromb64(obj$message)
+                               if (exists("fromb64")) obj$message<-fromb64(obj$message, ref = private$.vars)
                                
                                if (hasName(obj,"final") && (obj$final))
                                    stop(obj$message)
@@ -139,6 +143,7 @@ TableDispatch <- R6::R6Class(
                       
             ),
 private = list(
+                .vars = character(),
                 .warnings = list(),
                 .errors = list(),
                 .process_html = function(content, obj) {

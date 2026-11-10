@@ -18,10 +18,16 @@ Estimate <- R6::R6Class("Estimate",
                             self$ciwidth<-options$ciWidth/100
                           },
                           estimate=function(data) {
+                            # Never expose a previous fit after a failed re-estimation.
+                            self$model <- NULL
                             # Build conditional definitions on the same data and
                             # scale used to fit the regression interactions.
                             self$prepareConditional(data)
                             private$.lavaan_estimate(data)
+                            # Runner reports the recorded fitting error; do not mask
+                            # it by accessing slots on an absent lavaan model.
+                            if (is.something(self$errors))
+                              return(invisible(NULL))
                             
                             # fit indices
                             alist<-list()

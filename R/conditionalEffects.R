@@ -7,10 +7,16 @@ moderator_settings <- function(options, datamatic, data = NULL) {
             levels <- datamatic$factors_levels[[moderator]]
             coding <- datamatic$contrasts_values[[moderator]]
             columns <- paste0(tob64(moderator), FACTOR_SYMBOL, seq_len(ncol(coding)))
-            return(lapply(seq_along(levels), function(index) {
+            levelSettings <- lapply(seq_along(levels), function(index) {
                 list(values = stats::setNames(as.numeric(coding[index, ]), columns),
                      label = paste(moderator, levels[[index]], sep = " = "))
-            }))
+            })
+            # The centered-factor effect uses the equal-level contrast centroid,
+            # not the reference category or the sample-frequency-weighted mean.
+            # Evaluate the path product here, rather than averaging level products.
+            average <- list(values = stats::setNames(colMeans(coding), columns),
+                            label = paste(moderator, "Average", sep = " = "))
+            return(c(levelSettings, list(average)))
         }
         column <- tob64(moderator)
         if (is.null(data)) {

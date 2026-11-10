@@ -35,6 +35,20 @@ Initer <- R6::R6Class(
             }
             if (length(rows) > 0) rows else NULL
         },
+        init_models_contrastCodeTables = function() {
+            if (!self$options$showContrastCode)
+                return(NULL)
+            # SmartArray expands one table per factor, with one column per level.
+            lapply(self$options$factors, function(factor) {
+                values <- as.data.frame(t(self$datamatic$contrasts_values[[factor]]))
+                names(values) <- paste("Level", self$datamatic$factors_levels[[factor]], sep = "=")
+                # Supply literal headings so SmartTabs does not Base64-decode them.
+                attr(values, "titles") <- names(values)
+                values$cname <- paste0(factor, seq_len(nrow(values)))
+                values$clab <- unlist(self$datamatic$contrasts_labels[[factor]])
+                values
+            })
+        },
         init_regressions_overall_anova = function() {
             list(list(dep = self$options$dep))
         },

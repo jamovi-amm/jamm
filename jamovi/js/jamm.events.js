@@ -133,6 +133,8 @@ var initializeAll = function(ui, context) {
     finally {
        context.workspace.initializing = false;
     }
+    // Validate restored selections too, even if they already match the snapshot.
+    fromModeratorsToOthers(ui, context);
 };
 
 
@@ -273,8 +275,7 @@ var fromModeratorsToOthers = function(ui,context) {
         });
     });
     var pending = findChangesMulti("moderatorsTerms",moderatorsTerms,context,false);
-    var hasAdditions = pending.changes.some(function(change) { return change.added.length > 0; });
-    if (predictors.length > 0 && hasAdditions && predictors.every(function(predictor) {
+    if (predictors.length > 0 && predictors.every(function(predictor) {
         return selected.indexOf(predictor) > -1;
     })) {
         // Reject the transfer before it can add interactions to either model.
@@ -282,6 +283,17 @@ var fromModeratorsToOthers = function(ui,context) {
         moderatorsTerms = moderatorsTerms.map(function(block, index) {
             return removeFromList(pending.changes[index].added, block, context, 0);
         });
+        // A refresh can snapshot the invalid selection before this handler runs.
+        // In that case there are no additions to undo: reserve the last predictor.
+        var remaining = [];
+        moderatorsTerms.forEach(function(block) {
+            normalize(block).forEach(function(term) { remaining = remaining.concat(term); });
+        });
+        if (predictors.every(function(predictor) { return remaining.indexOf(predictor) > -1; })) {
+            moderatorsTerms = moderatorsTerms.map(function(block) {
+                return removeFromList([predictors[predictors.length - 1]], block, context, 1);
+            });
+        }
         context.workspace.revertingModerators = true;
         try {
             ui.moderatorsTerms.setValue(moderatorsTerms);

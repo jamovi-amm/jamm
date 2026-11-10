@@ -89,7 +89,10 @@ mediators as dependent variables. Not required in formula is used.}
 
 \item{moderatorsTerms}{a named vector of the form c("med"=c("mod1",mod2")) specifying the moderator(s) of each mediator. 
 This is required to decide for which variable we need to condition the mediated effects and to single out moderators
-in the path diagram. If not specified, any interaction is considered as any other term in the model}
+in the path diagram. If not specified, any interaction is considered as any other term in the model.
+Categorical moderators include each factor level and an Average setting at the equal-level
+contrast centroid (zero for centered factor coding). Indirect effects at Average are products
+of the centered-factor slopes, not averages of the level-specific indirect effects.}
 
 \item{formula}{a list of formulas to use, see the examples}
 }

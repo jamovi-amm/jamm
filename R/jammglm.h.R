@@ -31,7 +31,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 list()),
             moderatorsTerms = list(
                 list()),
-            meddiagram = FALSE,
+            meddiagram = TRUE,
             diagram = FALSE,
             diag_paths = "est",
             diag_resid = FALSE,
@@ -223,7 +223,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..meddiagram <- jmvcore::OptionBool$new(
                 "meddiagram",
                 meddiagram,
-                default=FALSE)
+                default=TRUE)
             private$..diagram <- jmvcore::OptionBool$new(
                 "diagram",
                 diagram,
@@ -448,7 +448,8 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     r2 = function() private$.items[["r2"]],
                     interactions = function() private$.items[["interactions"]],
                     coefficients = function() private$.items[["coefficients"]],
-                    contrastCodeTable = function() private$.items[["contrastCodeTable"]]),
+                    contrastCodeTable = function() private$.items[["contrastCodeTable"]],
+                    contrastCodeTables = function() private$.items[["contrastCodeTables"]]),
                 private = list(),
                 public=list(
                     initialize=function(options) {
@@ -632,7 +633,30 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 list(
                                     `name`="clab", 
                                     `title`="Contrast", 
-                                    `type`="text"))))}))$new(options=options))
+                                    `type`="text"))))
+                        self$add(jmvcore::Array$new(
+                            options=options,
+                            name="contrastCodeTables",
+                            title="Contrast Coefficients",
+                            visible="(showContrastCode)",
+                            items="(factors)",
+                            clearWith=list(
+                                "factors",
+                                "contrasts",
+                                "showContrastCode",
+                                "data"),
+                            template=jmvcore::Table$new(
+                                options=options,
+                                title="$key",
+                                columns=list(
+                                    list(
+                                        `name`="cname", 
+                                        `title`="Name", 
+                                        `type`="text"),
+                                    list(
+                                        `name`="clab", 
+                                        `title`="Contrast", 
+                                        `type`="text")))))}))$new(options=options))
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
                 active = list(
