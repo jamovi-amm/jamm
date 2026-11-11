@@ -11,22 +11,21 @@ Estimate <- R6::R6Class("Estimate",
                           tab_fitindices=NULL,
                           ciwidth=NULL,
                           tab_constfit=NULL,
-                          initialize=function(options,datamatic) {
+                          initialize=function(jmvobj,datamatic) {
                             super$initialize(
-                              options=options,
+                              jmvobj=jmvobj,
                               datamatic=datamatic)
-                            self$ciwidth<-options$ciWidth/100
+                            self$ciwidth<-self$options$ciWidth/100
                           },
                           estimate=function(data) {
                             # Never expose a previous fit after a failed re-estimation.
                             self$model <- NULL
+                            self$ok <- TRUE
                             # Build conditional definitions on the same data and
                             # scale used to fit the regression interactions.
                             self$prepareConditional(data)
                             private$.lavaan_estimate(data)
-                            # Runner reports the recorded fitting error; do not mask
-                            # it by accessing slots on an absent lavaan model.
-                            if (is.something(self$errors))
+                            if (!self$ok)
                               return(invisible(NULL))
                             
                             # fit indices
@@ -54,7 +53,7 @@ Estimate <- R6::R6Class("Estimate",
                              for (i in seq_along(end$r2)) 
                                     if (end$r2[[i]]>1 | end$r2[[i]]<0)  {
                                       end$r2[[i]]<-NA
-                                      self$warnings<-list(topic="r2",message="Some R-square indexex cannot be computed for this model")
+                                      self$warning<-list(topic="models_r2",message="Some R-square indexex cannot be computed for this model")
                                     }
                             
                               ### https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3821705/
@@ -115,11 +114,13 @@ Estimate <- R6::R6Class("Estimate",
                            
                            
                            
-                           self$warnings<-list(topic="main",message=results$warning)
-                           self$errors<-results$error
-                           
-                           if (is.something(self$errors))
-                             return(self$errors)
+                           self$warning<-list(topic="infotab",message=results$warning)
+                           if (!isFALSE(results$error)) {
+                             details<-fromb64(results$error,ref=self$vars)
+                             if (grepl("infinite or missing",details,fixed=TRUE))
+                               details<-paste(ERRS[["noluck"]],details)
+                             self$stop(paste("Model cannot be estimated:",details))
+                           }
                            
                            ## ask for the paramters estimates
                            self$model<-results$obj

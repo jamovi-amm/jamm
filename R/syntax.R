@@ -7,7 +7,6 @@
 ### variable name. 
 ### It assumes that all factors are present in the data as K-1 new variables with appropriated constrast value as numeric variables. 
 ### each "dummy" variable in named `VAR{FACTOR_SYMBOL}k`` 
-### Inherit from Dispatch, which provides $warnings and $errors mechanisms to store info. Requires the try_hard() function to catch errors
 ##  naming convention: all objects containing lavaan syntax, objects that are needed to build objects that can be passed directly
 ##                     to lavaan are named $lav_*.   $lav_* objects contains B64 variable names 
 ##                     All object containing tables to be passed to the results init tables are called $tab_*. 
@@ -17,8 +16,9 @@ Syntax <- R6::R6Class(
          "Syntax",
           class=FALSE, ## this and the next 
           cloneable=FALSE, ## should improve performance https://r6.r-lib.org/articles/Performance.html ###
-          inherit = Dispatch,
+          inherit = Scaffold,
           public=list(
+              vars=NULL,
               endogenous=NULL,
               endogenousTerms=NULL,
               moderators=NULL,
@@ -44,8 +44,10 @@ Syntax <- R6::R6Class(
               direct_names=NULL,
               total_names=NULL,
               
-              initialize=function(options,datamatic) {
-                super$initialize(options=options,vars=unlist(c(options$dep,options$mediators,options$factors,options$covs)))
+              initialize=function(jmvobj,datamatic) {
+                super$initialize(jmvobj)
+                options<-self$options
+                self$vars<-datamatic$vars
                 private$.conditional_datamatic <- datamatic
                 self$contrasts_names<-datamatic$contrasts_names
                 self$moderators<-unlist(options$moderatorsTerms)
@@ -130,31 +132,19 @@ Syntax <- R6::R6Class(
 
           ),   # End public
           active=list(
-           ### inherited warnings and errors are overriden to check specific message to change, and then passed to super 
-           warnings=function(obj) {
-             if (missing(obj))
-               return(private$.warnings)
+           warning=function(obj) {
              if (is.null(obj))
                return()
              if (is.null(obj$message))
                  return()
-             check<-length(grep("fixed.x=FALSE",obj$message,fixed = T)>0) 
-             if (check) 
-               obj$message<-WARNS[["usercov"]]
+             obj$message<-lapply(obj$message,function(message) {
+               if (isFALSE(message)) return(FALSE)
+               if (grepl("fixed.x=FALSE",message,fixed=TRUE))
+                 message<-WARNS[["usercov"]]
+               fromb64(message,ref=self$vars)
+             })
                
-             super$warnings<-obj
-           },
-           errors=function(obj) {
-             
-             if (missing(obj))
-               return(private$.errors)
-             if (is.null(obj))
-               return()
-             check<-length(grep("infinite or missing",obj,fixed = T)>0) 
-             if (check) 
-               super$errors<-ERRS[["noluck"]]
-             
-             super$errors<-obj
+             super$warning<-obj
            }
            
           ),
@@ -210,10 +200,9 @@ Syntax <- R6::R6Class(
               results<-try_hard({
                 do.call(lavaan::lavaanify, lavoptions)
               })
-              self$warnings<-list(topic="main",message=results$warning)
-              self$errors<-results$error
-              if (is.something(self$errors))
-                stop(paste(self$errors,collapse = "\n"))
+              self$warning<-list(topic="infotab",message=results$warning)
+              if (!isFALSE(results$error))
+                stop(fromb64(results$error,ref=self$vars),call.=FALSE)
               
               ## raw (B64ed) structure of results gos in .lav_structure. Here are all parameters to be estimated, with info regarding
               ## their nature (exogenous, endogenous, coefficient vs variances, etc), labels and names 
@@ -373,7 +362,7 @@ Syntax <- R6::R6Class(
                             res<-unique(unlist(res))
                             if (is.something(res)) {
                                     w<-glue::glue(WARNS[["nocenterd"]],vars=paste(res,collapse = ", "))
-                                   self$warnings<-list(topic="main",message=w)
+                                   self$warning<-list(topic="infotab",message=w)
                             }
                             
 
@@ -454,7 +443,7 @@ Syntax <- R6::R6Class(
               deps<-unique(setdiff(tab$lhs,tab$rhs))
 
               if (length(deps)==0) {
-                self$warnings<-list(topic="defined",message=WARNS[["noindirect"]])
+                self$warning<-list(topic="infotab",message=WARNS[["noindirect"]])
                 return()
               }
               tabs<-list()
@@ -469,7 +458,7 @@ Syntax <- R6::R6Class(
                     .doit(tabs[[i]],term=tt)
                 })
                 if (.results$error!=FALSE)
-                    self$warnings<-list(topic="defined",message=WARNS[["noindirect"]])
+                    self$warning<-list(topic="infotab",message=WARNS[["noindirect"]])
                 results[[i]]<-.results
               }
               # we moltiply the parameters labs to compose the indirect effect

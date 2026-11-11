@@ -10,34 +10,23 @@ Runner <- R6::R6Class(
             self$data <- data
             private$.regressions <- list()
             self$estimator$estimate(data)
-            if (is.something(self$estimator$errors)) {
-                # Report through Scaffold and retain lavaan's diagnostic details.
+            if (!self$estimator$ok) {
                 self$ok <- FALSE
-                self$warning <- list(
-                    topic = "issues",
-                    message = paste("Model cannot be estimated:", paste(self$estimator$errors, collapse = "; ")),
-                    head = "error"
-                )
                 return(invisible(NULL))
             }
         },
         run_infotab = function() {
-            # SmartTable catches warnings and attaches them to the owning table.
-            for (message in self$estimator$warnings[["main"]])
-                warning(message, call. = FALSE)
-            c(table_rows(self$estimator$tab_info), table_rows(self$estimator$models()),
-              table_rows(self$estimator$tab_indirect))
+            c(self$estimator$tab_info, self$estimator$models(),
+              self$estimator$tab_indirect)
         },
         run_models_r2 = function() {
-            for (message in self$estimator$warnings[["r2"]])
-                warning(message, call. = FALSE)
-            table_rows(self$estimator$tab_r2)
+            self$estimator$tab_r2
         },
         run_models_interactions = function() {
-            table_rows(self$estimator$tab_interactions)
+            self$estimator$tab_interactions
         },
         run_models_coefficients = function() {
-            table_rows(self$estimator$tab_coefficients)
+            self$estimator$tab_coefficients
         },
         run_models_contrastCodeTable = function() {
             self$init_models_contrastCodeTable()

@@ -2,11 +2,13 @@ Plotter <- R6::R6Class(
   "Plotter",
   cloneable=FALSE,
   class=FALSE,
-  inherit = Dispatch,
+  inherit = Scaffold,
   public=list(
+      vars=NULL,
       semPathsOptions=NULL,
-      initialize=function(options,datamatic,operator,resultsplots) {
-            super$initialize(options=options,vars=unlist(c(options$mediators,options$dep,options$factors,options$covs)))
+      initialize=function(jmvobj,datamatic,operator,resultsplots) {
+            super$initialize(jmvobj)
+            self$vars<-datamatic$vars
             private$.plotgroup<-resultsplots
             private$.operator<-operator
             private$.datamatic<-datamatic
@@ -86,7 +88,8 @@ Plotter <- R6::R6Class(
         rotation<-as.numeric(self$options$diag_rotate)
         if (layout %in% c("circle") & rotation %in% c(2,4)) {
             rotation<-1
-            self$warnings<-list(topic="diagram",message=PLOT_WARNS[["rotation"]])
+            self$warning<-list(topic="pathgroup_notes",message=PLOT_WARNS[["rotation"]])
+            self$analysis$results$pathgroup$notes$setVisible(TRUE)
         }
         
         self$semPathsOptions<-list(

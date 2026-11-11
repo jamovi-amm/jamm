@@ -17,7 +17,6 @@ jammGLM(
   contrasts = NULL,
   showRealNames = TRUE,
   showContrastCode = FALSE,
-  bogus = FALSE,
   simpleScale = "mean_sd",
   cvalue = 1,
   percvalue = 25,
@@ -27,6 +26,15 @@ jammGLM(
   pathOptions = list("suggested"),
   mediatorsTerms = list(list()),
   moderatorsTerms = list(list()),
+  meddiagram = FALSE,
+  diagram = FALSE,
+  diag_paths = "est",
+  diag_resid = FALSE,
+  diag_labsize = "medium",
+  diag_rotate = "1",
+  diag_type = "mediation",
+  diag_shape = "rectangle",
+  diag_abbrev = "0",
   formula
 )
 }
@@ -34,16 +42,17 @@ jammGLM(
 \item{data}{the data as a data frame}
 
 \item{dep}{a string naming the dependent variable from \code{data},
-variable must be numeric. Not useful if formula is used.}
+variable must be numeric}
 
-\item{mediators}{a vector of strings naming the mediators from \code{data}. Not useful if formula is used.}
+\item{mediators}{a vector of strings naming the mediators from \code{data}}
 
 \item{factors}{a vector of strings naming the fixed factors from
-\code{data}. Not useful if formula is used or the variable is already a factor in the data}
+\code{data}}
 
-\item{covs}{a vector of strings naming the covariates from \code{data}. Not useful if formula is used.}
+\item{covs}{a vector of strings naming the covariates from \code{data}}
 
-\item{modelTerms}{a list of character vectors describing fixed effects  terms. Not useful if formula is used}
+\item{modelTerms}{a list of character vectors describing fixed effects
+terms}
 
 \item{ciType}{Choose the confidence interval type}
 
@@ -53,9 +62,9 @@ confidence interval width for the parameter estimates}
 \item{bootN}{number of bootstrap samples for estimating confidence
 intervals}
 
-\item{contrasts}{a named vector of the form \code{c(var1='type', var2='type2')} specifying the type of contrast to use,
-one of \code{'deviation'}, \code{'simple'}, \code{'dummy'}, \code{'difference'}, \code{'helmert'}, \code{'repeated'} or \code{'polynomial'}.
- If NULL, \code{'simple'} is used. Can also be passed as a list of list of the form \code{list(list(var='var1',type='type1'))}.}
+\item{contrasts}{a list of lists specifying the factor and type of contrast
+to use, one of \code{'deviation'}, \code{'simple'}, \code{'difference'},
+\code{'helmert'}, \code{'repeated'} or \code{'polynomial'}}
 
 \item{showRealNames}{\code{TRUE} or \code{FALSE} (default), provide raw
 names of the contrasts variables}
@@ -63,58 +72,83 @@ names of the contrasts variables}
 \item{showContrastCode}{\code{TRUE} or \code{FALSE} (default), provide
 contrast coefficients tables}
 
-\item{bogus}{\code{a bogus option to define a label without visible
-children, used for internal checks}}
-
 \item{simpleScale}{\code{'mean_sd'} (default), \code{'custom'} , or
-\code{'custom_percent'}. Use to condition the covariates (if any).}
+\code{'custom_percent'}. Use to condition the covariates (if any)}
 
-\item{cvalue}{offset value for conditioning. Values are mean +/- cvalue.}
+\item{cvalue}{offset value for conditioning}
 
-\item{percvalue}{offset value for conditioning. Values are median +/- pecvalue}
+\item{percvalue}{offset value for conditioning}
 
-\item{simpleScaleLabels}{style for presenting condition values of a moderator. It can be \code{'labels'} (default), \code{'values'} or \code{'labels_values'} for both.}
+\item{simpleScaleLabels}{.}
 
-\item{scaling}{a named vector of the form \code{c(var1='type1',var2='type2')}. Types are
-\code{'centered'} to the mean, \code{'standardized'}, log-transformed \code{'log'} or \code{'none'}.
-\code{'none'} leaves the variable as it is. It can also be passed as a list of lists.}
+\item{scaling}{a list of lists specifying the covariates scaling, one of
+\code{'centered to the mean'}, \code{'standardized'}, or \code{'none'}.
+\code{'none'} leaves the variable as it is}
 
-\item{tableOptions}{a vector of options to be shown in the tables. \code{'component'} shows the indirect effects 
-components in the results tables. \code{'regression'} show the results of all the regression (R-squared, F-test and coefficients) involved in the model.}
+\item{tableOptions}{.}
 
 \item{pathOptions}{.}
 
 \item{mediatorsTerms}{a list of lists specifying the models for with the
-mediators as dependent variables. Not required in formula is used.}
+mediators as dependent variables.}
 
-\item{moderatorsTerms}{a named vector of the form c("med"=c("mod1",mod2")) specifying the moderator(s) of each mediator. 
-This is required to decide for which variable we need to condition the mediated effects and to single out moderators
-in the path diagram. If not specified, any interaction is considered as any other term in the model.
-Categorical moderators include each factor level and an Average setting at the equal-level
-contrast centroid (zero for centered factor coding). Indirect effects at Average are products
-of the centered-factor slopes, not averages of the level-specific indirect effects.}
+\item{moderatorsTerms}{a list of lists specifying the the IV which
+moderatorate each mediated effect.
+Categorical moderators include each factor level and an Average setting
+at the equal-level contrast centroid (zero for centered factor coding).
+Indirect effects at Average are products of the centered-factor slopes,
+not averages of the level-specific indirect effects.}
 
-\item{formula}{a list of formulas to use, see the examples}
+\item{meddiagram}{\code{TRUE} or \code{FALSE} (default), produce a path
+diagram}
+
+\item{diagram}{\code{TRUE} or \code{FALSE} (default), produce a path
+diagram}
+
+\item{diag_paths}{Choose the diagram labels}
+
+\item{diag_resid}{\code{TRUE} or \code{FALSE} (default), produce a path
+diagram}
+
+\item{diag_labsize}{Choose the diagram labels}
+
+\item{diag_rotate}{Choose the diagram labels}
+
+\item{diag_type}{Choose the path diagram layout, including a mediation-like
+layout}
+
+\item{diag_shape}{Choose the diagram labels}
+
+\item{diag_abbrev}{Choose the diagram labels}
+
+\item{formula}{(optional) the formula to use, see the examples}
 }
 \value{
 A results object containing:
 \tabular{llllll}{
-  \code{results$info} \tab \tab \tab \tab \tab a table \cr
-  \code{results$pathmodelgroup$pathmodel} \tab \tab \tab \tab \tab a path model \cr
-  \code{results$pathmodelgroup$pathnotes} \tab \tab \tab \tab \tab a table \cr
-  \code{results$models$moderationEffects} \tab \tab \tab \tab \tab a table \cr
-  \code{results$models$main} \tab \tab \tab \tab \tab a table \cr
-  \code{results$models$contrastCodeTables} \tab \tab \tab \tab \tab an array of contrast coefficients tables \cr
+  \code{results$model} \tab \tab \tab \tab \tab The underlying \code{lavaan} object \cr
+  \code{results$info} \tab \tab \tab \tab \tab a html \cr
+  \code{results$extrainfo} \tab \tab \tab \tab \tab a html \cr
+  \code{results$issues} \tab \tab \tab \tab \tab a html \cr
+  \code{results$infotab} \tab \tab \tab \tab \tab a table \cr
+  \code{results$models$r2} \tab \tab \tab \tab \tab a table \cr
+  \code{results$models$interactions} \tab \tab \tab \tab \tab a table \cr
+  \code{results$models$coefficients} \tab \tab \tab \tab \tab a table \cr
+  \code{results$models$contrastCodeTable} \tab \tab \tab \tab \tab a table \cr
   \code{results$regressions$overall} \tab \tab \tab \tab \tab a group \cr
   \code{results$regressions$mediator_regressions} \tab \tab \tab \tab \tab an array of regressions for the mediators \cr
   \code{results$regressions$full} \tab \tab \tab \tab \tab a group \cr
+  \code{results$pathgroup$pathmodel} \tab \tab \tab \tab \tab a model diagram \cr
+  \code{results$pathgroup$pathnotes} \tab \tab \tab \tab \tab a table \cr
+  \code{results$pathgroup$diagrams} \tab \tab \tab \tab \tab an array of path diagrams \cr
+  \code{results$pathgroup$notes} \tab \tab \tab \tab \tab a table \cr
 }
 
 Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
 
-\code{results$info$asDF}
+\code{results$infotab$asDF}
 
-\code{as.data.frame(results$info)}
+\code{as.data.frame(results$infotab)}
 }
 \description{
 GLM mediation model

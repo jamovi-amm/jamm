@@ -1,4 +1,13 @@
 
+.setContent <- function(element, value) {
+  if (requireNamespace("knitr", quietly = TRUE)) {
+    progress <- knitr::opts_knit$get("progress")
+    knitr::opts_knit$set(progress = FALSE)
+    on.exit(knitr::opts_knit$set(progress = progress))
+  }
+  element$setContent(value)
+}
+
 ginfo<-function(what=NULL,obj=NULL) {
   if (j_INFO) {
     if (!is.null(what))

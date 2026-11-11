@@ -2,8 +2,9 @@ Datamatic <- R6::R6Class(
   "Datamatic",
   cloneable=FALSE,
   class=FALSE,
-  inherit = Dispatch,
+  inherit = Scaffold,
   public=list(
+    vars=NULL,
     factors=NULL,
     factors_scale=NULL,
     factors_levels=list(),
@@ -12,8 +13,10 @@ Datamatic <- R6::R6Class(
     contrasts_names=NULL,
     continuous=NULL,
     continuous_scale=NULL,
-    initialize=function(options,data) {
-      super$initialize(options=options,vars=unlist(c(options$dep,options$mediators,options$factors,options$covs)))
+    initialize=function(jmvobj,data=jmvobj$data) {
+      super$initialize(jmvobj)
+      options<-self$options
+      self$vars<-unlist(c(options$dep,options$mediators,options$factors,options$covs))
       self$factors<-options$factors
       self$factors_scale<-sapply(options$contrasts, function(a) a$type)
       names(self$factors_scale)<-sapply(options$contrasts, function(a) a$var)
@@ -29,7 +32,7 @@ Datamatic <- R6::R6Class(
       for (cont in self$continuous) {
         cont64<-tob64(cont)
         if (class(data64[[cont64]]) == "factor")
-              self$warnings<-list(topic="main",message=DATA_WARNS[["fac_to_cont"]])
+              self$warning<-list(topic="infotab",message=DATA_WARNS[["fac_to_cont"]])
         data64[[cont64]] <- private$.continuous_value(data64[[cont64]],self$continuous_scale[[cont]])
       }
       for (factor in self$factors) {

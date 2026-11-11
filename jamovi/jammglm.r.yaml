@@ -364,6 +364,7 @@ items:
                          - name: lhs
                            title: "Dependent"
                            type: text
+                           combineBelow: true
                          - name: rhs
                            title: "Effect"
                            type: text
@@ -413,6 +414,7 @@ items:
                     - name: lhs
                       title: Dependent
                       type: text
+                      combineBelow: true
                     - name: rsquared
                       title: R-squared
                       type: number

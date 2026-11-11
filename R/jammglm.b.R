@@ -22,7 +22,7 @@ jammGLMClass <- R6::R6Class(
 
             # Set up the R6 workhorse classes, retaining jAMM's data API.
             dispatch_message_cleaner(self)
-            data_machine <- Datamatic$new(self$options, self$data)
+            data_machine <- Datamatic$new(self)
             runner_machine <- Runner$new(self, data_machine)
             private$.smartObjs <- list()
 
@@ -98,7 +98,7 @@ jammGLMClass <- R6::R6Class(
             private$.runner_machine <- runner_machine
 
             # Keep the existing jAMM diagram pipeline separate from table dispatch.
-            plotter_machine <- Plotter$new(self$options, data_machine, runner_machine$estimator, self$results$pathgroup)
+            plotter_machine <- Plotter$new(self, data_machine, runner_machine$estimator, self$results$pathgroup)
             plotter_machine$initPlots()
             private$.plotter_machine <- plotter_machine
 
@@ -125,12 +125,6 @@ jammGLMClass <- R6::R6Class(
 
             # Preserve the existing diagram preparation and warning reporting.
             private$.plotter_machine$preparePlots()
-            if (is.something(private$.plotter_machine$warnings$diagram)) {
-                for (index in seq_along(private$.plotter_machine$warnings$diagram)) {
-                    self$results$pathgroup$notes$addRow(index, list(message = private$.plotter_machine$warnings$diagram[[index]]))
-                }
-                self$results$pathgroup$notes$setVisible(TRUE)
-            }
 
             self$results$.setModel(private$.runner_machine$estimator$model)
 

@@ -37,8 +37,8 @@ Scaffold <- R6::R6Class("Scaffold",
                             },
                             
                             stop=function(msg, return=TRUE) {
-                            
-                                if (self$option(".interface","R")) stop(msg,call.=FALSE)
+
+                                if (self$option(".interface","R")) stop(gsub("<[^>]+>", "", msg),call.=FALSE)
                                     
                                 if (exists("ERROR_TABLE")) {
                                  self$warning<-list(topic=ERROR_TABLE,message=msg,head="error")
@@ -86,7 +86,7 @@ Scaffold <- R6::R6Class("Scaffold",
                             .storage=NULL,
                             .dispatcher=NULL,
                             .create_dispatcher=function() {
-                                private$.dispatcher<-TableDispatch$new(self$analysis$results)
+                                private$.dispatcher<-Dispatch$new(self$analysis$results)
                             }
                           ) #end of private
 ) ## end of class

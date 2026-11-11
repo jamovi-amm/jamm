@@ -1,6 +1,6 @@
 j_DEBUG = FALSE
 j_INFO = FALSE
-t_INFO  <- F
+t_INFO  <- FALSE
 
 
 #### Helper functions used by Scaffold (not exported)
@@ -96,6 +96,79 @@ try_hard<-function(exp,max_warn=5, silent=FALSE) {
   
   return(.results)
 }
+
+#### handle b64
+
+tob64<- function(x,...) UseMethod(".tob64")
+
+.tob64.default<-function(obj,ref=NULL) {
+  
+  if (is.null(obj))
+    return()
+  
+  if (is.null(ref)) {
+    obj<-jmvcore::toB64(obj)
+  } else {
+    for (r in ref) {
+      reg<-paste0("(?<=[\\s*~=]|^)",r,"(?=[\\s*~=]|$)")
+      obj<-stringr::str_replace_all(obj,reg,jmvcore::toB64(r))
+    }
+  }
+  obj
+}
+
+.tob64.list<-function(obj,ref=NULL) {
+  lapply(obj,bogustob64,ref)
+}
+
+bogustob64<-function(obj,ref) tob64(obj,ref)
+
+fromb64<- function(x,...) UseMethod(".fromb64")
+
+.fromb64.default<-function(obj,ref=NULL) {
+  
+  if (!is.something(obj))
+    return(obj)
+  
+  if (length(obj)>1)
+    return(unlist(sapply(obj, bogusfromb64,ref=ref,USE.NAMES = F)))
+  
+  int<-strsplit(obj,INTERACTION_SYMBOL,fixed=T)[[1]]
+  if (length(int)>1)
+    return(paste0(unlist(sapply(int,bogusfromb64,ref=ref)),collapse = ":"))
+  
+  if (is.null(ref)) {
+    fac<-strsplit(obj,FACTOR_SYMBOL,fixed=T)[[1]]
+    if (length(fac)==0)
+      return(obj)
+    encoded<-fac[[1]]
+    if (!grepl("^X[A-Za-z0-9._]*$",encoded))
+      return(obj)
+    decoded<-tryCatch({
+      value<-jmvcore::fromB64(encoded)
+      if (identical(jmvcore::toB64(value),encoded)) value else NULL
+    },error=function(error) NULL)
+    if (is.null(decoded))
+      return(obj)
+    obj<-decoded
+    if (length(fac)>1) obj<-paste0(obj,fac[[2]])
+  } else {
+    for (r in ref)
+      obj<-gsub(jmvcore::toB64(r),r,obj,fixed = T)
+    obj<-gsub(FACTOR_SYMBOL,"",obj,fixed = T)
+    obj<-gsub(INTERACTION_SYMBOL,":",obj,fixed = T)
+  }
+  
+  obj
+}
+
+.fromb64.list<-function(obj,ref=NULL) {
+  lapply(obj,bogusfromb64,ref=ref)
+}
+
+bogusfromb64<-function(obj,ref=NULL) fromb64(obj,ref=ref)
+
+### end
 
 
 sourcifyOption<- function(x,...) UseMethod(".sourcifyOption")
@@ -323,6 +396,10 @@ clean_lol<-function(alist) {
   paste0(a,b)
 }
 
+`%<+%`<-function(a,b) {
+  sprintf(a, b)   
+}
+
 
 `ladd<-`<-function(x,value) {
   x[[length(x)+1]]<-value
@@ -377,3 +454,12 @@ test_parameters <- function(obj,values, fun=is.null, verbose = TRUE, head="Pleas
      
   }
 }
+
+## Escape user-supplied labels before using them as regular expressions.
+escape_regex <- function(x) {
+  special <- c("\\", ".", "|", "(", ")", "[", "]", "{", "}", "^", "$", "*", "+", "?")
+  for (char in special)
+    x <- gsub(char, paste0("\\", char), x, fixed=TRUE)
+  x
+}
+

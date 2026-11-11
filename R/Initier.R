@@ -10,21 +10,21 @@ Initer <- R6::R6Class(
         initialize = function(jmvobj, datamatic) {
             super$initialize(jmvobj)
             self$datamatic <- datamatic
-            self$estimator <- Estimate$new(self$options, datamatic)
+            self$estimator <- Estimate$new(jmvobj, datamatic)
             self$vars <- self$estimator$vars
         },
         init_infotab = function() {
-            c(table_rows(self$estimator$tab_info), table_rows(self$estimator$models()),
-              table_rows(self$estimator$tab_indirect))
+            c(self$estimator$tab_info, self$estimator$models(),
+              self$estimator$tab_indirect)
         },
         init_models_r2 = function() {
             lapply(self$estimator$tab_r2, function(variable) list(lhs = variable))
         },
         init_models_interactions = function() {
-            table_rows(self$estimator$tab_interactions)
+            self$estimator$tab_interactions
         },
         init_models_coefficients = function() {
-            table_rows(self$estimator$tab_coefficients)
+            self$estimator$tab_coefficients
         },
         init_models_contrastCodeTable = function() {
             rows <- list()

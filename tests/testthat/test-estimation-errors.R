@@ -9,9 +9,10 @@ test_that("failed moderated fits report the fitting error, not a NULL slot error
 
     # Cover both an initial failure and failure after a successful fit.
     for (previousFit in c(FALSE, TRUE)) {
-        datamatic <- Datamatic$new(options, dataset)
         results <- jammGLMResults$new(options)
-        runner <- Runner$new(list(options = options, results = results), datamatic)
+        analysisObject <- list(options = options, results = results, data = dataset)
+        datamatic <- Datamatic$new(analysisObject)
+        runner <- Runner$new(analysisObject, datamatic)
         if (previousFit) {
             cleaned <- datamatic$cleandata(dataset, runner$estimator$interactions)
             runner$estimate(cleaned)
@@ -32,7 +33,13 @@ test_that("failed moderated fits report the fitting error, not a NULL slot error
         expect_match(results$issues$content, "no variance")
         expect_true(results$issues$visible)
         expect_null(runner$estimator$model)
-        expect_match(paste(runner$estimator$errors, collapse = "; "), "no variance")
+        expect_false(runner$estimator$ok)
+
+        cleaned <- datamatic$cleandata(dataset, runner$estimator$interactions)
+        runner$estimate(cleaned)
+        expect_true(runner$ok)
+        expect_true(runner$estimator$ok)
+        expect_s4_class(runner$estimator$model, "lavaan")
     }
 
     # The analysis must leave the notice visible without running tables or plots.
