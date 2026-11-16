@@ -17,6 +17,7 @@ const events = {
 
     onChange_mediators: function(ui) {
         updateSuppliers(ui,this);
+        updateScaling(ui,this);
     },
 
     onChange_covariates: function(ui) {
@@ -26,6 +27,9 @@ const events = {
     },
 
     onChange_modelSupplier: function(ui) {
+       // Supplier refreshes during restoration must not edit saved options.
+       if (this.workspace.initializing)
+           return;
        fromSupplierToModelTerms(ui,this);
     },
     onUpdate_modelSupplier: function(ui) {
@@ -33,6 +37,9 @@ const events = {
     },
 
     onChange_mediatorsSupplier: function(ui) {
+       // Only genuine supplier edits should propagate to the regressions.
+       if (this.workspace.initializing)
+           return;
        log("mediatorsSupplier has changed");
        fromSupplierToMediatorsTerms(ui, this);
        fromMediatorsToModelTerms(ui, this);
@@ -43,12 +50,17 @@ const events = {
             log("mediatorsSupplier update");
             let factorsList = this.cloneArray(ui.factors.value(), []);
             let covariatesList = this.cloneArray(ui.covs.value(), []);
-            var variablesList = factorsList.concat(covariatesList);
+            // Match updateSuppliers so opening this control does not remove mediators.
+            let mediatorsList = this.cloneArray(ui.mediators.value(), []);
+            var variablesList = factorsList.concat(covariatesList).concat(mediatorsList);
             ui.mediatorsSupplier.setValue(this.valuesToItems(variablesList, FormatDef.variable));
 
     },
 
     onChange_moderatorsSupplier: function(ui) {
+          // Restoring controls must leave the saved moderator specification intact.
+          if (this.workspace.initializing)
+              return;
           updateModeratorsTerms(ui, this);
           fromSupplierToModeratorsTerms(ui,this);
     },
@@ -69,22 +81,22 @@ const events = {
 
     },
 
-    onChange_plotsSupplier: function(ui) {
-    },
-    
-    onChange_simpleSupplier: function(ui) {
-    },
-
     onEvent_moderatorChanged: function(ui) {
+        // Ignore notifications emitted while restoring the saved controls.
+        if (this.workspace.initializing || this.workspace.revertingModerators)
+            return;
         console.log("moderators have changed");
         fromModeratorsToOthers(ui,this);
    },
   
 
     onEvent_mediatorToTerms: function(ui) {
+      // Rebinding a saved term list is not an edit to its regression equation.
+      if (this.workspace.initializing ||
+          findChangesMulti("mediatorsTerms", this.cloneArray(ui.mediatorsTerms.value(), []), this, false).index < 0)
+          return;
       log("mediators terms changed");
       
-
     fromMediatorsTerms(ui,this);
     fromMediatorsToModelTerms(ui,this);
     },
@@ -99,26 +111,30 @@ const events = {
 
 
 var initializeAll = function(ui, context) {
-    
-    updateSuppliers(ui,context);
-//    updateMediatorsTerms(ui, context);
-//    updateModeratorsTerms(ui, context);
- 
-    var modelSupplierList = context.cloneArray(context.itemsToValues(ui.modelSupplier.value(), []));
-    context.workspace.modelSupplierList=modelSupplierList;
-    var mediatorsSupplierList = context.cloneArray(context.itemsToValues(ui.mediatorsSupplier.value(), []));
-    context.workspace.mediatorsSupplierList=mediatorsSupplierList;
+    // Seed change tracking before supplier updates can emit change events.
+    var factors = context.cloneArray(ui.factors.value(), []);
+    var covariates = context.cloneArray(ui.covs.value(), []);
+    var mediators = context.cloneArray(ui.mediators.value(), []);
+    var components = factors.concat(covariates).concat(mediators);
+    context.workspace.modelSupplierList = context.cloneArray(components);
+    context.workspace.mediatorsSupplierList = context.cloneArray(components);
+    context.workspace.moderatorsSupplierList = factors.concat(covariates);
+    context.workspace.mediatorsTerms = context.cloneArray(ui.mediatorsTerms.value(), []);
+    context.workspace.moderatorsTerms = context.cloneArray(ui.moderatorsTerms.value(), []);
+    context.workspace.impliedModelTerms = impliedModelTerms(ui, context);
 
-    /// fix the mediatots terms 
-    var mediators= context.cloneArray(ui.mediators.value(), []);
-
-    var mediatorsTerms= context.cloneArray(ui.mediatorsTerms.value(), []);
-    context.workspace.mediatorsTerms=mediatorsTerms;
-
-    var moderatorsTerms= context.cloneArray(ui.moderatorsTerms.value(), []);
-    context.workspace.moderatorsTerms=moderatorsTerms;
-    
-
+    // Saved outcome terms are authoritative, even if defaults would differ.
+    context.workspace.initializing = true;
+    try {
+       updateSuppliers(ui,context);
+       labelize(ui.mediatorsTerms, mediators, "Mediator");
+       labelize(ui.moderatorsTerms, mediators, "Mediator");
+    }
+    finally {
+       context.workspace.initializing = false;
+    }
+    // Validate restored selections too, even if they already match the snapshot.
+    fromModeratorsToOthers(ui, context);
 };
 
 
@@ -145,6 +161,9 @@ var fromSupplierToMediatorsTerms= function(ui,context) {
 
      var mediatorsSupplierList = context.cloneArray(context.itemsToValues(ui.mediatorsSupplier.value()),[]);
      var diff = context.findChanges("mediatorsSupplierList",mediatorsSupplierList,context);
+     // Supplier initialization and repeated notifications are not model edits.
+     if (diff.added.length === 0 && diff.removed.length === 0)
+         return;
      var mediators = context.cloneArray(ui.mediators.value(),[]);
      var mediatorsTerms = context.cloneArray(ui.mediatorsTerms.value(),[]);
      var moderatorsTerms = context.cloneArray(ui.moderatorsTerms.value(),[]);
@@ -171,9 +190,11 @@ var fromSupplierToMediatorsTerms= function(ui,context) {
      // we remove the independent variables removed from the ui, if any
     if (diff.removed.length>0)
         light = removeFromMultiList(diff.removed,light,context,1);
+    log(light)
+    // Store first so synchronous control notifications see the new baseline.
+    storeComponent("mediatorsTerms",context.cloneArray(light),context);
     ui.mediatorsTerms.setValue(light);    
     labelize(ui.mediatorsTerms,mediators, "Mediator");  
-    storeComponent("mediatorsTerms",light,context);
 };
 
 
@@ -193,7 +214,6 @@ var fromMediatorsTerms= function(ui,context) {
        }
         ui.mediatorsTerms.setValue(mediatorsTerms);
         ui.moderatorsTerms.setValue(moderatorsTerms);
-//        isRoomForModerators(ui,context)
 };
 var fromSupplierToModeratorsTerms= function(ui,context) {
 
@@ -238,77 +258,52 @@ var updateModeratorsTerms= function(ui,context) {
 };
 
 
-var isRoomForModerators = function(ui,context) {
-    console.log("checkRoomForModerators");
-    var mediators = context.cloneArray(ui.mediators.value(),[]);
-    var moderatorsTerms = context.cloneArray(ui.moderatorsTerms.value(),[]);
-    var mediatorsTerms = context.cloneArray(ui.mediatorsTerms.value(),[]);
-    var moderators = flatMulti(moderatorsTerms,context);
-     
-
-     var diff = findChangesMulti("moderatorsTerms",moderatorsTerms,context,false);
-
-    // here we check if there are enough predictors in the mediator model to 
-    // define one moderator
-    var noroom = false;
-    for (var j = 0; j < mediators.length; j++)  { 
-       var meds = mediatorsTerms[j];
-           meds = removeFromList(moderators,meds,context);
-           if (meds.length===0) {
-              noroom = true;
-      }
-    }
-      // if there's no room (noroom==true) for an additional moderator, we remove it 
-      // from the new list and left the old list saved in the workspace (see findChangesMulti(...,false) )
-      var removeAdded= diff.index>-1 && noroom===true;
-          if (removeAdded) {
-            var moderatorsTest= context.cloneArray(moderatorsTerms);
-            moderatorsTest[diff.index] = removeFromList(diff.changes[diff.index].added,moderatorsTest[diff.index],context);
-            ui.moderatorsTerms.setValue(moderatorsTest);
-      }
-   return !removeAdded;
-};
-
-
 var fromModeratorsToOthers = function(ui,context) {
     console.log("from moderators to others");
     var mediators = context.cloneArray(ui.mediators.value(),[]);
     var moderatorsTerms = context.cloneArray(ui.moderatorsTerms.value(),[]);
     var mediatorsTerms = context.cloneArray(ui.mediatorsTerms.value(),[]);
     var modelTerms = context.cloneArray(ui.modelTerms.value(),[]);
-    var moderators = flatMulti(moderatorsTerms,context);
-     
-
-     var diff = findChangesMulti("moderatorsTerms",moderatorsTerms,context,false);
-
-    // here we check if there are enough predictors in the mediator model to 
-    // define one moderator
-    var noroom = false;
-    for (var j = 0; j < mediators.length; j++)  { 
-       var meds = mediatorsTerms[j];
-           var medstest = removeFromList(moderators,meds,context);
-           if (medstest.length===0) {
-              noroom = true;
-      }
+    // Reserve at least one independent variable across all moderator blocks.
+    // This is a global role check, not the old per-mediator predictor check.
+    var predictors = context.cloneArray(ui.factors.value(), []).concat(
+        context.cloneArray(ui.covs.value(), []));
+    var selected = [];
+    moderatorsTerms.forEach(function(block) {
+        normalize(block).forEach(function(term) {
+            selected = selected.concat(term);
+        });
+    });
+    var pending = findChangesMulti("moderatorsTerms",moderatorsTerms,context,false);
+    if (predictors.length > 0 && predictors.every(function(predictor) {
+        return selected.indexOf(predictor) > -1;
+    })) {
+        // Reject the transfer before it can add interactions to either model.
+        // Preserve removals made in the same edit, and suppress rollback events.
+        moderatorsTerms = moderatorsTerms.map(function(block, index) {
+            return removeFromList(pending.changes[index].added, block, context, 0);
+        });
+        // A refresh can snapshot the invalid selection before this handler runs.
+        // In that case there are no additions to undo: reserve the last predictor.
+        var remaining = [];
+        moderatorsTerms.forEach(function(block) {
+            normalize(block).forEach(function(term) { remaining = remaining.concat(term); });
+        });
+        if (predictors.every(function(predictor) { return remaining.indexOf(predictor) > -1; })) {
+            moderatorsTerms = moderatorsTerms.map(function(block) {
+                return removeFromList([predictors[predictors.length - 1]], block, context, 1);
+            });
+        }
+        context.workspace.revertingModerators = true;
+        try {
+            ui.moderatorsTerms.setValue(moderatorsTerms);
+        } finally {
+            context.workspace.revertingModerators = false;
+        }
     }
-      // if there's no room (noroom==true) for an additional moderator, we remove it 
-      // from the new list and left the old list saved in the workspace (see findChangesMulti(...,false) )
-      var removeAdded= diff.index>-1 && noroom===true;
-          if (removeAdded) {
-            var moderatorsTest= context.cloneArray(moderatorsTerms);
-            moderatorsTest[diff.index] = removeFromList(diff.changes[diff.index].added,moderatorsTest[diff.index],context);
-            ui.moderatorsTerms.setValue(moderatorsTest);
-      }
-
-      // if nothing happens, we spread the moderators. However, we need
-      // to check diff again, bacause we did not save moderatorsTerms before
-      // to avoid a loop that would unflash the warning no matter what.
-      // 
-      if (removeAdded===false) {
-
-         var diff2 = findChangesMulti("moderatorsTerms",moderatorsTerms,context,true);
-         if (diff2.index > -1) {
-         
+    // Save the baseline before updating controls that can emit change events.
+    var diff = findChangesMulti("moderatorsTerms",moderatorsTerms,context,true);
+         if (diff.index > -1) {
           // add interactions to mediators and full model terms if there are new moderators
            for (var i = 0; i < diff.changes[diff.index].added.length; i++) {
              var newTerm=diff.changes[diff.index].added[i];
@@ -338,13 +333,28 @@ var fromModeratorsToOthers = function(ui,context) {
       
       }
 
-  } 
-
 };
 
 var  fromMediatorsToModelTerms = function(ui,context) {
-    
      log("fromMediatorsToModelTerms");
+     if (context.workspace.initializing)
+         return;
+
+     // Add only newly implied terms; preserve outcome-only terms and intentional omissions.
+     var implied = impliedModelTerms(ui, context);
+     // Supplier events can arrive before initialization creates this snapshot.
+     // Default before cloning: jamovi's cloneArray cannot JSON-clone undefined.
+     var previous = context.cloneArray(context.workspace.impliedModelTerms === undefined ? [] : context.workspace.impliedModelTerms, []);
+     var added = removeFromList(previous, implied, context, 0);
+     context.workspace.impliedModelTerms = context.cloneArray(implied);
+     if (added.length > 0) {
+         var modelTerms = context.cloneArray(ui.modelTerms.value(), []);
+         ui.modelTerms.setValue(addToList(added, modelTerms, context));
+     }
+};
+
+// Calculate defaults separately so they can be compared without replacing saved terms.
+var impliedModelTerms = function(ui,context) {
      var mediators = context.cloneArray(ui.mediators.value(),[]);
      var mediatorsTerms = flatMulti(context.cloneArray(ui.mediatorsTerms.value(),[]),context);
      var modelTerms = [];
@@ -356,7 +366,7 @@ var  fromMediatorsToModelTerms = function(ui,context) {
            meds=meds.concat(ameds);
      }
     modelTerms=addToList(unique(meds),modelTerms,context);
-    ui.modelTerms.setValue(modelTerms);
+    return modelTerms;
 
 };
 
@@ -364,6 +374,9 @@ var updateScaling = function(ui,context) {
     log("updateScaling");
     var currentList = context.cloneArray(ui.scaling.value(), []);
     var variableList = context.cloneArray(ui.covs.value(), [])
+    var mediatorsList = context.cloneArray(ui.mediators.value(), [])
+    variableList=variableList.concat(mediatorsList)
+
     var list3 = [];
     for (let i = 0; i < variableList.length; i++) {
         let found = null;
@@ -504,37 +517,6 @@ var flatMulti = function(cosmos,context) {
   return unique(light);
 };
 
-var combineOne = function(values, mod, context) {
-        if (mod===undefined)
-            return(values);
-        var list = unique(values.concat([mod]));
-        for (var i = 0; i < values.length; i++) {
-            var newValue = context.clone(mod);
-            var value = values[i];
-            if (context.listContains(value,newValue[0],FormatDef.term)===false)
-                   if (FormatDef.term.isEqual(newValue,value)===false) {
-                      if (Array.isArray(value)) 
-                          newValue = newValue.concat(value);
-                      else
-                         newValue.push(value);   
-            list.push(newValue);
-            }
-        }
-        return unique(list);
-};
-
-var getInteractions = function(aList,context,order=2) {
-  
-  var iList = context.getCombinations(aList);
-  for (var i = 0; i < iList.length; i++ )
-          if (iList[i].length===1 || iList[i].length>order) {
-              iList.splice(i, 1);
-               i -= 1;
-          }
- return(iList);
-  
-};
-
 var normalize = function(cosmos) {
 
   if (cosmos===undefined)
@@ -632,31 +614,6 @@ var storeComponent = function(id,cosmos,context) {
 var log=function(obj) {
     if (DEBUG)
       console.log(obj);
-};
-
-var dlog=function(obj) {
-    if (DEBUG)
-      console.log(obj);
-};
-
-var flashMGridOptionListControl = function(widget,note=false) {
-        var i =widget.getSelectedRowIndices();
-        if (i.length==0) i=0;
-        widget.controls[i].controls[1].$el[0].style.backgroundColor="#ffcccc";
-        widget.controls[i].controls[1].$el[0].style.borderColor="red";
-        if (note!==false)
-           note.$el[0].style.visibility="visible";
-        
-
-};
-
-var unflashMGridOptionListControl = function(widget,note=false) {
-        var i =widget.getSelectedRowIndices();
-        if (i.length==0) i=0;
-        widget.controls[i].controls[1].$el[0].style.backgroundColor="white";
-        widget.controls[i].controls[1].$el[0].style.borderColor="rgb(46,138,199)";
-        if (note!==false)
-           note.$el[0].style.visibility="hidden";
 };
 
 var   cleanInteractions= function(quantum,cosmos,context){

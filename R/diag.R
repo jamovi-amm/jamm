@@ -1,15 +1,83 @@
-.diag.moderators_coord<-function(j) {
-  
-  M<-list(c(xleft=.00,ytop=.99),
-          c(xleft=.80,ytop=.99),
-          c(xleft=.00,ytop=.20),
-          c(xleft=.80,ytop=.20))
-  m<-(j %% 4)
-  if (m==0) m=4
-  r<-(j %/% 4)
-  line<-M[[m]]  
-  line["xlef"]<-line["xlef"]+.1*r  
-  line
+# Build the conceptual diagram directly from the specified regression terms.
+# This needs no estimation or UI objects.
+model_diagram_data <- function(options) {
+  mediators <- jmvcore::toB64(options$mediators)
+  dependent <- jmvcore::toB64(options$dep)
+  moderators <- unique(jmvcore::toB64(unlist(options$moderatorsTerms)))
+  outcomes <- c(mediators, dependent)
+  equations <- c(options$mediatorsTerms, list(options$modelTerms))
+  sources <- vector("list", length(outcomes))
+  moderated <- list()
+
+  for (equation in seq_along(outcomes)) {
+    for (term in equations[[equation]]) {
+      variables <- jmvcore::toB64(term)
+      termModerators <- intersect(variables, moderators)
+      predictors <- setdiff(variables, moderators)
+      if (length(predictors) == 0)
+        next()
+      source <- paste(predictors, collapse = ":")
+      sources[[equation]] <- unique(c(sources[[equation]], source))
+      for (moderator in termModerators) {
+        moderated[[length(moderated) + 1]] <- list(
+          moderator = moderator, from = source, to = outcomes[[equation]])
+      }
+    }
+  }
+
+  independents <- setdiff(unique(unlist(sources)), outcomes)
+  variables <- c(independents, outcomes)
+  paths <- matrix("0", length(variables), length(variables),
+                  dimnames = list(variables, variables))
+
+  # Suggested paths are visual guidance only; never change the fitted model.
+  paths[outcomes, independents] <- "S"
+  paths[dependent, mediators] <- "S"
+  for (equation in seq_along(outcomes))
+    paths[outcomes[[equation]], sources[[equation]]] <- "P"
+
+  infos <- list(M = paths, vars = variables, nvars = length(variables),
+                mediators = mediators, independents = independents,
+                isImpossible = FALSE)
+  suggested <- "suggested" %in% options$pathOptions
+  diagram <- diag.paths(infos, suggested = suggested, shiftmed = .01)
+  diagram$labels <- vapply(strsplit(variables, ":", fixed = TRUE),
+                          function(term) paste(jmvcore::fromB64(term), collapse = " * "),
+                          character(1))
+  diagram$moderators <- moderators
+  diagram$moderated <- lapply(moderated, function(path) {
+    list(from = match(path$from, variables), to = match(path$to, variables),
+         moderator = match(path$moderator, moderators))
+  })
+  diagram$nindependents <- length(independents)
+  diagram$nmediators <- length(mediators)
+  diagram$notes <- character()
+  if (suggested && any(paths == "S"))
+    diagram$notes <- c(diagram$notes, "Green paths indicate suggested coefficients")
+  if (length(moderators) > 0)
+    diagram$notes <- c(diagram$notes, "Moderators main effects are not shown")
+  if (length(independents) > 1)
+    diagram$notes <- c(diagram$notes, "Covariances among IV are estimated but not shown")
+  if (any(options$factors %in% unlist(c(options$mediatorsTerms, options$modelTerms))))
+    diagram$notes <- c(diagram$notes,
+      "Categorical independent variables are shown with one rectangle; their effects are estimated using contrast variables")
+  diagram
+}
+
+# Rendering uses image state alone, including when jamovi reopens a saved file.
+plot_model_diagram <- function(state) {
+  nvariables <- length(state$labels)
+  plot <- diagram::plotmat(
+    state$paths, pos = state$pos, name = state$labels,
+    box.size = .1 + (max(state$nmediators, state$nindependents) + 3)^-8,
+    box.type = "rect", box.prop = .4, box.cex = .80 + nvariables^-2,
+    curve = state$curves, endhead = FALSE, arr.type = "triangle",
+    arr.length = 1 / (nvariables - 1), arr.pos = .7, arr.col = "gray",
+    lcol = state$colors, box.lcol = state$bcolors)
+  for (path in state$moderated)
+    diag.plot_mod_arr(plot, path$from, path$to, path$moderator)
+  diag.plot_mods(plot, state$moderators)
+  invisible(plot)
 }
 
 .columnize<-function(n,space=.80,default=.5) {
@@ -24,22 +92,6 @@
   }
   res
 }
-
-.paths<-function(infos,val="") {
-  M<-matrix(0,nrow=infos$nvars,ncol=infos$nvars)
-  colnames(M)<-rownames(M)<-infos$vars
-  for (f in infos$models) {
-    d<-which(infos$vars==f$dep)
-    i<-which(infos$vars %in% f$ind)
-    M[d,i]<-val
-  }
-  M
-}
-
-
-
-
-
 
 diag.paths<-function(infos,suggested=F,shiftmed=0) {
 
@@ -83,7 +135,6 @@ diag.paths<-function(infos,suggested=F,shiftmed=0) {
   
 }
 
-
 .positions<-function(infos,shiftmed=0) {
   nx<-length(infos$independents)
   nm<-length(infos$mediators)
@@ -100,12 +151,12 @@ diag.paths<-function(infos,suggested=F,shiftmed=0) {
       M[i,2]<- rat    
     }
   
-  M[1:nx,1]<-.15
+  M[1:nx,1]<-.1
   
   medsx<-(nx+1):(nx+nm)
   M[medsx,2]<-.columnize(nm,default = wherem)
   M[medsx,1]<-.5
-  M[.nvar,1]<-.85
+  M[.nvar,1]<-.90
   M[.nvar,2]<-ifelse(nx==1 & nm==1,.15,.50)
   if (nm==1)
     return(as.matrix(M))
@@ -129,7 +180,6 @@ diag.paths<-function(infos,suggested=F,shiftmed=0) {
   }
   as.matrix(M)
 }
-
 
 .curves<-function(infos) {
   nm<-length(infos$mediators)
@@ -179,24 +229,19 @@ diag.paths<-function(infos,suggested=F,shiftmed=0) {
   line
 }
 
-
-diag.plot_mods<-function(plot, moderators,size,abbrev) {
+diag.plot_mods<-function(plot, moderators) {
   
   hbox<-plot$rec[1,4]-plot$rec[1,2]
+  boxwide<-.1
   nvars<-nrow(plot$rect)
   for (j in seq_along(moderators)) {
     mod<-moderators[j]
-    lab<-jmvcore::fromB64(moderators[j])
-    if (abbrev!="0")
-      lab<-abbreviate(lab,minlength = as.numeric(abbrev),strict = T)
-    lab<-gsub("`","",lab)
-    
     coord<-.diag.moderators_coord(nvars,j)
     xleft<-coord["xleft"]
     ytop<-coord["ytop"]
-    diagram::textrect(c(xleft,ytop), radx = size, rady = size*.6, 
+    diagram::textrect(c(xleft,ytop), radx = boxwide, rady = .06, 
              shadow.size =0, adj = c(0.5, 0.5), lwd=2,
-             lab = lab, box.col = "white", 
+             lab = jmvcore::fromB64(moderators[j]), box.col = "white", 
              lcol = "black",  angle = 0)
   }
 }
@@ -225,5 +270,4 @@ diag.plot_mod_arr<-function(plot,from,to,modindex) {
   arr.lenght=1/(nvars-1)
   shape::Arrows(xleft,ytop,tx,ty,arr.type="triangle",arr.width = .1, arr.length = arr.lenght,arr.col = "gray")
 }
-
 

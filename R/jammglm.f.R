@@ -1,35 +1,3 @@
-# ## fix some option when passed by R console ###
-## this code should be added in the jammGLM function generated
-## by jamovi compiler after copying it from .h.R to .f.R
-# 
-# >> for (v in factors) if (v %in% names(data)) data[[v]] <- as.factor(data[[v]])
-# >> if (inherits(modelTerms, 'formula')) modelTerms <- jmvcore::decomposeFormula(modelTerms)
-# 
-# 
-# if (is.something(names(moderatorsTerms))) {
-#   if (!is.list(moderatorsTerms))
-#     jmvcore::reject("The `moderatorsTerms` option should be a list")
-#   
-#   moderatorsTerms<-lapply(mediators, function(med) {
-#     ifelse(med %in% names(moderatorsTerms),as.list(moderatorsTerms[med]),list())
-#   })
-# }
-# if (is.something(names(scaling))) 
-#   scaling<-lapply(names(scaling), function(a) list(var=a,type=scaling[[a]]))
-# if (is.something(names(contrasts))) 
-#   contrasts<-lapply(names(contrasts), function(a) list(var=a,type=contrasts[[a]]))
-# 
-# ############
-# ### some check for input passed by R console ###
-# moderators<-unlist(moderatorsTerms)
-# test1<-intersect(moderators,mediators)
-# if (length(test1)>0)
-#   jmvcore::reject(paste("You specified the variable", test1,"to be both a mediator and a moderator. This is not allowed. You can specify interactions involving moderators and mediators as you like, but do not assign the role of moderator to a mediator."))
-
-
-
-
-
 #' GLM Mediation Model
 #'
 #' GLM mediation model
@@ -68,35 +36,49 @@
 #'   mediators as dependent variables.
 #' @param moderatorsTerms a list of lists specifying the the IV which
 #'   moderatorate each mediated effect.
-#' @param missing handle  missing values: \code{listwise} or \code{full information max likelihood}.
-#' @param diagram Choose the type of diagram: \code{conceptual} or
-#'   \code{statistical}.
+#'   Categorical moderators include each factor level and an Average setting
+#'   at the equal-level contrast centroid (zero for centered factor coding).
+#'   Indirect effects at Average are products of the centered-factor slopes,
+#'   not averages of the level-specific indirect effects.
+#' @param meddiagram \code{TRUE} or \code{FALSE} (default), produce a path
+#'   diagram
+#' @param diagram \code{TRUE} or \code{FALSE} (default), produce a path
+#'   diagram
 #' @param diag_paths Choose the diagram labels
+#' @param diag_resid \code{TRUE} or \code{FALSE} (default), produce a path
+#'   diagram
 #' @param diag_labsize Choose the diagram labels
+#' @param diag_rotate Choose the diagram labels
+#' @param diag_type Choose the path diagram layout, including a mediation-like
+#'   layout
 #' @param diag_shape Choose the diagram labels
 #' @param diag_abbrev Choose the diagram labels
-#' @param diag_offset \code{TRUE} or \code{FALSE} (default), offset labels in
-#'   diagram
 #' @param formula (optional) the formula to use, see the examples
 #' @return A results object containing:
 #' \tabular{llllll}{
-#'   \code{results$info} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$pathmodelgroup$pathmodel} \tab \tab \tab \tab \tab a path model \cr
-#'   \code{results$pathmodelgroup$statmodel} \tab \tab \tab \tab \tab a path model \cr
-#'   \code{results$pathmodelgroup$pathnotes} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$models$moderationEffects} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$models$main} \tab \tab \tab \tab \tab a table \cr
-#'   \code{results$models$contrastCodeTables} \tab \tab \tab \tab \tab an array of contrast coefficients tables \cr
+#'   \code{results$model} \tab \tab \tab \tab \tab The underlying \code{lavaan} object \cr
+#'   \code{results$info} \tab \tab \tab \tab \tab a html \cr
+#'   \code{results$extrainfo} \tab \tab \tab \tab \tab a html \cr
+#'   \code{results$issues} \tab \tab \tab \tab \tab a html \cr
+#'   \code{results$infotab} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$models$r2} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$models$interactions} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$models$coefficients} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$models$contrastCodeTable} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$regressions$overall} \tab \tab \tab \tab \tab a group \cr
 #'   \code{results$regressions$mediator_regressions} \tab \tab \tab \tab \tab an array of regressions for the mediators \cr
 #'   \code{results$regressions$full} \tab \tab \tab \tab \tab a group \cr
+#'   \code{results$pathgroup$pathmodel} \tab \tab \tab \tab \tab a model diagram \cr
+#'   \code{results$pathgroup$pathnotes} \tab \tab \tab \tab \tab a table \cr
+#'   \code{results$pathgroup$diagrams} \tab \tab \tab \tab \tab an array of path diagrams \cr
+#'   \code{results$pathgroup$notes} \tab \tab \tab \tab \tab a table \cr
 #' }
 #'
 #' Tables can be converted to data frames with \code{asDF} or \code{\link{as.data.frame}}. For example:
 #'
-#' \code{results$info$asDF}
+#' \code{results$infotab$asDF}
 #'
-#' \code{as.data.frame(results$info)}
+#' \code{as.data.frame(results$infotab)}
 #'
 #' @export
 jammGLM <- function(
@@ -118,146 +100,123 @@ jammGLM <- function(
     simpleScaleLabels = "labels",
     scaling = NULL,
     tableOptions = list(
-      "beta",
-      "component"),
+                "beta",
+                "component"),
     pathOptions = list(
-      "suggested"),
+                "suggested"),
     mediatorsTerms = list(
-      list()),
+                list()),
     moderatorsTerms = list(
-      list()),
-    missing = "listwise",
-    diagram = "conceptual",
+                list()),
+    meddiagram = FALSE,
+    diagram = FALSE,
     diag_paths = "est",
+    diag_resid = FALSE,
     diag_labsize = "medium",
+    diag_rotate = "1",
+    diag_type = "mediation",
     diag_shape = "rectangle",
     diag_abbrev = "0",
-    diag_offset = FALSE,
     formula) {
-  
-  if ( ! requireNamespace("jmvcore", quietly=TRUE))
-    stop("jammGLM requires jmvcore to be installed (restart may be required)")
-  
-  if ( ! missing(formula)) {
-    if (missing(dep))
-      dep <- jammGLMClass$private_methods$.marshalFormula(
-        formula=formula,
-        data=`if`( ! missing(data), data, NULL),
-        name="dep")
-    if (missing(factors))
-      factors <- jammGLMClass$private_methods$.marshalFormula(
-        formula=formula,
-        data=`if`( ! missing(data), data, NULL),
-        name="factors")
-    if (missing(covs))
-      covs <- jammGLMClass$private_methods$.marshalFormula(
-        formula=formula,
-        data=`if`( ! missing(data), data, NULL),
-        name="covs")
-    if (missing(mediators))
-      mediators <- jammGLMClass$private_methods$.marshalFormula(
-        formula=formula,
-        data=`if`( ! missing(data), data, NULL),
-        name="mediators")
-    if (missing(mediatorsTerms))
-      mediatorsTerms <- jammGLMClass$private_methods$.marshalFormula(
-        formula=formula,
-        data=`if`( ! missing(data), data, NULL),
-        name="mediatorsTerms")
-    if (missing(modelTerms))
-      modelTerms <- jammGLMClass$private_methods$.marshalFormula(
-        formula=formula,
-        data=`if`( ! missing(data), data, NULL),
-        name="modelTerms")
-    if (missing(moderatorsTerms))
-      moderatorsTerms <- jammGLMClass$private_methods$.marshalFormula(
-        formula=formula,
-        data=`if`( ! missing(data), data, NULL),
-        name="moderatorsTerms")
-    if (missing(simpleScale))
-      simpleScale <- jammGLMClass$private_methods$.marshalFormula(
-        formula=formula,
-        data=`if`( ! missing(data), data, NULL),
-        name="simpleScale")
-  }
-  
-  if ( ! missing(dep)) dep <- jmvcore::resolveQuo(jmvcore::enquo(dep))
-  if ( ! missing(mediators)) mediators <- jmvcore::resolveQuo(jmvcore::enquo(mediators))
-  if ( ! missing(factors)) factors <- jmvcore::resolveQuo(jmvcore::enquo(factors))
-  if ( ! missing(covs)) covs <- jmvcore::resolveQuo(jmvcore::enquo(covs))
-  if (missing(data))
-    data <- jmvcore::marshalData(
-      parent.frame(),
-      `if`( ! missing(dep), dep, NULL),
-      `if`( ! missing(mediators), mediators, NULL),
-      `if`( ! missing(factors), factors, NULL),
-      `if`( ! missing(covs), covs, NULL))
-  
-  for (v in factors) if (v %in% names(data)) data[[v]] <- as.factor(data[[v]])
-  if (inherits(modelTerms, "formula")) modelTerms <- jmvcore::decomposeFormula(modelTerms)
 
-## fix some option when passed by R console ###
-# this code should be added in the jammGLM function generated
-# by jamovi compiler after copying it from .h.R to .f.R
+    if ( ! requireNamespace("jmvcore", quietly=TRUE))
+        stop("jammGLM requires jmvcore to be installed (restart may be required)")
 
+    if ( ! missing(formula)) {
+        if (missing(dep))
+            dep <- jammGLMClass$private_methods$.marshalFormula(
+                formula=formula,
+                data=`if`( ! missing(data), data, NULL),
+                name="dep")
+        if (missing(factors))
+            factors <- jammGLMClass$private_methods$.marshalFormula(
+                formula=formula,
+                data=`if`( ! missing(data), data, NULL),
+                name="factors")
+        if (missing(covs))
+            covs <- jammGLMClass$private_methods$.marshalFormula(
+                formula=formula,
+                data=`if`( ! missing(data), data, NULL),
+                name="covs")
+        if (missing(mediators))
+            mediators <- jammGLMClass$private_methods$.marshalFormula(
+                formula=formula,
+                data=`if`( ! missing(data), data, NULL),
+                name="mediators")
+        if (missing(mediatorsTerms))
+            mediatorsTerms <- jammGLMClass$private_methods$.marshalFormula(
+                formula=formula,
+                data=`if`( ! missing(data), data, NULL),
+                name="mediatorsTerms")
+        if (missing(modelTerms))
+            modelTerms <- jammGLMClass$private_methods$.marshalFormula(
+                formula=formula,
+                data=`if`( ! missing(data), data, NULL),
+                name="modelTerms")
+        if (missing(moderatorsTerms))
+            moderatorsTerms <- jammGLMClass$private_methods$.marshalFormula(
+                formula=formula,
+                data=`if`( ! missing(data), data, NULL),
+                name="moderatorsTerms")
+        if (missing(simpleScale))
+            simpleScale <- jammGLMClass$private_methods$.marshalFormula(
+                formula=formula,
+                data=`if`( ! missing(data), data, NULL),
+                name="simpleScale")
+    }
 
+    if ( ! missing(dep)) dep <- jmvcore::resolveQuo(jmvcore::enquo(dep))
+    if ( ! missing(mediators)) mediators <- jmvcore::resolveQuo(jmvcore::enquo(mediators))
+    if ( ! missing(factors)) factors <- jmvcore::resolveQuo(jmvcore::enquo(factors))
+    if ( ! missing(covs)) covs <- jmvcore::resolveQuo(jmvcore::enquo(covs))
+    if (missing(data))
+        data <- jmvcore::marshalData(
+            parent.frame(),
+            `if`( ! missing(dep), dep, NULL),
+            `if`( ! missing(mediators), mediators, NULL),
+            `if`( ! missing(factors), factors, NULL),
+            `if`( ! missing(covs), covs, NULL))
 
-      if (is.something(names(moderatorsTerms))) {
-        if (!is.list(moderatorsTerms))
-          jmvcore::reject("The `moderatorsTerms` option should be a list")
+    for (v in factors) if (v %in% names(data)) data[[v]] <- as.factor(data[[v]])
+    if (inherits(modelTerms, "formula")) modelTerms <- jmvcore::decomposeFormula(modelTerms)
 
-        moderatorsTerms<-lapply(mediators, function(med) {
-          ifelse(med %in% names(moderatorsTerms),as.list(moderatorsTerms[med]),list())
-        })
-      }
-      if (is.something(names(scaling)))
-        scaling<-lapply(names(scaling), function(a) list(var=a,type=scaling[[a]]))
-      if (is.something(names(contrasts)))
-        contrasts<-lapply(names(contrasts), function(a) list(var=a,type=contrasts[[a]]))
+    options <- jammGLMOptions$new(
+        dep = dep,
+        mediators = mediators,
+        factors = factors,
+        covs = covs,
+        modelTerms = modelTerms,
+        ciType = ciType,
+        ciWidth = ciWidth,
+        bootN = bootN,
+        contrasts = contrasts,
+        showRealNames = showRealNames,
+        showContrastCode = showContrastCode,
+        simpleScale = simpleScale,
+        cvalue = cvalue,
+        percvalue = percvalue,
+        simpleScaleLabels = simpleScaleLabels,
+        scaling = scaling,
+        tableOptions = tableOptions,
+        pathOptions = pathOptions,
+        mediatorsTerms = mediatorsTerms,
+        moderatorsTerms = moderatorsTerms,
+        meddiagram = meddiagram,
+        diagram = diagram,
+        diag_paths = diag_paths,
+        diag_resid = diag_resid,
+        diag_labsize = diag_labsize,
+        diag_rotate = diag_rotate,
+        diag_type = diag_type,
+        diag_shape = diag_shape,
+        diag_abbrev = diag_abbrev)
 
-############
-### some check for input passed by R console ###
-      moderators<-unlist(moderatorsTerms)
-      test1<-intersect(moderators,mediators)
-      if (length(test1)>0)
-        jmvcore::reject(paste("You specified the variable", test1,"to be both a mediator and a moderator. This is not allowed. You can specify interactions involving moderators and mediators as you like, but do not assign the role of moderator to a mediator."))
+    analysis <- jammGLMClass$new(
+        options = options,
+        data = data)
 
-    
-  options <- jammGLMOptions$new(
-    dep = dep,
-    mediators = mediators,
-    factors = factors,
-    covs = covs,
-    modelTerms = modelTerms,
-    ciType = ciType,
-    ciWidth = ciWidth,
-    bootN = bootN,
-    contrasts = contrasts,
-    showRealNames = showRealNames,
-    showContrastCode = showContrastCode,
-    simpleScale = simpleScale,
-    cvalue = cvalue,
-    percvalue = percvalue,
-    simpleScaleLabels = simpleScaleLabels,
-    scaling = scaling,
-    tableOptions = tableOptions,
-    pathOptions = pathOptions,
-    mediatorsTerms = mediatorsTerms,
-    moderatorsTerms = moderatorsTerms,
-    missing= missing,
-    diagram = diagram,
-    diag_paths = diag_paths,
-    diag_labsize = diag_labsize,
-    diag_shape = diag_shape,
-    diag_abbrev = diag_abbrev,
-    diag_offset = diag_offset)
-  
-  analysis <- jammGLMClass$new(
-    options = options,
-    data = data)
-  
-  analysis$run()
-  
-  analysis$results
+    analysis$run()
+
+    analysis$results
 }
 

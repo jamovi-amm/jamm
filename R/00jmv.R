@@ -6,9 +6,10 @@
         `type`="software", 
         `author`="Gallucci, M.", 
         `year`=2020, 
-        `title`="jAMM: jamovi Advanced Mediation Models", 
+        `title`="jAMM: jamovi Advanced Mediation Models (Version 2.0.0)", 
         `publisher`="[jamovi module]. Retrieved from https://jamovi-amm.github.io/", 
-        `url`="https://jamovi-amm.github.io/"), 
+        `url`="https://jamovi-amm.github.io/", 
+        `versioning`="jAMM: jamovi Advanced Mediation Models"), 
     `lavaan`=list(
         `type`="article", 
         `author`="Rosseel, Y.", 

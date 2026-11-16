@@ -2,8 +2,9 @@
 name: jammGLM
 title: GLM Mediation Model
 menuGroup: medmod
-version: '1.1.0'
+version: '1.0.5'
 jas: '1.2'
+# The R interface is maintained in R/jammglm.f.R, as in GAMLj.
 export: false
 completeWhenFilled: false
 description:
@@ -101,10 +102,12 @@ options:
       options:
         - name: standard
           title: Standard
-        - name: bca
+        - name: bca.simple
           title: Bootstrap (BC)
         - name: perc
           title: Bootstrap (Percent)
+        - name: norm
+          title: Bootstrap (Normal)
         - name: none
           title: None
       default: standard
@@ -178,7 +181,6 @@ options:
       description:
           R: >
             `TRUE` or `FALSE` (default), provide contrast coefficients tables
-
 
 
 
@@ -259,7 +261,6 @@ options:
 ######### specs here ##########
 
     - name: tableOptions
-      title: Display
       type: NMXList
       options:
           - name: component
@@ -301,33 +302,25 @@ options:
           R: >
             a list of lists specifying the the IV which moderatorate each mediated effect.          
 
-#### diagram
-    - name: missing
-      title: Missing
-      type: List
-      options:
-        - name: listwise
-          title: Listwise
-        - name: ml
-          title: FIML
-      default: listwise
+#### path diagram ###
+
+    - name: meddiagram
+      title: Model Diagram
+      type: Bool
+      default: true
       description:
           R: >
-             handle  missing values: `listwise` or `full information max likelihood`.
+            `TRUE` or `FALSE` (default), produce a path diagram
 
-#### diagram
+
+
     - name: diagram
       title: Path Diagram
-      type: List
-      options:
-        - name: conceptual
-          title: Conceptual
-        - name: statistical
-          title: Statistical
-      default: conceptual
+      type: Bool
+      default: false
       description:
           R: >
-             Choose the type of diagram: `conceptual` or `statistical`.
+            `TRUE` or `FALSE` (default), produce a path diagram
 
     - name: diag_paths
       title: Paths Labels
@@ -337,12 +330,22 @@ options:
           title: Coefficients
         - name: stand
           title: Betas
+        - name: name
+          title: Labels
         - name: hide
           title: None
       default: est
       description:
           R: >
              Choose the diagram labels
+
+    - name: diag_resid
+      title: Residuals
+      type: Bool
+      default: false
+      description:
+          R: >
+            `TRUE` or `FALSE` (default), produce a path diagram
 
     - name: diag_labsize
       title: Node Size
@@ -356,11 +359,51 @@ options:
           title: Large
         - name: vlarge
           title: Very Large
+
       default: medium
       description:
           R: >
              Choose the diagram labels
 
+    - name: diag_rotate
+      title: Rotate
+      type: List
+      options:
+        - name:  "1"
+          title: Exog. top
+        - name: "2"
+          title: Exog. left
+        - name: "3"
+          title: Exog. bottom
+        - name: "4"
+          title: Exog. right
+
+      default: "1"
+      description:
+          R: >
+             Choose the diagram labels
+    - name: diag_type
+      title: Type
+      type: List
+      options:
+        - name: "mediation"
+          title: Mediation-like
+        - name: "circle"
+          title: Circle
+        - name: "circle2"
+          title: Circle alt.
+
+        - name:  "tree2"
+          title: Tree-like
+        - name:  "tree"
+          title: Tree-like alt.
+        - name: "spring"
+          title: Spring
+
+      default: "mediation"
+      description:
+          R: >
+             Choose the path diagram layout, including a mediation-like layout
 
     - name: diag_shape
       title: Shapes
@@ -381,6 +424,7 @@ options:
       description:
           R: >
              Choose the diagram labels
+
 
     - name: diag_abbrev
       title: Abbreviate
@@ -403,15 +447,11 @@ options:
           R: >
              Choose the diagram labels
 
-    - name: diag_offset
-      title: Offset labels
-      type: Bool
-      default: false
-      description:
-          R: >
-            `TRUE` or `FALSE` (default), offset labels in diagram
 
 ### end diagram ###
+
+
+
 
 ...
 

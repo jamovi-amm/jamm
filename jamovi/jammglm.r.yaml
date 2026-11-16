@@ -5,8 +5,24 @@ jrs: '1.0'
 
 
 items:
+  - name: model
+    type: Property
+    description: The underlying `lavaan` object
 
-  - name: info
+## these are handled by SmartInfo class
+  -   name: info
+      title: Introduction
+      type: Html
+  -   name: extrainfo
+      title: Extra Info
+      type: Html
+      visible: false
+  -   name: issues
+      title: Issues
+      type: Html
+      visible: false
+
+  - name: infotab
     title: Models Info
     type: Table
     columns:
@@ -15,74 +31,21 @@ items:
          title: ""
          combineBelow: true
 
-       - name: specs
-         type: text
-         title: ""
        - name: value
          type: text
          title: ""
+    clearWith:
+        - dep
+        - mediators
+        - factors
+        - covs
+        - modelTerms
+        - fixedIntercept
+        - moderatorsTerms
     refs: jamm
 
 
-  - name: pathmodelgroup
-    type: Group
-    title: Path Model
-    clearWith:
-                  - dep
-                  - mediatorsTerms
-                  - modelTerms
-                  - moderatorsTerms
-    items:
-            - name: pathmodel
-              title: Conceptual Diagram
-              type: Image
-              description: a path model
-              width: 800
-              height: 600
-              renderFun: .showConceptualDiagram
-              clearWith:
-                  - dep
-                  - mediatorsTerms
-                  - modelTerms
-                  - moderatorsTerms
-                  - pathOptions
-                  - diagram
-                  - diag_labsize
-                  - diag_shape
-                  - diag_abbrev
-                  
-              refs: diagram    
-              visible: (diagram:conceptual)
-            - name: statmodel
-              title: Statistical Diagram
-              type: Image
-              description: a path model
-              width: 800
-              height: 600
-              renderFun: .showStatDiagram
-              clearWith:
-                  - dep
-                  - mediatorsTerms
-                  - modelTerms
-                  - moderatorsTerms
-                  - pathOptions
-                  - diagram
-                  - diag_offset
-                  - diag_labsize
-                  - diag_shape
-                  - diag_abbrev
-                  - diag_paths
-              refs: diagram    
-              visible: (diagram:statistical)
-            - name: pathnotes
-              type: Table
-              title: ""
-              visible: false
-              columns:
-                  - name: info
-                    type: text
-                    title: "Diagram notes"
-   
+
 
   - name: models
     title: "Mediation"
@@ -94,7 +57,38 @@ items:
         - factors
         - covs
     items:
-          - name: moderationEffects
+    
+          - name: r2
+            title: R-squared
+            type: Table
+            clearWith:
+                  - dep
+                  - mediators
+                  - covs
+                  - factors
+                  - ciType
+                  - data
+
+            columns:
+                    - name: lhs
+                      title: "Pred.Variable"
+                      type: text
+                    - name: r2
+                      title: R²
+                      type: number
+                    - name: ci.lower
+                      type: number
+                      title: Lower
+                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      format: zto
+                    - name: ci.upper
+                      type: number
+                      title: Upper
+                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      format: zto
+
+    
+          - name: interactions
             title: Moderation effects (interactions)
             visible: false
             type: Table
@@ -105,16 +99,12 @@ items:
                      - fixedIntercept
                      - simpleScale
             columns:
-                    - name: mod
-                      title: "Moderator"
+                    - name: lhs
+                      title: "Dependent"
                       combineBelow: true
                       type: text
-                    - name: target
+                    - name: rhs
                       title: "Interaction"
-                      type: text
-                    - name: label
-                      title: "Contrasts"
-                      visible: false
                       type: text
                     - name: est
                       title: "Estimate"
@@ -143,7 +133,7 @@ items:
                       type: number
                       format: zto,pvalue
     
-          - name: main
+          - name: coefficients
             title: Indirect and Total Effects
             type: Table
             refs: lavaan
@@ -154,12 +144,25 @@ items:
                      - fixedIntercept
                      - simpleScale
                      - ciType
+                     - mediatorsTerms
+                     - moderatorsTerms
+                     - scaling
+                     - cvalue
+                     - percvalue
+                     - simpleScaleLabels
+                     - tableOptions
+                     - data
             columns:
+                    - name: condition
+                      title: Moderator levels
+                      type: text
+                      visible: false
+                      combineBelow: true
                     - name: type
                       title: "Type"
                       type: text
                       combineBelow: true
-                    - name: source
+                    - name: effect
                       title: "Effect"
                       type: text
                     - name: label
@@ -193,25 +196,39 @@ items:
                       format: zto,pvalue
 
 
-          - name: contrastCodeTables
-            title: Contrast Coefficients 
-            type: Array
-            description: an array of contrast coefficients tables
-            visible: (showContrastCode)
-            clearWith:
-                    - contrasts
-                    - showContrastCode
-            template:
-                   title:  $key
-                   type: Table
-                   visible: (showContrastCode)
-                   columns:
-                         - name: rnames
+          - name: contrastCodeTable
+            title: Contrasts Definition
+            type: Table
+            visible: false
+            columns:
+                         - name: rname
                            title: 'Name'
                            type: text
-                         - name: clabs
+                         - name: clab
                            title: 'Contrast'
                            type: text
+
+          - name: contrastCodeTables
+            title: Contrast Coefficients
+            type: Array
+            visible: (showContrastCode)
+            items: (factors)
+            clearWith:
+                - factors
+                - contrasts
+                - showContrastCode
+                - data
+            template:
+                title: $key
+                type: Table
+                columns:
+                    - name: cname
+                      title: Name
+                      type: text
+                    - name: clab
+                      title: Contrast
+                      type: text
+
 
   - name: regressions
     type: Group
@@ -240,6 +257,9 @@ items:
                  type: Table
                  visible: (tableOptions:regression)
                  columns:
+                    - name: dep
+                      title: Variable
+                      type: text
                     - name: rsquared
                       title: R-squared
                       type: number
@@ -300,7 +320,7 @@ items:
 
 
           - name: mediator_regressions
-            title: Mediator Model
+            title: Mediator(s) Model
             type: Array
             description: an array of regressions for the mediators
             clearWith: 
@@ -310,13 +330,16 @@ items:
 
             template:
                 clearWith: []
-                title:  ""
+                title:  "Regression model for "
                 type: Group
                 items:
                    - name: anova
                      type: Table
                      title: ANOVA
                      columns:
+                         - name: lhs
+                           title: Variable
+                           type: text
                          - name: rsquared
                            title: "R-squared"
                            type: number
@@ -338,11 +361,11 @@ items:
                      title: Regression
                      visible: (tableOptions:regression)
                      columns:
-                         - name: source
-                           title: "Names"
+                         - name: lhs
+                           title: "Dependent"
                            type: text
-                           visible: (showRealNames)
-                         - name: label
+                           combineBelow: true
+                         - name: rhs
                            title: "Effect"
                            type: text
                          - name: estimate
@@ -388,6 +411,10 @@ items:
                  type: Table
                  visible: (tableOptions:regression)
                  columns:
+                    - name: lhs
+                      title: Dependent
+                      type: text
+                      combineBelow: true
                     - name: rsquared
                       title: R-squared
                       type: number
@@ -409,12 +436,12 @@ items:
                  visible: (tableOptions:regression)
                  type: Table
                  columns:
-                    - name: source
-                      title: "Names"
+                    - name: lhs
+                      title: Dependent
                       type: text
-                      visible: (showRealNames)
-                    - name: label
-                      title: "Effect"
+                      combineBelow: true
+                    - name: rhs
+                      title: Effect
                       type: text
                     - name: estimate
                       title: "Estimate"
@@ -444,3 +471,82 @@ items:
                       title: "p"
                       type: number
                       format: zto,pvalue
+
+  - name: pathgroup
+    type: Group
+    title: Path Model
+    visible: (diagram | meddiagram)
+    clearWith:
+                  - data
+
+    items:
+            - name: pathmodel
+              title: Model Diagram
+              visible: (meddiagram)
+              type: Image
+              description: a model diagram
+              width: 600
+              height: 500
+              renderFun: .showModelDiagram
+              clearWith:
+                  - dep
+                  - mediatorsTerms
+                  - modelTerms
+                  - moderatorsTerms
+                  - pathOptions
+                  - meddiagram
+                  - diagram
+                  - diag_paths
+                  - diag_resid
+                  - diag_labsize
+                  - diag_rotate
+                  - diag_type
+                  - diag_shape
+                  - diag_abbrev
+              refs: diagram    
+            - name: pathnotes
+              type: Table
+              title: ""
+              visible: false
+              columns:
+                  - name: info
+                    type: text
+                    title: "Model diagram notes"
+    
+            - name: diagrams
+              title: Path Diagrams
+              type: Array
+              description: an array of path diagrams
+              visible: (diagram)
+              template:
+                   title: $key
+                   type: Image
+                   renderFun: .showDiagram
+                   width: 700
+                   height: 500
+                   clearWith:
+                      - pathOptions
+                      - meddiagram
+                      - diagram
+                      - diag_resid
+                      - diag_paths
+                      - diag_labsize
+                      - diag_rotate
+                      - diag_type
+                      - diag_shape
+                      - diag_abbrev
+                      - modelTerms
+                      - mediatorsTerms
+                      - data
+
+              refs: semplot
+             
+            - name: notes
+              type: Table
+              title: ""
+              visible: false
+              columns:
+                  - name: message
+                    type: text
+                    title: "Path diagram notes"
+

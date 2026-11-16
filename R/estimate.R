@@ -1,0 +1,147 @@
+## This class takes care of estimating the model and return the results. It inherit from Syntax, and define the same tables
+## defined by Syntax, but it fill them with the results.
+
+Estimate <- R6::R6Class("Estimate",
+                        inherit = Syntax,
+                        cloneable=FALSE,
+                        class=FALSE,
+                        public=list(
+                          model=NULL,
+                          tab_fit=NULL,
+                          tab_fitindices=NULL,
+                          ciwidth=NULL,
+                          tab_constfit=NULL,
+                          initialize=function(jmvobj,datamatic) {
+                            super$initialize(
+                              jmvobj=jmvobj,
+                              datamatic=datamatic)
+                            self$ciwidth<-self$options$ciWidth/100
+                          },
+                          estimate=function(data) {
+                            # Never expose a previous fit after a failed re-estimation.
+                            self$model <- NULL
+                            self$ok <- TRUE
+                            # Build conditional definitions on the same data and
+                            # scale used to fit the regression interactions.
+                            self$prepareConditional(data)
+                            private$.lavaan_estimate(data)
+                            if (!self$ok)
+                              return(invisible(NULL))
+                            
+                            # fit indices
+                            alist<-list()
+                            alist[[length(alist)+1]]<-c(info="Estimation Method",value=self$model@Options$estimator)
+                            alist[[length(alist)+1]]<-c(info="Number of observations",value=lavaan::lavInspect(self$model,"ntotal")) 
+                            alist[[length(alist)+1]]<-c(info="Converged",value=self$model@Fit@converged) 
+                            alist[[length(alist)+1]]<-c(info="",value="")
+                            
+                            self$tab_info<-alist
+                            
+                          }, 
+                          
+                          computeR2=function(data) {
+                            
+                            end<-private$.lav_structure
+                            endvars<-unique(end$lhs[end$op=="~"])
+                            end<-end[end$lhs==end$rhs,]
+                            end<-end[end$lhs %in% endvars,]
+                            end$lhs<-fromb64(end$lhs)
+                            end$rhs<-fromb64(end$rhs)
+                            
+                            end$var<-end$est/end$std.all
+                            end$r2<-1-end$std.all
+                             for (i in seq_along(end$r2)) 
+                                    if (end$r2[[i]]>1 | end$r2[[i]]<0)  {
+                                      end$r2[[i]]<-NA
+                                      self$warning<-list(topic="models_r2",message="Some R-square indexex cannot be computed for this model")
+                                    }
+                            
+                              ### https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3821705/
+                              N<-lavaan::lavInspect(self$model,"ntotal")
+                              r<-sqrt(end$r2)
+                              f<-.5 * log((1 + r)/(1 - r))
+                              zr<-f*sqrt((N-3))
+                              z0<-qnorm((1-self$ciwidth)/2,lower.tail = F)
+                              lower<-zr-z0
+                              upper<-zr+z0
+                              flower<-lower/sqrt(N-3)
+                              fupper<-upper/sqrt(N-3)
+                              rupper<-(exp(2*fupper)-1)/(1+exp(2*fupper))
+                              rupper<-rupper^2
+                              rlower<-(exp(2*flower)-1)/(1+exp(2*flower))
+                              rlower<-rlower^2
+                              end$ci.upper<-rupper
+                              end$ci.lower<-rlower
+                              ####
+                            self$tab_r2<-end
+
+
+                        }
+                        ), ## end public
+                        private=list(
+                          
+                         .lavaan_estimate=function(data) {
+                           # Always define the argument, even when no bootstrap
+                           # is requested and lavaan normally leaves it unevaluated.
+                           bootci <- "perc"
+                           if (self$options$ciType=="standard") {
+                             ci<-TRUE
+                             se="standard"
+                           } else {
+                             
+                             if (self$options$ciType=="none") {
+                               ci<-FALSE
+                               se="standard"
+                             } else {
+                               ci<-TRUE
+                               se="bootstrap"
+                               bootci=self$options$ciType
+                             }
+                           } 
+                           
+                           
+                           ## prepare the options based on Syntax definitions
+                           lavoptions<-list(model = private$.lav_structure, 
+                                            data = data,
+                                            se=se,
+                                            bootstrap=self$options$bootN,
+                                            estimator="ML",
+                                            likelihood="wishart"
+                           )
+                           
+                           ## estimate the models
+                           results<-try_hard({do.call(lavaan::lavaan,lavoptions)  })
+                           
+                           
+                           
+                           self$warning<-list(topic="infotab",message=results$warning)
+                           if (!isFALSE(results$error)) {
+                             details<-fromb64(results$error,ref=self$vars)
+                             if (grepl("infinite or missing",details,fixed=TRUE))
+                               details<-paste(ERRS[["noluck"]],details)
+                             self$stop(paste("Model cannot be estimated:",details))
+                           }
+                           
+                           ## ask for the paramters estimates
+                           self$model<-results$obj
+                           .lav_params<-lavaan::parameterestimates(
+                             self$model,
+                             ci=ci,
+                             standardized = T,
+                             level = self$ciwidth,
+                             boot.ci.type = bootci
+                           )
+                           
+                           ## we need some info initialized by Syntax regarding the parameters properties
+                           private$.lav_structure<-.lav_params
+                           private$.make_tables()
+                           self$computeR2(data)
+                           ginfo("Estimation is done...")
+                         }
+                
+                
+              ) #end of private 
+                          
+
+)  # end of class
+

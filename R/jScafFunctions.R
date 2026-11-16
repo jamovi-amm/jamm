@@ -1,6 +1,7 @@
-j_DEBUG <- T
-j_INFO  <- T
-t_INFO  <- F
+j_DEBUG = FALSE
+j_INFO = FALSE
+t_INFO  <- FALSE
+
 
 #### Helper functions used by Scaffold (not exported)
 
@@ -14,6 +15,7 @@ tinfo <- function(...) {
 
 jinfo <- function(...) {
   if (j_INFO) {
+
     cat("\n")
     cat(paste(list(...)))
     cat("\n")
@@ -21,29 +23,25 @@ jinfo <- function(...) {
 }
 
 
-
 mark <- function(...) {
-  if (!j_DEBUG) 
+  if (!j_DEBUG)
     return()
-
-  if (.Platform$OS.type=="windows")
-     sink(paste0(tempdir(),"/jamm.log"),append=TRUE)
   
-  if (missing(...))
-    cat("Mark here\n")
+
+  if (missing(...)) cat("Mark here\n")
+  
   items<-list(...)
   
   if (length(items)>1)  cat("______begin________\n\n")
+  
   for (a in items)
     if (is.character(a))
       cat(a,"\n")
   else
     print(a)
-  if (length(items)>1)  cat("_____end_______\n\n")
-  if (.Platform$OS.type=="windows")
-    sink()
   
-
+  if (length(items)>1)  cat("_____end_______\n\n")
+  
 }
 
 is.something <- function(x, ...) UseMethod(".is.something")
@@ -61,14 +59,14 @@ is.something <- function(x, ...) UseMethod(".is.something")
 is.there<-function(pattern,string) length(grep(pattern,string,fixed=T))>0
 
 #### This function run an expression and returns any warnings or errors without stopping the execution.
-try_hard<-function(exp,max_warn=5) {
+try_hard<-function(exp,max_warn=5, silent=FALSE) {
   
   .results<-list(error=FALSE,warning=list(),message=FALSE,obj=FALSE)
   
   .results$obj <- withCallingHandlers(
     tryCatch(exp, error=function(e) {
-      mark("SOURCE:")
-      mark(conditionCall(e))
+      if (!silent) mark("SOURCE:")
+      if (!silent) mark(conditionCall(e))
       .results$error<<-conditionMessage(e)
       NULL
     }), warning=function(w) {
@@ -86,7 +84,7 @@ try_hard<-function(exp,max_warn=5) {
     })
   
   
-  if (!isFALSE(.results$error)) {
+  if (!isFALSE(.results$error) && isFALSE(silent)) {
     mark("CALLER:")
     mark(rlang::enquo(exp))
     mark("ERROR:")
@@ -98,6 +96,79 @@ try_hard<-function(exp,max_warn=5) {
   
   return(.results)
 }
+
+#### handle b64
+
+tob64<- function(x,...) UseMethod(".tob64")
+
+.tob64.default<-function(obj,ref=NULL) {
+  
+  if (is.null(obj))
+    return()
+  
+  if (is.null(ref)) {
+    obj<-jmvcore::toB64(obj)
+  } else {
+    for (r in ref) {
+      reg<-paste0("(?<=[\\s*~=]|^)",r,"(?=[\\s*~=]|$)")
+      obj<-stringr::str_replace_all(obj,reg,jmvcore::toB64(r))
+    }
+  }
+  obj
+}
+
+.tob64.list<-function(obj,ref=NULL) {
+  lapply(obj,bogustob64,ref)
+}
+
+bogustob64<-function(obj,ref) tob64(obj,ref)
+
+fromb64<- function(x,...) UseMethod(".fromb64")
+
+.fromb64.default<-function(obj,ref=NULL) {
+  
+  if (!is.something(obj))
+    return(obj)
+  
+  if (length(obj)>1)
+    return(unlist(sapply(obj, bogusfromb64,ref=ref,USE.NAMES = F)))
+  
+  int<-strsplit(obj,INTERACTION_SYMBOL,fixed=T)[[1]]
+  if (length(int)>1)
+    return(paste0(unlist(sapply(int,bogusfromb64,ref=ref)),collapse = ":"))
+  
+  if (is.null(ref)) {
+    fac<-strsplit(obj,FACTOR_SYMBOL,fixed=T)[[1]]
+    if (length(fac)==0)
+      return(obj)
+    encoded<-fac[[1]]
+    if (!grepl("^X[A-Za-z0-9._]*$",encoded))
+      return(obj)
+    decoded<-tryCatch({
+      value<-jmvcore::fromB64(encoded)
+      if (identical(jmvcore::toB64(value),encoded)) value else NULL
+    },error=function(error) NULL)
+    if (is.null(decoded))
+      return(obj)
+    obj<-decoded
+    if (length(fac)>1) obj<-paste0(obj,fac[[2]])
+  } else {
+    for (r in ref)
+      obj<-gsub(jmvcore::toB64(r),r,obj,fixed = T)
+    obj<-gsub(FACTOR_SYMBOL,"",obj,fixed = T)
+    obj<-gsub(INTERACTION_SYMBOL,":",obj,fixed = T)
+  }
+  
+  obj
+}
+
+.fromb64.list<-function(obj,ref=NULL) {
+  lapply(obj,bogusfromb64,ref=ref)
+}
+
+bogusfromb64<-function(obj,ref=NULL) fromb64(obj,ref=ref)
+
+### end
 
 
 sourcifyOption<- function(x,...) UseMethod(".sourcifyOption")
@@ -120,8 +191,6 @@ sourcifyOption<- function(x,...) UseMethod(".sourcifyOption")
   }
   ''
 }
-
-
 .sourcifyOption.OptionVariables<-function(option,def=NULL) {
   
   if (is.null(option$value))
@@ -135,10 +204,8 @@ sourcifyOption<- function(x,...) UseMethod(".sourcifyOption")
     return(paste0(option$name,"=c(",paste0(values,collapse = ","),")"))
 }
   
-.sourcifyOption.OptionTerms<-function(option,def=NULL) {
-  .sourcifyOption.default(option,def)
-  
-}
+.sourcifyOption.OptionTerms<-function(option,def=NULL)
+     .sourcifyOption.default(option,def)
   
 .sourcifyOption.OptionArray<-function(option,def=NULL) {
   alist<-option$value
@@ -238,19 +305,6 @@ ebind_square<-function(...) {
   
 }
 
-`ladd<-`<-function(x,value) {
-  x[[length(x)+1]]<-value
-  return(x)
-}
-
-`padd<-` <- function(x, value) {
-  x <- c(0, x)
-  x[[1]] <- value
-  x
-}
-
-###########
-
 
 sourcifyOption<- function(x,...) UseMethod(".sourcifyOption")
 
@@ -335,3 +389,77 @@ clean_lol<-function(alist) {
   }
   il
 }
+
+### syntax functions
+
+`%+%`<-function(a,b) {
+  paste0(a,b)
+}
+
+`%<+%`<-function(a,b) {
+  sprintf(a, b)   
+}
+
+
+`ladd<-`<-function(x,value) {
+  x[[length(x)+1]]<-value
+  return(x)
+}
+
+`padd<-` <- function(x, value) {
+  x <- c(0, x)
+  x[[1]] <- value
+  x
+}
+
+
+is.joption <- function(obj, option) {
+  (option %in% obj$names)
+}
+
+###########
+
+### formatting and stuff ###
+
+format5<-function(x) format(x,digits=5)
+
+
+check_parameters <- function(values, fun=is.null, verbose = TRUE, head="Please fill in the required input:") {
+  
+      needed <- names(values)
+      what   <- unlist(sapply(values,fun))
+      needed <- needed[what]
+      
+      if (length(needed)>0) {
+            if (verbose) {
+            text <- "<p>" %+% head %+% "</p> <ul>" 
+            for (ned in needed) text <- text %+% "<li>" %+% ned %+% "</li>" 
+            text <-  text %+% "</ul>"
+            return(text)
+            } else 
+                return(needed)
+      }
+      return()
+}
+
+test_parameters <- function(obj,values, fun=is.null, verbose = TRUE, head="Please fill in the required input:") {
+  
+  test<-check_parameters(values,fun=fun,verbose=verbose,head=head) 
+ 
+  if (length(test)>0) {
+     obj$ok <-FALSE
+     obj$warning<-list(topic="issues",message=paste(test,collapse=", "), head="info") 
+     call <- rlang::expr(return()) 
+     rlang::eval_bare(call, env = parent.frame())
+     
+  }
+}
+
+## Escape user-supplied labels before using them as regular expressions.
+escape_regex <- function(x) {
+  special <- c("\\", ".", "|", "(", ")", "[", "]", "{", "}", "^", "$", "*", "+", "?")
+  for (char in special)
+    x <- gsub(char, paste0("\\", char), x, fixed=TRUE)
+  x
+}
+
