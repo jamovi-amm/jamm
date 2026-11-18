@@ -19,7 +19,7 @@ test_that("a moderator cannot consume the last independent variable", {
 
 test_that("moderator UI rejects transfers even after its snapshot is refreshed", {
     skip_if_not_installed("V8")
-    eventsPath <- test_path("..", "..", "jamovi", "js", "jamm.events.js")
+    eventsPath <- source_file("jamovi", "js", "jamm.events.js")
     skip_if_not(file.exists(eventsPath), "UI sources are only available in the source checkout")
     engine <- V8::v8()
     engine$eval("var module = { exports: {} };")

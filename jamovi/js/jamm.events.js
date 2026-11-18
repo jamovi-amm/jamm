@@ -111,6 +111,10 @@ const events = {
 
 
 var initializeAll = function(ui, context) {
+    // LEGACY (jAMM < 2.0): must run before the snapshots below. Remove with
+    // migrateLegacyModerators().
+    migrateLegacyModerators(ui, context);
+
     // Seed change tracking before supplier updates can emit change events.
     var factors = context.cloneArray(ui.factors.value(), []);
     var covariates = context.cloneArray(ui.covs.value(), []);
@@ -639,6 +643,39 @@ var   cleanInteractions= function(quantum,cosmos,context){
 }
  return cosmos;
   
+};
+
+
+// ---------------------------------------------------------------------------
+// LEGACY (jAMM < 2.0): `moderatorsTerms` -> `mod_terms`
+// jAMM 1.x saved the moderators in `moderatorsTerms`. In 2.x that option is
+// hidden (no control) and kept only so old .omv files still load. jamovi still
+// exposes it here as ui.moderatorsTerms. When the panel opens, move its content
+// into `mod_terms` (unless that is already set) and empty it, so the file is
+// migrated the next time it is saved. R/legacy.R does the same on the R side,
+// which also covers analyses that are re-run without opening the panel.
+// TO REMOVE: delete this function, its call in initializeAll(), the hidden
+// option in jammglm.a.yaml and R/legacy.R.
+// ---------------------------------------------------------------------------
+var migrateLegacyModerators = function(ui, context) {
+    if (ui.moderatorsTerms === undefined)
+        return;
+    var hasTerms = function(blocks) {
+        return blocks.some(function(block) { return block && block.length > 0; });
+    };
+    var legacy = context.cloneArray(ui.moderatorsTerms.value(), []);
+    if ( ! hasTerms(legacy))
+        return;
+    var wasInitializing = context.workspace.initializing;
+    context.workspace.initializing = true;
+    try {
+        if ( ! hasTerms(context.cloneArray(ui.mod_terms.value(), [])))
+            ui.mod_terms.setValue(legacy);
+        ui.moderatorsTerms.setValue([[]]);
+    }
+    finally {
+        context.workspace.initializing = wasInitializing;
+    }
 };
 
 

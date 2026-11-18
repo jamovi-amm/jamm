@@ -1,6 +1,6 @@
 test_that("every result citation has a reference entry", {
-    referencePath <- test_path("..", "..", "jamovi", "00refs.yaml")
-    resultPath <- test_path("..", "..", "jamovi", "jammglm.r.yaml")
+    referencePath <- source_file("jamovi", "00refs.yaml")
+    resultPath <- source_file("jamovi", "jammglm.r.yaml")
     skip_if_not(file.exists(referencePath) && file.exists(resultPath))
     references <- readLines(referencePath)
     keys <- trimws(references[grepl("^    [[:alnum:]_]+:$", references)])
@@ -13,8 +13,8 @@ test_that("every result citation has a reference entry", {
 })
 
 test_that("analysis menu metadata survives manifest regeneration", {
-    optionPath <- test_path("..", "..", "jamovi", "jammglm.a.yaml")
-    manifestPath <- test_path("..", "..", "jamovi", "0000.yaml")
+    optionPath <- source_file("jamovi", "jammglm.a.yaml")
+    manifestPath <- source_file("jamovi", "0000.yaml")
     skip_if_not(file.exists(optionPath) && file.exists(manifestPath))
     options <- readLines(optionPath)
     manifest <- trimws(readLines(manifestPath))

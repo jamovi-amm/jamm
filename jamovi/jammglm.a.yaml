@@ -104,7 +104,7 @@ options:
       options:
         - name: standard
           title: Standard
-        - name: bca.simple
+        - name: bca
           title: Bootstrap (BC)
         - name: perc
           title: Bootstrap (Percent)
@@ -115,7 +115,8 @@ options:
       default: standard
       description:
           R: >
-             Choose the confidence interval type
+             Confidence interval type: `'standard'` (default, delta method), `'bca'` (bias-corrected
+             bootstrap), `'perc'` (percentile bootstrap), `'norm'` (normal bootstrap), or `'none'`.
 
 
     - name: ciWidth
@@ -304,6 +305,26 @@ options:
       description:
           R: >
             a list of lists specifying the variables that moderate each mediated effect.
+
+    # ------------------------------------------------------------------
+    # LEGACY (jAMM < 2.0): `moderatorsTerms` was renamed `mod_terms` in 2.0.
+    # Kept as a hidden option (no panel control) only so that analyses saved
+    # with jAMM 1.x reopen with their moderators. Its value is moved into
+    # `mod_terms` by migrate_legacy_options() (R/legacy.R) and by
+    # migrateLegacyModerators() (jamovi/js/jamm.events.js).
+    # TO REMOVE: delete this option and everything tagged "LEGACY (jAMM < 2.0)".
+    # ------------------------------------------------------------------
+    - name: moderatorsTerms
+      title: Moderator Effects (legacy)
+      type: Array
+      hidden: true
+      default: [[]]
+      template:
+          type: Terms
+      description:
+          R: >
+            deprecated, use `mod_terms`. Accepted only for analyses and
+            scripts written for jAMM 1.x.
 
 #### path diagram ###
 

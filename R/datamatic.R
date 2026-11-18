@@ -48,7 +48,7 @@ Datamatic <- R6::R6Class(
         ### we need this for Rinterface ####
         nlevels<-length(self$factors_levels[[factor]])
         stats::contrasts(data64[[factor64]]) <- self$contrasts_values[[factor]]
-        dummies<-model.matrix(as.formula(paste0("~",factor64)),data=data64)
+        dummies<-stats::model.matrix(stats::as.formula(paste0("~",factor64)),data=data64)
         dummies<-dummies[,-1]
         dummies<-data.frame(dummies)
         onames<-names(data64)

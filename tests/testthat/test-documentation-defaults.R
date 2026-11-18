@@ -22,8 +22,8 @@ test_that("the R interface prepares the conceptual model diagram by default", {
 })
 
 test_that("R help parses and no longer describes unsupported conditioning options", {
-    helpPath <- test_path("..", "..", "man", "jammGLM.Rd")
-    sourcePath <- test_path("..", "..", "R", "jammglm.f.R")
+    helpPath <- source_file("man", "jammGLM.Rd")
+    sourcePath <- source_file("R", "jammglm.f.R")
     skip_if_not(file.exists(helpPath) && file.exists(sourcePath))
     expect_no_warning(tools::parse_Rd(helpPath))
     for (path in c(helpPath, sourcePath)) {

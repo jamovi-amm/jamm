@@ -1,5 +1,5 @@
 test_that("UI diagnostics are silent by default and use the logging helper", {
-    eventsPath <- test_path("..", "..", "jamovi", "js", "jamm.events.js")
+    eventsPath <- source_file("jamovi", "js", "jamm.events.js")
     skip_if_not(file.exists(eventsPath), "UI sources are only available in the source checkout")
     source <- readLines(eventsPath)
     expect_equal(sum(grepl("console.log(", source, fixed = TRUE)), 1)

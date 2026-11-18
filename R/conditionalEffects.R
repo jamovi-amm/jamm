@@ -79,7 +79,7 @@ conditional_effects <- function(options, datamatic, parameters, chains, data = N
             parameter = paste0("CE", length(rows) + 1), type = type, effect = effect,
             expression = expression, condition = condition, scale = scale)
     }
-    endpoints <- vapply(chains, function(chain) paste(chain[[1]], tail(chain, 1), sep = ":"), character(1))
+    endpoints <- vapply(chains, function(chain) paste(chain[[1]], utils::tail(chain, 1), sep = ":"), character(1))
     for (setting in moderator_settings(options, datamatic, data)) {
         products <- character(length(chains))
         for (index in seq_along(chains)) {
@@ -89,7 +89,7 @@ conditional_effects <- function(options, datamatic, parameters, chains, data = N
             }, character(1))
             products[[index]] <- paste(components, collapse = "*")
             add("Indirect", paste(fromb64(chain), collapse = " \U21d2 "), products[[index]],
-                setting$label, chain[[1]], tail(chain, 1))
+                setting$label, chain[[1]], utils::tail(chain, 1))
             if ("component" %in% options$tableOptions) {
                 for (edge in seq_along(components)) {
                     add("Component", paste(fromb64(chain[c(edge, edge + 1)]), collapse = " \U21d2 "),
@@ -101,7 +101,7 @@ conditional_effects <- function(options, datamatic, parameters, chains, data = N
             matching <- which(endpoints == endpoint)
             chain <- chains[[matching[[1]]]]
             from <- chain[[1]]
-            to <- tail(chain, 1)
+            to <- utils::tail(chain, 1)
             label <- paste(fromb64(c(from, to)), collapse = " \U21d2 ")
             direct <- slope(from, to, setting$values)
             add("Direct", label, direct, setting$label, from, to)

@@ -3,3 +3,4 @@
 export(jammGLM)
 export(new_plot_state)
 export(render_plot_state)
+importFrom(R6,R6Class)

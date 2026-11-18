@@ -1,11 +1,14 @@
-test_that("warning capture retains every warning by default", {
+# try_hard() comes from jmvScaffold, which caps captured warnings at five by
+# default and appends a marker, so that a fit cannot flood the results.
+test_that("warning capture keeps the first five warnings and marks the rest", {
     messages <- paste("Distinct warning", seq_len(8))
     captured <- expect_no_warning(try_hard({
         for (message in messages)
             warning(message, call. = FALSE)
         42
     }))
-    expect_identical(unlist(captured$warning, use.names = FALSE), messages)
+    expect_identical(unlist(captured$warning, use.names = FALSE),
+                     c(messages[1:5], "Additional warnings are present."))
     expect_identical(captured$obj, 42)
     expect_false(captured$error)
     expect_false(try_hard(NULL)$warning)
@@ -30,10 +33,14 @@ test_that("fitting and parameter-extraction warnings reach the results together"
     messages <- paste("Parameter extraction warning", seq_len(8))
     with_mocked_bindings({
         analysis <- jammGLMClass$new(options = options, data = dataset)
-        expect_no_warning(analysis$run())
-        notes <- vapply(analysis$results$infotab$notes, function(note) note$note, character(1))
-        expect_true(all(c("Fitting warning", messages) %in% notes))
-        expect_false("Additional warnings are present." %in% notes)
+        expect_no_warning(analysis$run(noThrow = TRUE))
+        expect_identical(analysis$status, "complete")
+        # Fitting and extraction warnings share one capture, capped at five
+        # (repeated messages are merged in the notice).
+        content <- notice_content(analysis$results)
+        for (message in c("Fitting warning", messages[1:3], "Additional warnings are present."))
+            expect_match(content, message, fixed = TRUE)
+        expect_false(grepl(messages[[8]], content, fixed = TRUE))
         expect_false(analysis$results$issues$visible)
     }, lavaan = function(...) {
         warning("Fitting warning", call. = FALSE)
@@ -55,8 +62,7 @@ test_that("models without indirect paths warn without invalid total definitions"
     analysisObject <- list(options = options, results = results, data = dataset)
     datamatic <- Datamatic$new(analysisObject)
     runner <- expect_no_error(Runner$new(analysisObject, datamatic))
-    notes <- vapply(results$infotab$notes, function(note) note$note, character(1))
-    expect_identical(unname(notes), WARNS[["noindirect"]])
+    expect_identical(notice_content(results), WARNS[["noindirect"]])
     expect_length(runner$estimator$indirect_names, 0)
     expect_length(runner$estimator$total_names, 0)
     cleaned <- datamatic$cleandata(dataset, runner$estimator$interactions)
@@ -65,7 +71,7 @@ test_that("models without indirect paths warn without invalid total definitions"
     expect_s4_class(runner$estimator$model, "lavaan")
     analysis <- jammGLMClass$new(options = options, data = dataset)
     expect_no_error(analysis$run())
+    expect_identical(analysis$status, "complete")
     expect_false(analysis$results$issues$visible)
-    notes <- vapply(analysis$results$infotab$notes, function(note) note$note, character(1))
-    expect_true(WARNS[["noindirect"]] %in% notes)
+    expect_match(notice_content(analysis$results), WARNS[["noindirect"]], fixed = TRUE)
 })

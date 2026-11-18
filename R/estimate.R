@@ -95,7 +95,9 @@ Estimate <- R6::R6Class("Estimate",
                              } else {
                                ci<-TRUE
                                se="bootstrap"
-                               bootci=self$options$ciType
+                               # 'bca' is the option value saved by jAMM 1.x; lavaan calls
+                               # the bias-corrected (non-accelerated) interval 'bca.simple'.
+                               bootci <- switch(self$options$ciType, bca = "bca.simple", self$options$ciType)
                              }
                            } 
                            

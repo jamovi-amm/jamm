@@ -1,6 +1,6 @@
 test_that("conditioning and bootstrap controls have matching enable rules", {
     skip_if_not_installed("yaml")
-    uiPath <- test_path("..", "..", "jamovi", "jammglm.u.yaml")
+    uiPath <- source_file("jamovi", "jammglm.u.yaml")
     skip_if_not(file.exists(uiPath))
     controls <- list()
     walk <- function(element) {
@@ -13,7 +13,7 @@ test_that("conditioning and bootstrap controls have matching enable rules", {
     expect_identical(controls$cvalue$enable, "(simpleScale_mean_sd)")
     expect_identical(controls$percvalue$enable, "(simpleScale_percent)")
     expect_identical(controls$ciWidth$enable, "(!ciType:none)")
-    expect_identical(controls$bootN$enable, "(ciType:bca.simple || ciType:perc || ciType:norm)")
+    expect_identical(controls$bootN$enable, "(ciType:bca || ciType:perc || ciType:norm)")
 })
 
 test_that("unused information widgets and their helpers are absent", {

@@ -1,7 +1,7 @@
 clear_with_schema <- function() {
     skip_if_not_installed("yaml")
-    resultPath <- test_path("..", "..", "jamovi", "jammglm.r.yaml")
-    optionPath <- test_path("..", "..", "jamovi", "jammglm.a.yaml")
+    resultPath <- source_file("jamovi", "jammglm.r.yaml")
+    optionPath <- source_file("jamovi", "jammglm.a.yaml")
     skip_if_not(file.exists(resultPath) && file.exists(optionPath))
     elements <- list()
     walk <- function(element, path) {

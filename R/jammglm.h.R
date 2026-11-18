@@ -31,6 +31,8 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 list()),
             mod_terms = list(
                 list()),
+            moderatorsTerms = list(
+                list()),
             model_diagram = TRUE,
             path_diagram = FALSE,
             diag_paths = "est",
@@ -92,7 +94,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 ciType,
                 options=list(
                     "standard",
-                    "bca.simple",
+                    "bca",
                     "perc",
                     "norm",
                     "none"),
@@ -221,6 +223,15 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 template=jmvcore::OptionTerms$new(
                     "mod_terms",
                     NULL))
+            private$..moderatorsTerms <- jmvcore::OptionArray$new(
+                "moderatorsTerms",
+                moderatorsTerms,
+                hidden=TRUE,
+                default=list(
+                    list()),
+                template=jmvcore::OptionTerms$new(
+                    "moderatorsTerms",
+                    NULL))
             private$..model_diagram <- jmvcore::OptionBool$new(
                 "model_diagram",
                 model_diagram,
@@ -313,6 +324,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..pathOptions)
             self$.addOption(private$..mediatorsTerms)
             self$.addOption(private$..mod_terms)
+            self$.addOption(private$..moderatorsTerms)
             self$.addOption(private$..model_diagram)
             self$.addOption(private$..path_diagram)
             self$.addOption(private$..diag_paths)
@@ -344,6 +356,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         pathOptions = function() private$..pathOptions$value,
         mediatorsTerms = function() private$..mediatorsTerms$value,
         mod_terms = function() private$..mod_terms$value,
+        moderatorsTerms = function() private$..moderatorsTerms$value,
         model_diagram = function() private$..model_diagram$value,
         path_diagram = function() private$..path_diagram$value,
         diag_paths = function() private$..diag_paths$value,
@@ -374,6 +387,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..pathOptions = NA,
         ..mediatorsTerms = NA,
         ..mod_terms = NA,
+        ..moderatorsTerms = NA,
         ..model_diagram = NA,
         ..path_diagram = NA,
         ..diag_paths = NA,

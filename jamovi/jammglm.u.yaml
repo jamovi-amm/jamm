@@ -293,10 +293,10 @@ children:
                 name: ciType_standard
                 optionName: ciType
                 optionPart: standard
-              - name: ciType_bca.simple
+              - name: ciType_bca
                 type: RadioButton
                 optionName: ciType
-                optionPart: bca.simple
+                optionPart: bca
               - type: RadioButton
                 name: ciType_bootperc
                 optionName: ciType
@@ -318,7 +318,7 @@ children:
               - type: TextBox
                 name: bootN
                 format: number
-                enable: (ciType:bca.simple || ciType:perc || ciType:norm)
+                enable: (ciType:bca || ciType:perc || ciType:norm)
           - type: Label
             label: Display in Tables
             margin: large

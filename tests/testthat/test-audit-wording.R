@@ -1,6 +1,6 @@
 test_that("panel labels use full words and hide the inline offset label", {
-    uiPath <- test_path("..", "..", "jamovi", "jammglm.u.yaml")
-    optionPath <- test_path("..", "..", "jamovi", "jammglm.a.yaml")
+    uiPath <- source_file("jamovi", "jammglm.u.yaml")
+    optionPath <- source_file("jamovi", "jammglm.a.yaml")
     skip_if_not(file.exists(uiPath) && file.exists(optionPath))
     ui <- readLines(uiPath)
     options <- readLines(optionPath)

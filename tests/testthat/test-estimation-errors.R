@@ -25,13 +25,10 @@ test_that("failed moderated fits report the fitting error, not a NULL slot error
         invalid <- dataset
         invalid$SVO <- 1
         cleaned <- datamatic$cleandata(invalid, runner$estimator$interactions)
-        invisible(capture.output(
-            runner$estimate(cleaned)
-        ))
-        expect_false(runner$ok)
-        expect_match(results$issues$content, "Model cannot be estimated")
-        expect_match(results$issues$content, "no variance")
-        expect_true(results$issues$visible)
+        # A failed fit stops the analysis, so jamovi reports it as an analysis error.
+        # lavaan prints its variable table on this failure; keep test output clean.
+        expect_error(invisible(capture.output(runner$estimate(cleaned))),
+                     "Model cannot be estimated.*no variance")
         expect_null(runner$estimator$model)
         expect_false(runner$estimator$ok)
 
@@ -42,15 +39,17 @@ test_that("failed moderated fits report the fitting error, not a NULL slot error
         expect_s4_class(runner$estimator$model, "lavaan")
     }
 
-    # The analysis must leave the notice visible without running tables or plots.
+    # jamovi runs with noThrow = TRUE: the error is stored on the results and
+    # no table or plot is filled from the failed fit.
     analysis <- jammGLMClass$new(options = options, data = invalid)
-    invisible(capture.output(analysis$run()))
-    expect_match(analysis$results$issues$content, "Model cannot be estimated")
-    expect_match(analysis$results$issues$content, "no variance")
-    expect_true(analysis$results$issues$visible)
+    invisible(capture.output(analysis$run(noThrow = TRUE)))
+    expect_identical(analysis$status, "error")
+    expect_match(analysis_error(analysis), "Model cannot be estimated")
+    expect_match(analysis_error(analysis), "no variance")
+    expect_length(analysis$results$models$coefficients$asDF$est[!is.na(analysis$results$models$coefficients$asDF$est)], 0)
 })
 
-test_that("failed fits preserve earlier lavaan diagnostics in the error box", {
+test_that("failed fits preserve earlier lavaan diagnostics in the error message", {
     dataset <- coopmedmod_data(c("cprime", "EXP", "BEH"))
     options <- jammGLMOptions$new(
         dep = "BEH", mediators = "EXP", covs = "cprime",
@@ -62,13 +61,12 @@ test_that("failed fits preserve earlier lavaan diagnostics in the error box", {
     )
     with_mocked_bindings({
         analysis <- jammGLMClass$new(options = options, data = dataset)
-        expect_no_warning(invisible(capture.output(analysis$run())))
-        expect_true(analysis$results$issues$visible)
-        expect_match(analysis$results$issues$content, diagnostic, fixed = TRUE)
-        expect_match(analysis$results$issues$content,
-                     "Final error: object 'icov' not found", fixed = TRUE)
-        notes <- vapply(analysis$results$infotab$notes, function(note) note$note, character(1))
-        expect_true(diagnostic %in% notes)
+        expect_no_warning(analysis$run(noThrow = TRUE))
+        expect_identical(analysis$status, "error")
+        expect_match(analysis_error(analysis), diagnostic, fixed = TRUE)
+        expect_match(analysis_error(analysis), "Final error: object 'icov' not found", fixed = TRUE)
+        # The warning raised before the failure is also kept in the notice.
+        expect_match(notice_content(analysis$results), diagnostic, fixed = TRUE)
     }, lavaan = function(...) {
         warning(diagnostic, call. = FALSE)
         stop("object 'icov' not found", call. = FALSE)

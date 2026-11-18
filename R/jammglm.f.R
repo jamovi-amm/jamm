@@ -12,7 +12,9 @@
 #' @param covs a vector of strings naming the covariates from \code{data}
 #' @param modelTerms a list of character vectors describing fixed effects
 #'   terms
-#' @param ciType Choose the confidence interval type
+#' @param ciType confidence interval type: \code{'standard'} (default, delta
+#'   method), \code{'bca'} (bias-corrected bootstrap), \code{'perc'}
+#'   (percentile bootstrap), \code{'norm'} (normal bootstrap), or \code{'none'}.
 #' @param ciWidth a number between 50 and 99.9 (default: 95) specifying the
 #'   confidence interval width for the parameter estimates
 #' @param bootN integer number of bootstrap samples (at least 50) for estimating
@@ -46,6 +48,9 @@
 #'   at the equal-level contrast centroid (zero for centered factor coding).
 #'   Indirect effects at Average are products of the centered-factor slopes,
 #'   not averages of the level-specific indirect effects.
+#' @param moderatorsTerms deprecated, use \code{mod_terms}. Accepted (with a
+#'   warning) for scripts written for jAMM 1.x; ignored when \code{mod_terms}
+#'   is also given.
 #' @param model_diagram \code{TRUE} (default) or \code{FALSE}; show the conceptual
 #'   model diagram based on the specified regression terms.
 #' @param path_diagram \code{TRUE} or \code{FALSE} (default); show the statistical
@@ -129,7 +134,9 @@ jammGLM <- function(
     diag_rotate = "1",
     diag_type = "mediation",
     diag_shape = "rectangle",
-    diag_abbrev = "0"
+    diag_abbrev = "0",
+    # LEGACY (jAMM < 2.0): deprecated alias of `mod_terms`. Remove with R/legacy.R.
+    moderatorsTerms = NULL
     ) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
@@ -211,6 +218,14 @@ jammGLM <- function(
 
     for (v in factors) if (v %in% names(data)) data[[v]] <- as.factor(data[[v]])
     if (inherits(modelTerms, "formula")) modelTerms <- jmvcore::decomposeFormula(modelTerms)
+
+    # LEGACY (jAMM < 2.0): accept scripts written for jAMM 1.x, which named
+    # this argument `moderatorsTerms`. Remove together with R/legacy.R.
+    if (!is.null(moderatorsTerms)) {
+        warning("'moderatorsTerms' is deprecated; use 'mod_terms' instead.", call. = FALSE)
+        if (length(unlist(mod_terms)) == 0)
+            mod_terms <- moderatorsTerms
+    }
 
     options <- jammGLMOptions$new(
         dep = dep,

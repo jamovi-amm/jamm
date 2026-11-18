@@ -12,6 +12,10 @@ jammGLMClass <- R6::R6Class(
             jinfo("MODULE: jAMM  #### phase init  ####")
             private$.time <- Sys.time()
 
+            # LEGACY (jAMM < 2.0): copy the jAMM 1.x option `moderatorsTerms` into
+            # `mod_terms` before anything reads the options. Remove with R/legacy.R.
+            migrate_legacy_options(self$options)
+
             private$.ready <- readiness(self$options)
             if (!private$.ready$ready) {
                 if (private$.ready$report) {
@@ -232,6 +236,11 @@ jammGLMClass <- R6::R6Class(
 
 
             if (option$name %in% NO_R_OPTS) 
+              return("")
+
+            # LEGACY (jAMM < 2.0): never write the deprecated option into generated
+            # syntax; its value is already in `mod_terms`. Remove with R/legacy.R.
+            if (option$name == "moderatorsTerms")
               return("")
             
             # since OptionsArray has not embedded default, we pass them as ARRAY_DEFAULTS defined

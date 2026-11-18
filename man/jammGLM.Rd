@@ -35,7 +35,8 @@ jammGLM(
   diag_rotate = "1",
   diag_type = "mediation",
   diag_shape = "rectangle",
-  diag_abbrev = "0"
+  diag_abbrev = "0",
+  moderatorsTerms = NULL
 )
 }
 \arguments{
@@ -57,7 +58,9 @@ variable must be numeric}
 \item{modelTerms}{a list of character vectors describing fixed effects
 terms}
 
-\item{ciType}{Choose the confidence interval type}
+\item{ciType}{confidence interval type: \code{'standard'} (default, delta
+method), \code{'bca'} (bias-corrected bootstrap), \code{'perc'}
+(percentile bootstrap), \code{'norm'} (normal bootstrap), or \code{'none'}.}
 
 \item{ciWidth}{a number between 50 and 99.9 (default: 95) specifying the
 confidence interval width for the parameter estimates}
@@ -135,6 +138,10 @@ the statistical path diagram.}
 \item{diag_abbrev}{minimum abbreviation length for statistical diagram node
 labels: \code{'0'} (default, no abbreviation), \code{'5'}, \code{'10'},
 \code{'15'}, \code{'20'}, or \code{'25'}.}
+
+\item{moderatorsTerms}{deprecated, use \code{mod_terms}. Accepted (with a
+warning) for scripts written for jAMM 1.x; ignored when \code{mod_terms}
+is also given.}
 }
 \value{
 A results object containing:

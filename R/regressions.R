@@ -3,11 +3,11 @@
   estimates <- try({
     model<-stats::lm(modelFormula, data=data)
     smr<-summary(model)
-    pvalue=pf(smr$fstatistic[[1]],smr$fstatistic[[2]],smr$fstatistic[[3]],lower.tail = F)
+    pvalue=stats::pf(smr$fstatistic[[1]],smr$fstatistic[[2]],smr$fstatistic[[3]],lower.tail = F)
     anov<-list(rsquared=smr$r.squared,f=smr$fstatistic[[1]],df1=smr$fstatistic[[2]],df2=smr$fstatistic[[3]],p=pvalue)
     res<-as.data.frame(smr$coefficients)
     res$df<-smr$df[2]
-    ci<-confint(model,level = ciWidth)
+    ci<-stats::confint(model,level = ciWidth)
     res<-cbind(res,ci)
     colnames(res)<-c("estimate","se","t","p","df","ci.lower","ci.upper")
     res
@@ -17,7 +17,7 @@
     jmvcore::reject(msg, code='error')
   }
 
-  toscale<-all.vars(as.formula(modelFormula))
+  toscale<-all.vars(stats::as.formula(modelFormula))
   zdata<-as.data.frame(scale(data[,toscale]))
   beta<-stats::lm(modelFormula, data=zdata)
   estimates$beta<-beta$coefficients
