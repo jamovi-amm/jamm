@@ -73,7 +73,7 @@ Datamatic <- R6::R6Class(
     ), ### end of public
    private=list(
      .inspect_data=function(data) {
-            names(data)<-jmvcore::toB64(names(data))
+            names(data)<-tob64(names(data))
             for (factor in self$factors) {
                     self$factors_levels[[factor]]<-levels(data[,tob64(factor)])
                     for (i in seq_along(levels(data[,tob64(factor)])))

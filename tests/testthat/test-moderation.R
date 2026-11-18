@@ -76,3 +76,19 @@ test_that("a categorical moderator conditions on each level and on their average
     expect_equal(effect_row(results, "Component", "SVO ⇒ EXP", "prime = coop")$est,
                  stats::coef(stats::lm(EXP ~ SVO, coop))[["SVO"]], tolerance = 1e-6)
 })
+
+test_that("moderated full mediation shows the direct effect fixed to 0 in every condition", {
+    results <- jammGLM(data = coopmedmod, dep = "BEH", mediators = "EXP", covs = c("cprime", "SVO"),
+                       mediatorsTerms = list(list("cprime", "SVO", c("cprime", "SVO"))),
+                       modelTerms = list("EXP", "SVO", c("EXP", "SVO")),
+                       mod_terms = list(list("SVO")))
+    for (label in c("SVO = Mean - 1 SD", "SVO = Mean", "SVO = Mean + 1 SD")) {
+        direct <- effect_row(results, "Direct", "cprime ⇒ BEH", label)
+        expect_identical(direct$est, 0, info = label)
+        expect_true(all(is.na(direct[, c("se", "ci.lower", "ci.upper", "z", "pvalue")])), info = label)
+        indirect <- effect_row(results, "Indirect", "cprime ⇒ EXP ⇒ BEH", label)
+        total <- effect_row(results, "Total", "cprime ⇒ BEH", label)
+        expect_equal(total$est, indirect$est, tolerance = 1e-6, info = label)
+        expect_equal(total$se, indirect$se, tolerance = 1e-6, info = label)
+    }
+})

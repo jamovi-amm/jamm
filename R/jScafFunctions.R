@@ -44,17 +44,25 @@ mark <- function(...) {
   
 }
 
-is.something <- function(x, ...) UseMethod(".is.something")
-
-.is.something.default <- function(obj) (!is.null(obj))
-
-.is.something.list <- function(obj) (length(obj) > 0)
-
-.is.something.numeric <- function(obj) (length(obj) > 0)
-
-.is.something.character <- function(obj) (length(obj) > 0)
-
-.is.something.logical <- function(obj) !is.na(obj)
+# Returns FALSE for "empty" values: NULL, zero-length vectors and lists, NA.
+# Chooses the rule with plain tests rather than UseMethod(".is.something"): a
+# generic whose method prefix (".is.something") differs from its own name only
+# dispatches when called by name, and fails with "no applicable method" from the
+# console or when passed as a function (Filter(is.something, x)).
+# Results are identical to the former S3 methods, including two quirks: a logical
+# vector gives one value per element, and objects with their own class (factor,
+# data.frame, formula, R6, S4, ...) always count as something.
+is.something <- function(x, ...) {
+  if (is.null(x))
+    return(FALSE)
+  if (is.object(x) && !inherits(x, c("list", "numeric", "integer", "character", "logical")))
+    return(TRUE)
+  if (is.logical(x))
+    return(!is.na(x))
+  if (is.list(x) || is.numeric(x) || is.character(x))
+    return(length(x) > 0)
+  TRUE
+}
 
 is.there<-function(pattern,string) length(grep(pattern,string,fixed=T))>0
 
@@ -97,78 +105,6 @@ try_hard<-function(exp,max_warn=5, silent=FALSE) {
   return(.results)
 }
 
-#### handle b64
-
-tob64<- function(x,...) UseMethod(".tob64")
-
-.tob64.default<-function(obj,ref=NULL) {
-  
-  if (is.null(obj))
-    return()
-  
-  if (is.null(ref)) {
-    obj<-jmvcore::toB64(obj)
-  } else {
-    for (r in ref) {
-      reg<-paste0("(?<=[\\s*~=]|^)",r,"(?=[\\s*~=]|$)")
-      obj<-stringr::str_replace_all(obj,reg,jmvcore::toB64(r))
-    }
-  }
-  obj
-}
-
-.tob64.list<-function(obj,ref=NULL) {
-  lapply(obj,bogustob64,ref)
-}
-
-bogustob64<-function(obj,ref) tob64(obj,ref)
-
-fromb64<- function(x,...) UseMethod(".fromb64")
-
-.fromb64.default<-function(obj,ref=NULL) {
-  
-  if (!is.something(obj))
-    return(obj)
-  
-  if (length(obj)>1)
-    return(unlist(sapply(obj, bogusfromb64,ref=ref,USE.NAMES = F)))
-  
-  int<-strsplit(obj,INTERACTION_SYMBOL,fixed=T)[[1]]
-  if (length(int)>1)
-    return(paste0(unlist(sapply(int,bogusfromb64,ref=ref)),collapse = ":"))
-  
-  if (is.null(ref)) {
-    fac<-strsplit(obj,FACTOR_SYMBOL,fixed=T)[[1]]
-    if (length(fac)==0)
-      return(obj)
-    encoded<-fac[[1]]
-    if (!grepl("^X[A-Za-z0-9._]*$",encoded))
-      return(obj)
-    decoded<-tryCatch({
-      value<-jmvcore::fromB64(encoded)
-      if (identical(jmvcore::toB64(value),encoded)) value else NULL
-    },error=function(error) NULL)
-    if (is.null(decoded))
-      return(obj)
-    obj<-decoded
-    if (length(fac)>1) obj<-paste0(obj,fac[[2]])
-  } else {
-    for (r in ref)
-      obj<-gsub(jmvcore::toB64(r),r,obj,fixed = T)
-    obj<-gsub(FACTOR_SYMBOL,"",obj,fixed = T)
-    obj<-gsub(INTERACTION_SYMBOL,":",obj,fixed = T)
-  }
-  
-  obj
-}
-
-.fromb64.list<-function(obj,ref=NULL) {
-  lapply(obj,bogusfromb64,ref=ref)
-}
-
-bogusfromb64<-function(obj,ref=NULL) fromb64(obj,ref=ref)
-
-### end
 
 
 sourcifyOption<- function(x,...) UseMethod(".sourcifyOption")

@@ -41,7 +41,10 @@ Syntax <- R6::R6Class(
               factorinfo=NULL,
               contrasts_names=NULL,
               indirect_names=NULL,
-              direct_names=NULL,
+              # one entry per X -> Y pair with indirect effects, in the order of the
+              # totals: list(name = "X⇒Y", label = lavaan label of the direct path,
+              # or NULL when the user left the path out of the full model)
+              direct_effects=NULL,
               total_names=NULL,
               
               initialize=function(jmvobj,datamatic) {
@@ -97,7 +100,9 @@ Syntax <- R6::R6Class(
                    private$.lav_structure, private$.indirect_names, data)
                  if (length(private$.conditional_effects) == 0)
                    return(invisible(NULL))
-                 private$.lav_defined <- vapply(private$.conditional_effects, function(effect) {
+                 # Direct effects fixed to 0 by the model are not lavaan parameters.
+                 estimated <- Filter(function(effect) !isTRUE(effect$fixed), private$.conditional_effects)
+                 private$.lav_defined <- vapply(estimated, function(effect) {
                    paste(effect$parameter, ":=", effect$expression)
                  }, character(1))
                  private$.make_structure()
@@ -139,7 +144,7 @@ Syntax <- R6::R6Class(
                  return()
              obj$message<-lapply(obj$message,function(message) {
                if (isFALSE(message)) return(FALSE)
-               fromb64(message,ref=self$vars)
+               fromb64(message)
              })
                
              super$warning<-obj
@@ -200,7 +205,7 @@ Syntax <- R6::R6Class(
               })
               self$warning<-list(topic="jamovi",message=results$warning)
               if (!isFALSE(results$error))
-                stop(fromb64(results$error,ref=self$vars),call.=FALSE)
+                stop(fromb64(results$error),call.=FALSE)
               
               ## raw (B64ed) structure of results gos in .lav_structure. Here are all parameters to be estimated, with info regarding
               ## their nature (exogenous, endogenous, coefficient vs variances, etc), labels and names 
@@ -225,8 +230,8 @@ Syntax <- R6::R6Class(
                 sel<-grep(INTERACTION_SYMBOL,.lav_structure$rhs,fixed = TRUE)
                 self$tab_interactions<-.lav_structure[sel,]
                 self$tab_interactions<-self$tab_interactions[self$tab_interactions$op=="~",]
-                self$tab_interactions$lhs<-fromb64(self$tab_interactions$lhs,self$vars)
-                self$tab_interactions$rhs<-fromb64(self$tab_interactions$rhs,self$vars)
+                self$tab_interactions$lhs<-fromb64(self$tab_interactions$lhs)
+                self$tab_interactions$rhs<-fromb64(self$tab_interactions$rhs)
                 # Moderator factors expand into several contrast columns.
                 # Match all their main effects, not just the first grep pattern.
                 sel<-!(.lav_structure$rhs %in% private$.lav_moderators)
@@ -236,8 +241,8 @@ Syntax <- R6::R6Class(
               
 
                   ## translate names
-                  .lav_structure$lhs<-fromb64(.lav_structure$lhs,self$vars)
-                  .lav_structure$rhs<-fromb64(.lav_structure$rhs,self$vars)
+                  .lav_structure$lhs<-fromb64(.lav_structure$lhs)
+                  .lav_structure$rhs<-fromb64(.lav_structure$rhs)
 
               ### self$structure containts all parameters with plain names. Useful for children to refer to parameters properties
               ### is not a tab_* which will be displayed in results
@@ -251,8 +256,13 @@ Syntax <- R6::R6Class(
               inames<-names(self$indirect_names)
               self$tab_coefficients<-list()
               
+              # Indirect and total effects are found by their parameter names
+              # (IE1, IE2, ... from .indirect(); TOT1, TOT2, ... from .total(), in
+              # the same order), not by their expression: lavaan expands a total
+              # made of a single indirect effect (TOT1 := IE1, full mediation)
+              # into the same expression as that indirect effect.
               for (i in seq_along(self$indirect_names)) {
-                arow<-.lav_structure[.lav_structure$rhs==inames[i],]
+                arow<-.lav_structure[.lav_structure$op==":=" & .lav_structure$lhs==paste0("IE",i),]
                 arow$type<-"Indirect"
                 arow$effect<-self$indirect_names[[i]]
                 self$tab_coefficients[[length(self$tab_coefficients)+1]]<-arow
@@ -267,17 +277,20 @@ Syntax <- R6::R6Class(
                   }
                 }
               }
-              dnames<-names(self$direct_names)
-              for (i in seq_along(self$direct_names)) {
-                arow<-.lav_structure[.lav_structure$label==dnames[i],]
-                arow$type<-"Direct"
-                arow$effect<-self$direct_names[[i]]
+              for (direct in self$direct_effects) {
+                if (is.null(direct$label)) {
+                  # Not in the full model: shown as fixed to 0 (see the note set in .total()).
+                  arow<-private$.fixed_direct_row(direct$name)
+                } else {
+                  arow<-.lav_structure[.lav_structure$label==direct$label,]
+                  arow$type<-"Direct"
+                  arow$effect<-direct$name
+                }
                 self$tab_coefficients[[length(self$tab_coefficients)+1]]<-arow
               }
               
-              tnames<-names(self$total_names)
               for (i in seq_along(self$total_names)) {
-                arow<-.lav_structure[.lav_structure$rhs==tnames[i],]
+                arow<-.lav_structure[.lav_structure$op==":=" & .lav_structure$lhs==paste0("TOT",i),]
                 arow$type<-"Total"
                 arow$effect<-self$total_names[[i]]
                 self$tab_coefficients[[length(self$tab_coefficients)+1]]<-arow
@@ -287,6 +300,8 @@ Syntax <- R6::R6Class(
               # method and bootstrap intervals include all path covariances.
               if (length(private$.conditional_effects) > 0) {
                 self$tab_coefficients <- lapply(private$.conditional_effects, function(effect) {
+                  if (isTRUE(effect$fixed))
+                    return(private$.fixed_direct_row(effect$effect, effect$condition))
                   row <- .lav_structure[.lav_structure$lhs == effect$parameter & .lav_structure$op == ":=", ]
                   row$type <- effect$type
                   row$effect <- effect$effect
@@ -475,7 +490,7 @@ Syntax <- R6::R6Class(
               private$.indirect_names=termslist
               ## compose into string with the arrow
               labs<-sapply(termslist,paste,collapse=" \U21d2 ")
-              self$indirect_names<-as.list(fromb64(labs,self$vars))
+              self$indirect_names<-as.list(fromb64(labs))
               names(self$indirect_names)<-pars
               # save also as a list for the tab_info
               self$tab_indirect<-lapply(self$indirect_names,function(a) list(info="Indirect effects",value=a))
@@ -485,33 +500,51 @@ Syntax <- R6::R6Class(
               ## first, we update the lavaanified structure table
               private$.make_structure()
               tab<-private$.lav_structure
-              totals<-list()
-              total_names<-list()
-              direct_names<-list()
               inds<-private$.indirect_names
               inames<-names(self$indirect_names)
               if (length(inds)==0)
                 return()
-              
+
+              # Group the indirect chains by their endpoints X -> Y. The direct
+              # path X -> Y may be absent (wrong model but estimable, or an IV left out of
+              # the full model), so its label cannot be the grouping key.
+              pairs<-list()
               for (i in seq_along(inds)) {
-                ind<-inds[[i]]
-                rhs<-trimws(ind[1])
-                lhs<-trimws(ind[length(ind)])
-                lab<-tab$label[tab$rhs==rhs & tab$lhs==lhs]
-                if (lab %in% names(totals)) totals[[lab]]<-c(totals[[lab]],inames[i])
-                else {
-                    totals[[lab]]<-c(lab,inames[i])
-                    total_names[[lab]]<-paste0(fromb64(ind[1]),"\U21d2",fromb64(trimws(ind[length(ind)])))
-                    direct_names[[lab]]<-paste0(fromb64(ind[1]),"\U21d2",fromb64(trimws(ind[length(ind)])))
+                from<-trimws(inds[[i]][1])
+                to<-trimws(utils::tail(inds[[i]],1))
+                key<-paste(from,to,sep="\r")
+                if (is.null(pairs[[key]])) {
+                  direct<-tab$label[tab$op=="~" & tab$rhs==from & tab$lhs==to]  # character(0) if absent
+                  pairs[[key]]<-list(name=paste0(fromb64(from),"\U21d2",fromb64(to)),
+                                     direct=direct, indirect=character())
                 }
+                pairs[[key]]$indirect<-c(pairs[[key]]$indirect,inames[i])
               }
-              plabs<-paste0("TOT",1:length(totals))
-              totals<-sapply(totals, function(a) paste(a,collapse ="+"))
-              synt<-paste(plabs,totals,sep=":=",collapse = " ; ")
-              private$.lav_total<-synt
-              self$total_names<-total_names
-              names(self$total_names)<-totals
-              self$direct_names<-direct_names
+
+              # Total = direct (when estimated) + every indirect effect between X and Y.
+              # Without a direct path, the model fixes it at 0 and the total is the
+              # sum of the indirect effects.
+              totals<-vapply(pairs,function(p) paste(c(p$direct,p$indirect),collapse="+"),character(1))
+              private$.lav_total<-paste(paste0("TOT",seq_along(totals)),totals,sep=":=",collapse=" ; ")
+              # .make_tables() finds the Total rows by these names (the total expressions)...
+              self$total_names<-stats::setNames(lapply(pairs,function(p) p$name),totals)
+
+              # ...and the Direct rows from these. A direct path the user left out of
+              # the full model is still listed (label NULL): the table shows it as
+              # fixed to 0, so the constraint is visible.
+              self$direct_effects<-unname(lapply(pairs,function(p)
+                list(name=p$name, label=if (length(p$direct)==1) p$direct else NULL)))
+              if (any(vapply(pairs,function(p) length(p$direct)==0,logical(1))))
+                self$warning<-list(topic="models_coefficients",message=WARNS[["fixeddirect"]])
+            },
+            # A Direct row for a path that is not in the full model: its value is
+            # fixed to 0 by the model, so it has no standard error, interval or test.
+            .fixed_direct_row=function(name, condition=NULL) {
+              row<-data.frame(type="Direct", effect=name, est=0, se=NA, ci.lower=NA, ci.upper=NA,
+                              std.all=0, z=NA, pvalue=NA, stringsAsFactors=FALSE)
+              if (!is.null(condition))
+                row$condition<-condition
+              row
             }
             
             

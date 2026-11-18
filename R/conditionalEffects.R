@@ -73,11 +73,13 @@ conditional_effects <- function(options, datamatic, parameters, chains, data = N
         paste0("(", paste(summands, collapse = "+"), ")")
     }
     rows <- list()
-    add <- function(type, effect, expression, condition, from, to) {
+    # fixed = TRUE marks a direct effect the full model fixes to 0: it is shown
+    # in the table but is not defined as a lavaan parameter.
+    add <- function(type, effect, expression, condition, from, to, fixed = FALSE) {
         scale <- if (is.null(data)) NA_real_ else stats::sd(data[[from]]) / stats::sd(data[[to]])
         rows[[length(rows) + 1]] <<- list(
             parameter = paste0("CE", length(rows) + 1), type = type, effect = effect,
-            expression = expression, condition = condition, scale = scale)
+            expression = expression, condition = condition, scale = scale, fixed = fixed)
     }
     endpoints <- vapply(chains, function(chain) paste(chain[[1]], utils::tail(chain, 1), sep = ":"), character(1))
     for (setting in moderator_settings(options, datamatic, data)) {
@@ -104,9 +106,18 @@ conditional_effects <- function(options, datamatic, parameters, chains, data = N
             to <- utils::tail(chain, 1)
             label <- paste(fromb64(c(from, to)), collapse = " \U21d2 ")
             direct <- slope(from, to, setting$values)
-            add("Direct", label, direct, setting$label, from, to)
-            add("Total", label, paste(c(direct, products[matching]), collapse = "+"),
-                setting$label, from, to)
+            # slope() returns "0" when the full model has no direct path X -> Y
+            # (full mediation): the Direct row shows it fixed to 0, as for
+            # unmoderated models, and the total is the sum of the indirect effects.
+            if (direct == "0") {
+                add("Direct", label, "0", setting$label, from, to, fixed = TRUE)
+                add("Total", label, paste(products[matching], collapse = "+"),
+                    setting$label, from, to)
+            } else {
+                add("Direct", label, direct, setting$label, from, to)
+                add("Total", label, paste(c(direct, products[matching]), collapse = "+"),
+                    setting$label, from, to)
+            }
         }
     }
     rows

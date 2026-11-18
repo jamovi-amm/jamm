@@ -109,20 +109,46 @@ test_that("two factors and a covariate estimate together and match lm", {
     expect_equal(sum(effects$type == "Indirect"), 4)
 })
 
-test_that("full mediation (no direct path in the full model) estimates the indirect effect", {
+test_that("full mediation shows the direct effect fixed to 0 and the total equal to the indirect", {
     results <- jammGLM(data = coopmedmod, dep = "BEH", mediators = "EXP", covs = "SVO",
                        mediatorsTerms = list(list("SVO")), modelTerms = list("EXP"))
     a <- stats::coef(stats::lm(EXP ~ SVO, coopmedmod))[["SVO"]]
     b <- stats::coef(stats::lm(BEH ~ EXP, coopmedmod))[["EXP"]]
-    expect_equal(effect_row(results, "Indirect", "SVO ⇒ EXP ⇒ BEH")$est, a * b, tolerance = 1e-6)
-    expect_false("Direct" %in% results$models$coefficients$asDF$type)
+    indirect <- effect_row(results, "Indirect", "SVO ⇒ EXP ⇒ BEH")
+    expect_equal(indirect$est, a * b, tolerance = 1e-6)
+    # The direct path is not estimated: it is shown as 0, with no SE, interval or test.
+    direct <- effect_row(results, "Direct", "SVO ⇒ BEH")
+    expect_identical(direct$est, 0)
+    expect_identical(direct$std.all, 0)
+    expect_true(all(is.na(direct[, c("se", "ci.lower", "ci.upper", "z", "pvalue")])))
+    notes <- vapply(results$models$coefficients$notes, function(note) note$note, character(1))
+    expect_true(any(grepl("fixed to 0", notes)))
+    total <- effect_row(results, "Total", "SVO ⇒ BEH")
+    expect_equal(total$est, indirect$est, tolerance = 1e-6)
+    expect_equal(total$se, indirect$se, tolerance = 1e-6)
 })
 
 test_that("an independent variable without a direct path keeps the others' effects", {
     results <- jammGLM(data = coopmedmod, dep = "BEH", mediators = "EXP", covs = c("cprime", "SVO"),
                        mediatorsTerms = list(list("cprime", "SVO")), modelTerms = list("EXP", "SVO"))
-    expect_true(all(c("cprime ⇒ EXP ⇒ BEH", "SVO ⇒ EXP ⇒ BEH") %in%
-                    results$models$coefficients$asDF$effect))
+    fit <- lavaan::sem("EXP ~ a1*cprime + a2*SVO
+                        BEH ~ b*EXP + c*SVO
+                        totalCprime := a1*b
+                        totalSVO := c + a2*b", data = coopmedmod, likelihood = "wishart")
+    estimates <- lavaan::parameterEstimates(fit)
+    expect_identical(effect_row(results, "Direct", "cprime ⇒ BEH")$est, 0)
+    expect_equal(effect_row(results, "Direct", "SVO ⇒ BEH")$est,
+                 estimates$est[estimates$label == "c"], tolerance = 1e-6)
+    expect_equal(effect_row(results, "Total", "cprime ⇒ BEH")$se,
+                 estimates$se[estimates$label == "totalCprime"], tolerance = 1e-6)
+    expect_equal(effect_row(results, "Total", "SVO ⇒ BEH")$se,
+                 estimates$se[estimates$label == "totalSVO"], tolerance = 1e-6)
+})
+
+test_that("models with every direct path estimated have no fixed-effect note", {
+    results <- jammGLM(data = coopmedmod, dep = "BEH", mediators = "EXP", covs = "SVO",
+                       mediatorsTerms = list(list("SVO")), modelTerms = list("EXP", "SVO"))
+    expect_length(results$models$coefficients$notes, 0)
 })
 
 test_that("variable names that start like another variable's are shown correctly", {

@@ -128,12 +128,12 @@ Estimate <- R6::R6Class("Estimate",
                            
                            self$warning<-list(topic="jamovi",message=results$warning)
                            if (!isFALSE(results$error)) {
-                             details<-fromb64(results$error,ref=self$vars)
+                             details<-fromb64(results$error)
                              if (grepl("infinite or missing",details,fixed=TRUE))
                                details<-paste(ERRS[["noluck"]],details)
                              if (!isFALSE(results$warning)) {
                                warnings<-unique(fromb64(
-                                 unlist(results$warning,use.names=FALSE),ref=self$vars
+                                 unlist(results$warning,use.names=FALSE)
                                ))
                                details<-paste(
                                  paste(warnings,collapse="\n"),

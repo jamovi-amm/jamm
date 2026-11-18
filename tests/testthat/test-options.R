@@ -217,18 +217,19 @@ test_that("scaling changes lower-order effects in a moderated model as documente
         jammGLM(data = dat, dep = "BEH", mediators = "EXP", covs = c("cprime", "SVO"),
                 mediatorsTerms = list(list("cprime", "SVO", c("cprime", "SVO"))),
                 modelTerms = list("EXP", "cprime", "SVO", c("EXP", "SVO"), c("cprime", "SVO")),
-                mod_terms = list(list("SVO")),
+                mod_terms = list(list("SVO")), tableOptions = list("regression"),
                 scaling = list(list(var = "cprime", type = type), list(var = "SVO", type = type),
                                list(var = "EXP", type = type)))
     }
     raw <- fitScaled("none")
     centered <- fitScaled("centered")
     standardized <- fitScaled("standardized")
-    # The cprime -> EXP coefficient of the fitted lavaan model.
+    # The cprime -> EXP coefficient of the fitted lavaan model, found through the
+    # regression table so the test does not depend on how jamm names variables
+    # internally.
     path <- function(results) {
-        estimates <- lavaan::parameterEstimates(results$model)
-        estimates$est[estimates$op == "~" & estimates$lhs == jmvcore::toB64("EXP") &
-                      estimates$rhs == jmvcore::toB64("cprime")]
+        table <- results$regressions$mediator_regressions$items[[1]]$regression$asDF
+        table$estimate[table$rhs == "cprime"]
     }
     expect_equal(path(raw), stats::coef(stats::lm(EXP ~ cprime * SVO, dat))[["cprime"]],
                  tolerance = 1e-6)
