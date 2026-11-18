@@ -505,14 +505,9 @@ SmartTable <- R6::R6Class("SmartTable",
 
                                 .label <-paste(info$label,info$format)
                                 .name  <-info$root
-                                tail1<-".ci.lower"
-                                tail2<-".ci.upper"
-                                if (length(.name)==0) {
-                                             tail1<-"ci.lower"
-                                             tail2<-"ci.upper"
-                                }
-                                l<-paste0(.name,tail1)
-                                u<-paste0(.name,tail2)
+                                prefix<-if (length(.name)==0 || identical(.name,"")) "" else paste0(.name,".")
+                                l<-paste0(prefix,"ci.lower")
+                                u<-paste0(prefix,"ci.upper")
                                 if (l %in% names(self$table$columns))
                                   self$table$getColumn(l)$setSuperTitle(jmvcore::format(.label, info$width))
                                 if (u %in% names(self$table$columns))

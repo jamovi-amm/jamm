@@ -1,3 +1,14 @@
 ^.*\.Rproj$
 ^\.Rproj\.user$
 ^\.claude$
+# jamovi build output and module archives (not part of the R source package)
+^build$
+^temp$
+^.*\.jmo$
+# development material
+^AI$
+^docs$
+^local$
+^inst/i18n$
+# GPL-2+ is a standard licence: R needs no LICENSE file in the package
+^LICENSE$

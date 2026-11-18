@@ -1,6 +1,6 @@
 ---
 name:  jammGLM
-title: GLM Mediation Analysis
+title: GLM Mediation Model
 jrs: '1.0'
 
 
@@ -9,18 +9,8 @@ items:
     type: Property
     description: The underlying `lavaan` object
 
-## these are handled by SmartInfo class
-  -   name: info
-      title: Introduction
-      type: Html
-  -   name: extrainfo
-      title: Extra Info
-      type: Html
-      visible: false
-  -   name: issues
-      title: Issues
-      type: Html
-      visible: false
+## tables are filled with SmartTabs class which requires that the clearWith field be complete and accurate
+## Double check that the options listed in clearWith are correct for all tables.
 
   - name: infotab
     title: Models Info
@@ -34,14 +24,30 @@ items:
        - name: value
          type: text
          title: ""
-    clearWith:
+
+       - name: desc
+         type: text
+         title: ""
+    clearWith: &modelDependencies
+        - data
         - dep
         - mediators
         - factors
         - covs
         - modelTerms
-        - fixedIntercept
-        - moderatorsTerms
+        - mediatorsTerms
+        - mod_terms
+        - contrasts
+        - scaling
+        - ciType
+        - ciWidth
+        - bootN
+        - simpleScale
+        - cvalue
+        - percvalue
+        - simpleScaleLabels
+        - tableOptions
+        - showRealNames
     refs: jamm
 
 
@@ -51,27 +57,17 @@ items:
     title: "Mediation"
     type: Group
     visible: false
-    clearWith:
-        - dep
-        - mediators
-        - factors
-        - covs
+    clearWith: *modelDependencies
     items:
     
           - name: r2
             title: R-squared
             type: Table
-            clearWith:
-                  - dep
-                  - mediators
-                  - covs
-                  - factors
-                  - ciType
-                  - data
+            clearWith: *modelDependencies
 
             columns:
                     - name: lhs
-                      title: "Pred.Variable"
+                      title: "Variable"
                       type: text
                     - name: r2
                       title: R²
@@ -79,12 +75,12 @@ items:
                     - name: ci.lower
                       type: number
                       title: Lower
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ciType != 'none')
                       format: zto
                     - name: ci.upper
                       type: number
                       title: Upper
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ciType != 'none')
                       format: zto
 
     
@@ -92,12 +88,7 @@ items:
             title: Moderation effects (interactions)
             visible: false
             type: Table
-            clearWith:
-                     - dep
-                     - modelTerms
-                     - contrasts
-                     - fixedIntercept
-                     - simpleScale
+            clearWith: *modelDependencies
             columns:
                     - name: lhs
                       title: "Dependent"
@@ -115,11 +106,11 @@ items:
                     - name: ci.lower
                       type: number
                       title: Lower
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ciType != 'none')
                     - name: ci.upper
                       type: number
                       title: Upper
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ciType != 'none')
 
                     - name: std.all
                       type: number
@@ -137,21 +128,7 @@ items:
             title: Indirect and Total Effects
             type: Table
             refs: lavaan
-            clearWith:
-                     - dep
-                     - modelTerms
-                     - contrasts
-                     - fixedIntercept
-                     - simpleScale
-                     - ciType
-                     - mediatorsTerms
-                     - moderatorsTerms
-                     - scaling
-                     - cvalue
-                     - percvalue
-                     - simpleScaleLabels
-                     - tableOptions
-                     - data
+            clearWith: *modelDependencies
             columns:
                     - name: condition
                       title: Moderator levels
@@ -166,8 +143,8 @@ items:
                       title: "Effect"
                       type: text
                     - name: label
-                      title: "Contrasts"
-                      visible: false
+                      title: "Contrast"
+                      visible: (showRealNames && length(factors) > 0)
                       type: text
                     - name: est
                       title: "Estimate"
@@ -178,11 +155,11 @@ items:
                     - name: ci.lower
                       type: number
                       title: Lower
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ciType != 'none')
                     - name: ci.upper
                       type: number
                       title: Upper
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ciType != 'none')
                     - name: std.all
                       type: number
                       title: β
@@ -200,6 +177,11 @@ items:
             title: Contrasts Definition
             type: Table
             visible: false
+            clearWith:
+                - data
+                - factors
+                - contrasts
+                - showRealNames
             columns:
                          - name: rname
                            title: 'Name'
@@ -213,7 +195,7 @@ items:
             type: Array
             visible: (showContrastCode)
             items: (factors)
-            clearWith:
+            clearWith: &contrastTableDependencies
                 - factors
                 - contrasts
                 - showContrastCode
@@ -221,6 +203,7 @@ items:
             template:
                 title: $key
                 type: Table
+                clearWith: *contrastTableDependencies
                 columns:
                     - name: cname
                       title: Name
@@ -235,27 +218,22 @@ items:
     title: ""
     visible: (tableOptions:regression)
 
-    clearWith:
-        - dep
-        - contrasts
-        - scaling
+    clearWith: *modelDependencies
         
     items:
           - name: overall
-            title: Total effects 
+            title: Total effects
             type: Group
             visible: (tableOptions:regression)
 
-            clearWith: 
-                     - dep
-                     - contrasts
-                     - scaling
+            clearWith: *modelDependencies
 
             items:
                - name: anova
-                 title: ANOVA Table 
+                 title: ANOVA Table
                  type: Table
                  visible: (tableOptions:regression)
+                 clearWith: *modelDependencies
                  columns:
                     - name: dep
                       title: Variable
@@ -277,15 +255,16 @@ items:
                       type: number
                       format: zto,pvalue
                - name: regression
-                 title: Regression Table 
+                 title: Regression Table
                  type: Table
                  visible: (tableOptions:regression)
+                 clearWith: *modelDependencies
 
                  columns:
                     - name: source
                       title: "Names"
                       type: text
-                      visible: (showRealNames)
+                      visible: (showRealNames && length(factors) > 0)
                     - name: label
                       title: "Effect"
                       type: text
@@ -295,14 +274,14 @@ items:
                     - name: se
                       title: "SE"
                       type: number
-                    - name: cilow
+                    - name: ci.lower
                       type: number
                       title: Lower
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
-                    - name: cihig
+                      visible: (ciType != 'none')
+                    - name: ci.upper
                       type: number
                       title: Upper
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ciType != 'none')
                     - name: beta
                       type: number
                       title: β
@@ -320,22 +299,20 @@ items:
 
 
           - name: mediator_regressions
-            title: Mediator(s) Model
+            title: Mediator Models
             type: Array
             description: an array of regressions for the mediators
-            clearWith: 
-                     - dep
-                     - contrasts
-                     - scaling
+            clearWith: *modelDependencies
 
             template:
-                clearWith: []
-                title:  "Regression model for "
+                clearWith: *modelDependencies
+                title:  "Regression model for"
                 type: Group
                 items:
                    - name: anova
                      type: Table
                      title: ANOVA
+                     clearWith: *modelDependencies
                      columns:
                          - name: lhs
                            title: Variable
@@ -359,12 +336,17 @@ items:
                    - name: regression
                      type: Table
                      title: Regression
+                     clearWith: *modelDependencies
                      visible: (tableOptions:regression)
                      columns:
                          - name: lhs
                            title: "Dependent"
                            type: text
                            combineBelow: true
+                         - name: source
+                           title: "Names"
+                           type: text
+                           visible: (showRealNames && length(factors) > 0)
                          - name: rhs
                            title: "Effect"
                            type: text
@@ -374,14 +356,14 @@ items:
                          - name: se
                            title: "SE"
                            type: number
-                         - name: cilow
+                         - name: ci.lower
                            type: number
                            title: Lower
-                           visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
-                         - name: cihig
+                           visible: (ciType != 'none')
+                         - name: ci.upper
                            type: number
                            title: Upper
-                           visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                           visible: (ciType != 'none')
                          - name: beta
                            type: number
                            title: β
@@ -398,18 +380,16 @@ items:
                            format: zto,pvalue
 
           - name: full
-            title: Full model effects 
+            title: Full model effects
             type: Group
             visible: (tableOptions:regression)
-            clearWith: 
-                     - dep
-                     - contrasts
-                     - scaling
+            clearWith: *modelDependencies
             items:
                - name: anova
-                 title: ANOVA Table 
+                 title: ANOVA Table
                  type: Table
                  visible: (tableOptions:regression)
+                 clearWith: *modelDependencies
                  columns:
                     - name: lhs
                       title: Dependent
@@ -432,14 +412,19 @@ items:
                       type: number
                       format: zto,pvalue
                - name: regression
-                 title: Regression Table 
+                 title: Regression Table
                  visible: (tableOptions:regression)
                  type: Table
+                 clearWith: *modelDependencies
                  columns:
                     - name: lhs
                       title: Dependent
                       type: text
                       combineBelow: true
+                    - name: source
+                      title: Names
+                      type: text
+                      visible: (showRealNames && length(factors) > 0)
                     - name: rhs
                       title: Effect
                       type: text
@@ -449,14 +434,14 @@ items:
                     - name: se
                       title: "SE"
                       type: number
-                    - name: cilow
+                    - name: ci.lower
                       type: number
                       title: Lower
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
-                    - name: cihig
+                      visible: (ciType != 'none')
+                    - name: ci.upper
                       type: number
                       title: Upper
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ciType != 'none')
                     - name: beta
                       type: number
                       title: β
@@ -475,27 +460,28 @@ items:
   - name: pathgroup
     type: Group
     title: Path Model
-    visible: (diagram | meddiagram)
-    clearWith:
+    visible: (path_diagram | model_diagram)
+    clearWith: &pathDiagramDependencies
                   - data
-
-    items:
-            - name: pathmodel
-              title: Model Diagram
-              visible: (meddiagram)
-              type: Image
-              description: a model diagram
-              width: 600
-              height: 500
-              renderFun: .showModelDiagram
-              clearWith:
                   - dep
+                  - mediators
+                  - factors
+                  - covs
                   - mediatorsTerms
                   - modelTerms
-                  - moderatorsTerms
+                  - mod_terms
+                  - contrasts
+                  - scaling
+                  - ciType
+                  - ciWidth
+                  - bootN
+                  - simpleScale
+                  - cvalue
+                  - percvalue
+                  - simpleScaleLabels
                   - pathOptions
-                  - meddiagram
-                  - diagram
+                  - model_diagram
+                  - path_diagram
                   - diag_paths
                   - diag_resid
                   - diag_labsize
@@ -503,11 +489,33 @@ items:
                   - diag_type
                   - diag_shape
                   - diag_abbrev
+
+    items:
+            - name: pathmodel
+              title: Model Diagram
+              visible: (model_diagram)
+              type: Image
+              description: a model diagram
+              width: 600
+              height: 500
+              renderFun: .showModelDiagram
+              clearWith: &modelDiagramDependencies
+                  - data
+                  - dep
+                  - mediators
+                  - factors
+                  - covs
+                  - mediatorsTerms
+                  - modelTerms
+                  - mod_terms
+                  - pathOptions
+                  - model_diagram
               refs: diagram    
             - name: pathnotes
               type: Table
               title: ""
               visible: false
+              clearWith: *modelDiagramDependencies
               columns:
                   - name: info
                     type: text
@@ -517,27 +525,15 @@ items:
               title: Path Diagrams
               type: Array
               description: an array of path diagrams
-              visible: (diagram)
+              visible: (path_diagram)
+              clearWith: *pathDiagramDependencies
               template:
                    title: $key
                    type: Image
                    renderFun: .showDiagram
                    width: 700
                    height: 500
-                   clearWith:
-                      - pathOptions
-                      - meddiagram
-                      - diagram
-                      - diag_resid
-                      - diag_paths
-                      - diag_labsize
-                      - diag_rotate
-                      - diag_type
-                      - diag_shape
-                      - diag_abbrev
-                      - modelTerms
-                      - mediatorsTerms
-                      - data
+                   clearWith: *pathDiagramDependencies
 
               refs: semplot
              
@@ -545,6 +541,7 @@ items:
               type: Table
               title: ""
               visible: false
+              clearWith: *pathDiagramDependencies
               columns:
                   - name: message
                     type: text

@@ -3,12 +3,12 @@
 \docType{data}
 \name{pathjdata}
 \alias{pathjdata}
-\title{PATHj example data}
+\title{pathjdata}
 \usage{
 data(pathjdata)
 }
 \description{
-Data for testing pathj package
+Data for testing mediation and path analysis models
 }
 \examples{
 data(pathjdata)

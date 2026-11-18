@@ -29,10 +29,12 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 "suggested"),
             mediatorsTerms = list(
                 list()),
+            mod_terms = list(
+                list()),
             moderatorsTerms = list(
                 list()),
-            meddiagram = TRUE,
-            diagram = FALSE,
+            model_diagram = TRUE,
+            path_diagram = FALSE,
             diag_paths = "est",
             diag_resid = FALSE,
             diag_labsize = "medium",
@@ -92,7 +94,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 ciType,
                 options=list(
                     "standard",
-                    "bca.simple",
+                    "bca",
                     "perc",
                     "norm",
                     "none"),
@@ -103,7 +105,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 min=50,
                 max=99.9,
                 default=95)
-            private$..bootN <- jmvcore::OptionNumber$new(
+            private$..bootN <- jmvcore::OptionInteger$new(
                 "bootN",
                 bootN,
                 min=50,
@@ -151,6 +153,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..cvalue <- jmvcore::OptionNumber$new(
                 "cvalue",
                 cvalue,
+                min=0.1,
                 default=1)
             private$..percvalue <- jmvcore::OptionNumber$new(
                 "percvalue",
@@ -212,21 +215,30 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 template=jmvcore::OptionTerms$new(
                     "mediatorsTerms",
                     NULL))
+            private$..mod_terms <- jmvcore::OptionArray$new(
+                "mod_terms",
+                mod_terms,
+                default=list(
+                    list()),
+                template=jmvcore::OptionTerms$new(
+                    "mod_terms",
+                    NULL))
             private$..moderatorsTerms <- jmvcore::OptionArray$new(
                 "moderatorsTerms",
                 moderatorsTerms,
+                hidden=TRUE,
                 default=list(
                     list()),
                 template=jmvcore::OptionTerms$new(
                     "moderatorsTerms",
                     NULL))
-            private$..meddiagram <- jmvcore::OptionBool$new(
-                "meddiagram",
-                meddiagram,
+            private$..model_diagram <- jmvcore::OptionBool$new(
+                "model_diagram",
+                model_diagram,
                 default=TRUE)
-            private$..diagram <- jmvcore::OptionBool$new(
-                "diagram",
-                diagram,
+            private$..path_diagram <- jmvcore::OptionBool$new(
+                "path_diagram",
+                path_diagram,
                 default=FALSE)
             private$..diag_paths <- jmvcore::OptionList$new(
                 "diag_paths",
@@ -311,9 +323,10 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             self$.addOption(private$..tableOptions)
             self$.addOption(private$..pathOptions)
             self$.addOption(private$..mediatorsTerms)
+            self$.addOption(private$..mod_terms)
             self$.addOption(private$..moderatorsTerms)
-            self$.addOption(private$..meddiagram)
-            self$.addOption(private$..diagram)
+            self$.addOption(private$..model_diagram)
+            self$.addOption(private$..path_diagram)
             self$.addOption(private$..diag_paths)
             self$.addOption(private$..diag_resid)
             self$.addOption(private$..diag_labsize)
@@ -342,9 +355,10 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         tableOptions = function() private$..tableOptions$value,
         pathOptions = function() private$..pathOptions$value,
         mediatorsTerms = function() private$..mediatorsTerms$value,
+        mod_terms = function() private$..mod_terms$value,
         moderatorsTerms = function() private$..moderatorsTerms$value,
-        meddiagram = function() private$..meddiagram$value,
-        diagram = function() private$..diagram$value,
+        model_diagram = function() private$..model_diagram$value,
+        path_diagram = function() private$..path_diagram$value,
         diag_paths = function() private$..diag_paths$value,
         diag_resid = function() private$..diag_resid$value,
         diag_labsize = function() private$..diag_labsize$value,
@@ -372,9 +386,10 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
         ..tableOptions = NA,
         ..pathOptions = NA,
         ..mediatorsTerms = NA,
+        ..mod_terms = NA,
         ..moderatorsTerms = NA,
-        ..meddiagram = NA,
-        ..diagram = NA,
+        ..model_diagram = NA,
+        ..path_diagram = NA,
         ..diag_paths = NA,
         ..diag_resid = NA,
         ..diag_labsize = NA,
@@ -389,9 +404,6 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     inherit = jmvcore::Group,
     active = list(
         model = function() private$..model,
-        info = function() private$.items[["info"]],
-        extrainfo = function() private$.items[["extrainfo"]],
-        issues = function() private$.items[["issues"]],
         infotab = function() private$.items[["infotab"]],
         models = function() private$.items[["models"]],
         regressions = function() private$.items[["regressions"]],
@@ -403,22 +415,8 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 options=options,
                 name="",
-                title="GLM Mediation Analysis")
+                title="GLM Mediation Model")
             private$..model <- NULL
-            self$add(jmvcore::Html$new(
-                options=options,
-                name="info",
-                title="Introduction"))
-            self$add(jmvcore::Html$new(
-                options=options,
-                name="extrainfo",
-                title="Extra Info",
-                visible=FALSE))
-            self$add(jmvcore::Html$new(
-                options=options,
-                name="issues",
-                title="Issues",
-                visible=FALSE))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="infotab",
@@ -432,15 +430,31 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="value", 
                         `type`="text", 
+                        `title`=""),
+                    list(
+                        `name`="desc", 
+                        `type`="text", 
                         `title`="")),
                 clearWith=list(
+                    "data",
                     "dep",
                     "mediators",
                     "factors",
                     "covs",
                     "modelTerms",
-                    "fixedIntercept",
-                    "moderatorsTerms"),
+                    "mediatorsTerms",
+                    "mod_terms",
+                    "contrasts",
+                    "scaling",
+                    "ciType",
+                    "ciWidth",
+                    "bootN",
+                    "simpleScale",
+                    "cvalue",
+                    "percvalue",
+                    "simpleScaleLabels",
+                    "tableOptions",
+                    "showRealNames"),
                 refs="jamm"))
             self$add(R6::R6Class(
                 inherit = jmvcore::Group,
@@ -458,25 +472,53 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             name="models",
                             title="Mediation",
                             clearWith=list(
+                    "data",
                     "dep",
                     "mediators",
                     "factors",
-                    "covs"))
+                    "covs",
+                    "modelTerms",
+                    "mediatorsTerms",
+                    "mod_terms",
+                    "contrasts",
+                    "scaling",
+                    "ciType",
+                    "ciWidth",
+                    "bootN",
+                    "simpleScale",
+                    "cvalue",
+                    "percvalue",
+                    "simpleScaleLabels",
+                    "tableOptions",
+                    "showRealNames"))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="r2",
                             title="R-squared",
                             clearWith=list(
+                                "data",
                                 "dep",
                                 "mediators",
-                                "covs",
                                 "factors",
+                                "covs",
+                                "modelTerms",
+                                "mediatorsTerms",
+                                "mod_terms",
+                                "contrasts",
+                                "scaling",
                                 "ciType",
-                                "data"),
+                                "ciWidth",
+                                "bootN",
+                                "simpleScale",
+                                "cvalue",
+                                "percvalue",
+                                "simpleScaleLabels",
+                                "tableOptions",
+                                "showRealNames"),
                             columns=list(
                                 list(
                                     `name`="lhs", 
-                                    `title`="Pred.Variable", 
+                                    `title`="Variable", 
                                     `type`="text"),
                                 list(
                                     `name`="r2", 
@@ -486,13 +528,13 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `name`="ci.lower", 
                                     `type`="number", 
                                     `title`="Lower", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)", 
+                                    `visible`="(ciType != 'none')", 
                                     `format`="zto"),
                                 list(
                                     `name`="ci.upper", 
                                     `type`="number", 
                                     `title`="Upper", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)", 
+                                    `visible`="(ciType != 'none')", 
                                     `format`="zto"))))
                         self$add(jmvcore::Table$new(
                             options=options,
@@ -500,11 +542,25 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             title="Moderation effects (interactions)",
                             visible=FALSE,
                             clearWith=list(
+                                "data",
                                 "dep",
+                                "mediators",
+                                "factors",
+                                "covs",
                                 "modelTerms",
+                                "mediatorsTerms",
+                                "mod_terms",
                                 "contrasts",
-                                "fixedIntercept",
-                                "simpleScale"),
+                                "scaling",
+                                "ciType",
+                                "ciWidth",
+                                "bootN",
+                                "simpleScale",
+                                "cvalue",
+                                "percvalue",
+                                "simpleScaleLabels",
+                                "tableOptions",
+                                "showRealNames"),
                             columns=list(
                                 list(
                                     `name`="lhs", 
@@ -527,12 +583,12 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `name`="ci.lower", 
                                     `type`="number", 
                                     `title`="Lower", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                    `visible`="(ciType != 'none')"),
                                 list(
                                     `name`="ci.upper", 
                                     `type`="number", 
                                     `title`="Upper", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                    `visible`="(ciType != 'none')"),
                                 list(
                                     `name`="std.all", 
                                     `type`="number", 
@@ -553,20 +609,25 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             title="Indirect and Total Effects",
                             refs="lavaan",
                             clearWith=list(
+                                "data",
                                 "dep",
+                                "mediators",
+                                "factors",
+                                "covs",
                                 "modelTerms",
-                                "contrasts",
-                                "fixedIntercept",
-                                "simpleScale",
-                                "ciType",
                                 "mediatorsTerms",
-                                "moderatorsTerms",
+                                "mod_terms",
+                                "contrasts",
                                 "scaling",
+                                "ciType",
+                                "ciWidth",
+                                "bootN",
+                                "simpleScale",
                                 "cvalue",
                                 "percvalue",
                                 "simpleScaleLabels",
                                 "tableOptions",
-                                "data"),
+                                "showRealNames"),
                             columns=list(
                                 list(
                                     `name`="condition", 
@@ -585,8 +646,8 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `type`="text"),
                                 list(
                                     `name`="label", 
-                                    `title`="Contrasts", 
-                                    `visible`=FALSE, 
+                                    `title`="Contrast", 
+                                    `visible`="(showRealNames && length(factors) > 0)", 
                                     `type`="text"),
                                 list(
                                     `name`="est", 
@@ -600,12 +661,12 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `name`="ci.lower", 
                                     `type`="number", 
                                     `title`="Lower", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                    `visible`="(ciType != 'none')"),
                                 list(
                                     `name`="ci.upper", 
                                     `type`="number", 
                                     `title`="Upper", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                    `visible`="(ciType != 'none')"),
                                 list(
                                     `name`="std.all", 
                                     `type`="number", 
@@ -625,6 +686,11 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             name="contrastCodeTable",
                             title="Contrasts Definition",
                             visible=FALSE,
+                            clearWith=list(
+                                "data",
+                                "factors",
+                                "contrasts",
+                                "showRealNames"),
                             columns=list(
                                 list(
                                     `name`="rname", 
@@ -648,6 +714,11 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             template=jmvcore::Table$new(
                                 options=options,
                                 title="$key",
+                                clearWith=list(
+                                    "factors",
+                                    "contrasts",
+                                    "showContrastCode",
+                                    "data"),
                                 columns=list(
                                     list(
                                         `name`="cname", 
@@ -671,9 +742,25 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             name="regressions",
                             title="",
                             clearWith=list(
+                    "data",
                     "dep",
+                    "mediators",
+                    "factors",
+                    "covs",
+                    "modelTerms",
+                    "mediatorsTerms",
+                    "mod_terms",
                     "contrasts",
-                    "scaling"))
+                    "scaling",
+                    "ciType",
+                    "ciWidth",
+                    "bootN",
+                    "simpleScale",
+                    "cvalue",
+                    "percvalue",
+                    "simpleScaleLabels",
+                    "tableOptions",
+                    "showRealNames"))
                         self$add(R6::R6Class(
                             inherit = jmvcore::Group,
                             active = list(
@@ -687,14 +774,50 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                         name="overall",
                                         title="Total effects",
                                         clearWith=list(
+                    "data",
                     "dep",
+                    "mediators",
+                    "factors",
+                    "covs",
+                    "modelTerms",
+                    "mediatorsTerms",
+                    "mod_terms",
                     "contrasts",
-                    "scaling"))
+                    "scaling",
+                    "ciType",
+                    "ciWidth",
+                    "bootN",
+                    "simpleScale",
+                    "cvalue",
+                    "percvalue",
+                    "simpleScaleLabels",
+                    "tableOptions",
+                    "showRealNames"))
                                     self$add(jmvcore::Table$new(
                                         options=options,
                                         name="anova",
                                         title="ANOVA Table",
                                         visible="(tableOptions:regression)",
+                                        clearWith=list(
+                                            "data",
+                                            "dep",
+                                            "mediators",
+                                            "factors",
+                                            "covs",
+                                            "modelTerms",
+                                            "mediatorsTerms",
+                                            "mod_terms",
+                                            "contrasts",
+                                            "scaling",
+                                            "ciType",
+                                            "ciWidth",
+                                            "bootN",
+                                            "simpleScale",
+                                            "cvalue",
+                                            "percvalue",
+                                            "simpleScaleLabels",
+                                            "tableOptions",
+                                            "showRealNames"),
                                         columns=list(
                                             list(
                                                 `name`="dep", 
@@ -726,12 +849,32 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                         name="regression",
                                         title="Regression Table",
                                         visible="(tableOptions:regression)",
+                                        clearWith=list(
+                                            "data",
+                                            "dep",
+                                            "mediators",
+                                            "factors",
+                                            "covs",
+                                            "modelTerms",
+                                            "mediatorsTerms",
+                                            "mod_terms",
+                                            "contrasts",
+                                            "scaling",
+                                            "ciType",
+                                            "ciWidth",
+                                            "bootN",
+                                            "simpleScale",
+                                            "cvalue",
+                                            "percvalue",
+                                            "simpleScaleLabels",
+                                            "tableOptions",
+                                            "showRealNames"),
                                         columns=list(
                                             list(
                                                 `name`="source", 
                                                 `title`="Names", 
                                                 `type`="text", 
-                                                `visible`="(showRealNames)"),
+                                                `visible`="(showRealNames && length(factors) > 0)"),
                                             list(
                                                 `name`="label", 
                                                 `title`="Effect", 
@@ -745,15 +888,15 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                                 `title`="SE", 
                                                 `type`="number"),
                                             list(
-                                                `name`="cilow", 
+                                                `name`="ci.lower", 
                                                 `type`="number", 
                                                 `title`="Lower", 
-                                                `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                                `visible`="(ciType != 'none')"),
                                             list(
-                                                `name`="cihig", 
+                                                `name`="ci.upper", 
                                                 `type`="number", 
                                                 `title`="Upper", 
-                                                `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                                `visible`="(ciType != 'none')"),
                                             list(
                                                 `name`="beta", 
                                                 `type`="number", 
@@ -775,11 +918,27 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         self$add(jmvcore::Array$new(
                             options=options,
                             name="mediator_regressions",
-                            title="Mediator(s) Model",
+                            title="Mediator Models",
                             clearWith=list(
+                                "data",
                                 "dep",
+                                "mediators",
+                                "factors",
+                                "covs",
+                                "modelTerms",
+                                "mediatorsTerms",
+                                "mod_terms",
                                 "contrasts",
-                                "scaling"),
+                                "scaling",
+                                "ciType",
+                                "ciWidth",
+                                "bootN",
+                                "simpleScale",
+                                "cvalue",
+                                "percvalue",
+                                "simpleScaleLabels",
+                                "tableOptions",
+                                "showRealNames"),
                             template=R6::R6Class(
                                 inherit = jmvcore::Group,
                                 active = list(
@@ -791,12 +950,51 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                         super$initialize(
                                             options=options,
                                             name="undefined",
-                                            title="Regression model for ",
-                                            clearWith=list())
+                                            title="Regression model for",
+                                            clearWith=list(
+                    "data",
+                    "dep",
+                    "mediators",
+                    "factors",
+                    "covs",
+                    "modelTerms",
+                    "mediatorsTerms",
+                    "mod_terms",
+                    "contrasts",
+                    "scaling",
+                    "ciType",
+                    "ciWidth",
+                    "bootN",
+                    "simpleScale",
+                    "cvalue",
+                    "percvalue",
+                    "simpleScaleLabels",
+                    "tableOptions",
+                    "showRealNames"))
                                         self$add(jmvcore::Table$new(
                                             options=options,
                                             name="anova",
                                             title="ANOVA",
+                                            clearWith=list(
+                                                "data",
+                                                "dep",
+                                                "mediators",
+                                                "factors",
+                                                "covs",
+                                                "modelTerms",
+                                                "mediatorsTerms",
+                                                "mod_terms",
+                                                "contrasts",
+                                                "scaling",
+                                                "ciType",
+                                                "ciWidth",
+                                                "bootN",
+                                                "simpleScale",
+                                                "cvalue",
+                                                "percvalue",
+                                                "simpleScaleLabels",
+                                                "tableOptions",
+                                                "showRealNames"),
                                             columns=list(
                                                 list(
                                                     `name`="lhs", 
@@ -827,6 +1025,26 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                             options=options,
                                             name="regression",
                                             title="Regression",
+                                            clearWith=list(
+                                                "data",
+                                                "dep",
+                                                "mediators",
+                                                "factors",
+                                                "covs",
+                                                "modelTerms",
+                                                "mediatorsTerms",
+                                                "mod_terms",
+                                                "contrasts",
+                                                "scaling",
+                                                "ciType",
+                                                "ciWidth",
+                                                "bootN",
+                                                "simpleScale",
+                                                "cvalue",
+                                                "percvalue",
+                                                "simpleScaleLabels",
+                                                "tableOptions",
+                                                "showRealNames"),
                                             visible="(tableOptions:regression)",
                                             columns=list(
                                                 list(
@@ -834,6 +1052,11 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                                     `title`="Dependent", 
                                                     `type`="text", 
                                                     `combineBelow`=TRUE),
+                                                list(
+                                                    `name`="source", 
+                                                    `title`="Names", 
+                                                    `type`="text", 
+                                                    `visible`="(showRealNames && length(factors) > 0)"),
                                                 list(
                                                     `name`="rhs", 
                                                     `title`="Effect", 
@@ -847,15 +1070,15 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                                     `title`="SE", 
                                                     `type`="number"),
                                                 list(
-                                                    `name`="cilow", 
+                                                    `name`="ci.lower", 
                                                     `type`="number", 
                                                     `title`="Lower", 
-                                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                                    `visible`="(ciType != 'none')"),
                                                 list(
-                                                    `name`="cihig", 
+                                                    `name`="ci.upper", 
                                                     `type`="number", 
                                                     `title`="Upper", 
-                                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                                    `visible`="(ciType != 'none')"),
                                                 list(
                                                     `name`="beta", 
                                                     `type`="number", 
@@ -887,14 +1110,50 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                         name="full",
                                         title="Full model effects",
                                         clearWith=list(
+                    "data",
                     "dep",
+                    "mediators",
+                    "factors",
+                    "covs",
+                    "modelTerms",
+                    "mediatorsTerms",
+                    "mod_terms",
                     "contrasts",
-                    "scaling"))
+                    "scaling",
+                    "ciType",
+                    "ciWidth",
+                    "bootN",
+                    "simpleScale",
+                    "cvalue",
+                    "percvalue",
+                    "simpleScaleLabels",
+                    "tableOptions",
+                    "showRealNames"))
                                     self$add(jmvcore::Table$new(
                                         options=options,
                                         name="anova",
                                         title="ANOVA Table",
                                         visible="(tableOptions:regression)",
+                                        clearWith=list(
+                                            "data",
+                                            "dep",
+                                            "mediators",
+                                            "factors",
+                                            "covs",
+                                            "modelTerms",
+                                            "mediatorsTerms",
+                                            "mod_terms",
+                                            "contrasts",
+                                            "scaling",
+                                            "ciType",
+                                            "ciWidth",
+                                            "bootN",
+                                            "simpleScale",
+                                            "cvalue",
+                                            "percvalue",
+                                            "simpleScaleLabels",
+                                            "tableOptions",
+                                            "showRealNames"),
                                         columns=list(
                                             list(
                                                 `name`="lhs", 
@@ -927,12 +1186,37 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                         name="regression",
                                         title="Regression Table",
                                         visible="(tableOptions:regression)",
+                                        clearWith=list(
+                                            "data",
+                                            "dep",
+                                            "mediators",
+                                            "factors",
+                                            "covs",
+                                            "modelTerms",
+                                            "mediatorsTerms",
+                                            "mod_terms",
+                                            "contrasts",
+                                            "scaling",
+                                            "ciType",
+                                            "ciWidth",
+                                            "bootN",
+                                            "simpleScale",
+                                            "cvalue",
+                                            "percvalue",
+                                            "simpleScaleLabels",
+                                            "tableOptions",
+                                            "showRealNames"),
                                         columns=list(
                                             list(
                                                 `name`="lhs", 
                                                 `title`="Dependent", 
                                                 `type`="text", 
                                                 `combineBelow`=TRUE),
+                                            list(
+                                                `name`="source", 
+                                                `title`="Names", 
+                                                `type`="text", 
+                                                `visible`="(showRealNames && length(factors) > 0)"),
                                             list(
                                                 `name`="rhs", 
                                                 `title`="Effect", 
@@ -946,15 +1230,15 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                                 `title`="SE", 
                                                 `type`="number"),
                                             list(
-                                                `name`="cilow", 
+                                                `name`="ci.lower", 
                                                 `type`="number", 
                                                 `title`="Lower", 
-                                                `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                                `visible`="(ciType != 'none')"),
                                             list(
-                                                `name`="cihig", 
+                                                `name`="ci.upper", 
                                                 `type`="number", 
                                                 `title`="Upper", 
-                                                `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                                `visible`="(ciType != 'none')"),
                                             list(
                                                 `name`="beta", 
                                                 `type`="number", 
@@ -988,36 +1272,69 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             name="pathgroup",
                             title="Path Model",
                             clearWith=list(
-                    "data"))
+                    "data",
+                    "dep",
+                    "mediators",
+                    "factors",
+                    "covs",
+                    "mediatorsTerms",
+                    "modelTerms",
+                    "mod_terms",
+                    "contrasts",
+                    "scaling",
+                    "ciType",
+                    "ciWidth",
+                    "bootN",
+                    "simpleScale",
+                    "cvalue",
+                    "percvalue",
+                    "simpleScaleLabels",
+                    "pathOptions",
+                    "model_diagram",
+                    "path_diagram",
+                    "diag_paths",
+                    "diag_resid",
+                    "diag_labsize",
+                    "diag_rotate",
+                    "diag_type",
+                    "diag_shape",
+                    "diag_abbrev"))
                         self$add(jmvcore::Image$new(
                             options=options,
                             name="pathmodel",
                             title="Model Diagram",
-                            visible="(meddiagram)",
+                            visible="(model_diagram)",
                             width=600,
                             height=500,
                             renderFun=".showModelDiagram",
                             clearWith=list(
+                                "data",
                                 "dep",
+                                "mediators",
+                                "factors",
+                                "covs",
                                 "mediatorsTerms",
                                 "modelTerms",
-                                "moderatorsTerms",
+                                "mod_terms",
                                 "pathOptions",
-                                "meddiagram",
-                                "diagram",
-                                "diag_paths",
-                                "diag_resid",
-                                "diag_labsize",
-                                "diag_rotate",
-                                "diag_type",
-                                "diag_shape",
-                                "diag_abbrev"),
+                                "model_diagram"),
                             refs="diagram"))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="pathnotes",
                             title="",
                             visible=FALSE,
+                            clearWith=list(
+                                "data",
+                                "dep",
+                                "mediators",
+                                "factors",
+                                "covs",
+                                "mediatorsTerms",
+                                "modelTerms",
+                                "mod_terms",
+                                "pathOptions",
+                                "model_diagram"),
                             columns=list(
                                 list(
                                     `name`="info", 
@@ -1027,7 +1344,35 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             options=options,
                             name="diagrams",
                             title="Path Diagrams",
-                            visible="(diagram)",
+                            visible="(path_diagram)",
+                            clearWith=list(
+                                "data",
+                                "dep",
+                                "mediators",
+                                "factors",
+                                "covs",
+                                "mediatorsTerms",
+                                "modelTerms",
+                                "mod_terms",
+                                "contrasts",
+                                "scaling",
+                                "ciType",
+                                "ciWidth",
+                                "bootN",
+                                "simpleScale",
+                                "cvalue",
+                                "percvalue",
+                                "simpleScaleLabels",
+                                "pathOptions",
+                                "model_diagram",
+                                "path_diagram",
+                                "diag_paths",
+                                "diag_resid",
+                                "diag_labsize",
+                                "diag_rotate",
+                                "diag_type",
+                                "diag_shape",
+                                "diag_abbrev"),
                             template=jmvcore::Image$new(
                                 options=options,
                                 title="$key",
@@ -1035,25 +1380,67 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                 width=700,
                                 height=500,
                                 clearWith=list(
+                                    "data",
+                                    "dep",
+                                    "mediators",
+                                    "factors",
+                                    "covs",
+                                    "mediatorsTerms",
+                                    "modelTerms",
+                                    "mod_terms",
+                                    "contrasts",
+                                    "scaling",
+                                    "ciType",
+                                    "ciWidth",
+                                    "bootN",
+                                    "simpleScale",
+                                    "cvalue",
+                                    "percvalue",
+                                    "simpleScaleLabels",
                                     "pathOptions",
-                                    "meddiagram",
-                                    "diagram",
-                                    "diag_resid",
+                                    "model_diagram",
+                                    "path_diagram",
                                     "diag_paths",
+                                    "diag_resid",
                                     "diag_labsize",
                                     "diag_rotate",
                                     "diag_type",
                                     "diag_shape",
-                                    "diag_abbrev",
-                                    "modelTerms",
-                                    "mediatorsTerms",
-                                    "data")),
+                                    "diag_abbrev")),
                             refs="semplot"))
                         self$add(jmvcore::Table$new(
                             options=options,
                             name="notes",
                             title="",
                             visible=FALSE,
+                            clearWith=list(
+                                "data",
+                                "dep",
+                                "mediators",
+                                "factors",
+                                "covs",
+                                "mediatorsTerms",
+                                "modelTerms",
+                                "mod_terms",
+                                "contrasts",
+                                "scaling",
+                                "ciType",
+                                "ciWidth",
+                                "bootN",
+                                "simpleScale",
+                                "cvalue",
+                                "percvalue",
+                                "simpleScaleLabels",
+                                "pathOptions",
+                                "model_diagram",
+                                "path_diagram",
+                                "diag_paths",
+                                "diag_resid",
+                                "diag_labsize",
+                                "diag_rotate",
+                                "diag_type",
+                                "diag_shape",
+                                "diag_abbrev"),
                             columns=list(
                                 list(
                                     `name`="message", 

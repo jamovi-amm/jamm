@@ -47,7 +47,7 @@ children:
             events:
               change: ./jamm.events::onChange_covariates
   - type: CollapseBox
-    label: Mediators Models
+    label: Mediator Models
     collapsed: true
     stretchFactor: 1
     children:
@@ -146,7 +146,7 @@ children:
                 transferAction: interactions
                 children:
                   - type: ListBox
-                    name: moderatorsTerms
+                    name: mod_terms
                     height: large
                     events:
                       change: ./jamm.events::onEvent_moderatorChanged
@@ -176,7 +176,7 @@ children:
                           template:
                             type: TermLabel
   - type: CollapseBox
-    label: Factors Coding
+    label: Factor Coding
     collapsed: true
     stretchFactor: 1
     children:
@@ -203,7 +203,7 @@ children:
       - type: CheckBox
         name: showContrastCode
   - type: CollapseBox
-    label: Covariates Scaling
+    label: Covariate Scaling
     collapsed: true
     stretchFactor: 1
     children:
@@ -230,7 +230,7 @@ children:
         style: inline
         children:
           - type: Label
-            label: Covariates conditioning
+            label: Covariate Conditioning
             children:
               - type: LayoutBox
                 margin: large
@@ -243,7 +243,9 @@ children:
                     children:
                       - type: TextBox
                         name: cvalue
+                        label: null
                         format: number
+                        enable: (simpleScale_mean_sd)
                   - name: simpleScale_percent
                     type: RadioButton
                     optionName: simpleScale
@@ -256,7 +258,7 @@ children:
                         format: number
                         enable: (simpleScale_percent)
           - type: Label
-            label: Covariates labeling
+            label: Covariate Labeling
             children:
               - type: LayoutBox
                 margin: large
@@ -274,7 +276,7 @@ children:
                     optionName: simpleScaleLabels
                     optionPart: values_labels
   - type: CollapseBox
-    label: Mediation options
+    label: Mediation Options
     collapsed: true
     stretchFactor: 1
     children:
@@ -291,10 +293,10 @@ children:
                 name: ciType_standard
                 optionName: ciType
                 optionPart: standard
-              - name: ciType_bca.simple
+              - name: ciType_bca
                 type: RadioButton
                 optionName: ciType
-                optionPart: bca.simple
+                optionPart: bca
               - type: RadioButton
                 name: ciType_bootperc
                 optionName: ciType
@@ -312,11 +314,13 @@ children:
                 label: Interval
                 suffix: '%'
                 format: number
+                enable: (!ciType:none)
               - type: TextBox
                 name: bootN
                 format: number
+                enable: (ciType:bca || ciType:perc || ciType:norm)
           - type: Label
-            label: Display in tables
+            label: Display in Tables
             margin: large
             style: list
             children:
@@ -349,7 +353,7 @@ children:
             style: inline
             children:
               - type: CheckBox
-                name: meddiagram
+                name: model_diagram
               - type: Label
                 label: Diagram Options
                 margin: large
@@ -359,14 +363,14 @@ children:
                     type: CheckBox
                     optionPart: suggested
                     optionName: pathOptions
-                    enable: (meddiagram)
+                    enable: (model_diagram)
           - type: LayoutBox
             margin: large
             stretchFactor: 1
             style: inline
             children:
               - type: CheckBox
-                name: diagram
+                name: path_diagram
               - type: Label
                 label: Paths
                 margin: large
@@ -376,22 +380,22 @@ children:
                     name: diag_paths_est
                     optionName: diag_paths
                     optionPart: est
-                    enable: (diagram)
+                    enable: (path_diagram)
                   - type: RadioButton
                     name: diag_paths_stand
                     optionName: diag_paths
                     optionPart: stand
-                    enable: (diagram)
+                    enable: (path_diagram)
                   - type: RadioButton
                     name: diag_paths_name
                     optionName: diag_paths
                     optionPart: name
-                    enable: (diagram)
+                    enable: (path_diagram)
                   - type: RadioButton
                     name: diag_paths_hide
                     optionName: diag_paths
                     optionPart: hide
-                    enable: (diagram)
+                    enable: (path_diagram)
               - type: Label
                 label: Show
                 margin: large
@@ -399,7 +403,7 @@ children:
                 children:
                   - type: CheckBox
                     name: diag_resid
-                    enable: (diagram)
+                    enable: (path_diagram)
           - type: LayoutBox
             margin: large
             stretchFactor: 1
@@ -412,10 +416,10 @@ children:
                 children:
                   - type: ComboBox
                     name: diag_type
-                    enable: (diagram)
+                    enable: (path_diagram)
                   - type: ComboBox
                     name: diag_rotate
-                    enable: (diagram && !diag_type:mediation)
+                    enable: (path_diagram && !diag_type:mediation)
               - type: Label
                 label: Nodes
                 margin: large
@@ -423,10 +427,10 @@ children:
                 children:
                   - type: ComboBox
                     name: diag_labsize
-                    enable: (diagram)
+                    enable: (path_diagram)
                   - type: ComboBox
                     name: diag_shape
-                    enable: (diagram)
+                    enable: (path_diagram)
                   - type: ComboBox
                     name: diag_abbrev
-                    enable: (diagram)
+                    enable: (path_diagram)

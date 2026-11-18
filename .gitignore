@@ -48,3 +48,5 @@ vignettes/*.pdf
 
 # AI
 AI/
+# graphics written by R when no device is open
+Rplots.pdf

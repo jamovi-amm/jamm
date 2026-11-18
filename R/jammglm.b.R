@@ -12,16 +12,19 @@ jammGLMClass <- R6::R6Class(
             jinfo("MODULE: jAMM  #### phase init  ####")
             private$.time <- Sys.time()
 
+            # LEGACY (jAMM < 2.0): copy the jAMM 1.x option `moderatorsTerms` into
+            # `mod_terms` before anything reads the options. Remove with R/legacy.R.
+            migrate_legacy_options(self$options)
+
             private$.ready <- readiness(self$options)
             if (!private$.ready$ready) {
                 if (private$.ready$report) {
-                    self$results$infotab$addRow("info", list(info = "Setup", specs = private$.ready$reason))
+                    self$results$infotab$addRow("info", list(info = "Setup", value = private$.ready$reason, desc = ""))
                 }
                 return()
             }
 
             # Set up the R6 workhorse classes, retaining jAMM's data API.
-            dispatch_message_cleaner(self)
             data_machine <- Datamatic$new(self)
             runner_machine <- Runner$new(self, data_machine)
             private$.smartObjs <- list()
@@ -38,11 +41,12 @@ jammGLMClass <- R6::R6Class(
             # Interactions start hidden and are activated when table data exist.
             aSmartObj <- SmartTable$new(self$results$models$interactions, runner_machine)
             aSmartObj$activateOnData <- TRUE
+            aSmartObj$spaceBy<- "lhs"
             aSmartObj$ci("", self$options$ciWidth)
             ladd(private$.smartObjs) <- aSmartObj
 
             # Indirect and total effects.
-            self$results$models$coefficients$getColumn("condition")$setVisible(length(unlist(self$options$moderatorsTerms)) > 0)
+            self$results$models$coefficients$getColumn("condition")$setVisible(length(unlist(self$options$mod_terms)) > 0)
             aSmartObj <- SmartTable$new(self$results$models$coefficients, runner_machine)
             aSmartObj$ci("", self$options$ciWidth)
             aSmartObj$spaceBy <- "condition"
@@ -59,9 +63,9 @@ jammGLMClass <- R6::R6Class(
             ladd(private$.smartObjs) <- aSmartObj
 
             if ("regression" %in% self$options$tableOptions) {
-                self$results$regressions$setTitle("Regressions Results")
+                self$results$regressions$setTitle("Regression Results")
                 if (length(self$options$mediators) > 1) {
-                    self$results$regressions$mediator_regressions$setTitle("Mediators Models")
+                    self$results$regressions$mediator_regressions$setTitle("Mediator Models")
                 }
 
                 # Total-effects ANOVA and regression tables.
@@ -70,10 +74,12 @@ jammGLMClass <- R6::R6Class(
 
                 aSmartObj <- SmartTable$new(self$results$regressions$overall$regression, runner_machine)
                 aSmartObj$title <- paste("Total effects predicting:", self$options$dep)
+                aSmartObj$ci("", self$options$ciWidth)
                 ladd(private$.smartObjs) <- aSmartObj
 
                 # Each mediator owns a group containing ANOVA and coefficients.
                 aSmartObj <- SmartArray$new(self$results$regressions$mediator_regressions, runner_machine)
+                aSmartObj$ci("", self$options$ciWidth)
                 ladd(private$.smartObjs) <- aSmartObj
                 mediatorsSmartObj <- aSmartObj
 
@@ -82,7 +88,8 @@ jammGLMClass <- R6::R6Class(
                 ladd(private$.smartObjs) <- aSmartObj
 
                 aSmartObj <- SmartTable$new(self$results$regressions$full$regression, runner_machine)
-                aSmartObj$title <- paste("Full model predicting", self$options$dep)
+                aSmartObj$title <- paste("Full model predicting:", self$options$dep)
+                aSmartObj$ci("", self$options$ciWidth)
                 ladd(private$.smartObjs) <- aSmartObj
             }
 
@@ -132,70 +139,16 @@ jammGLMClass <- R6::R6Class(
             jinfo("RUN TIME:", Sys.time() - runnow, " secs")
             jinfo("TIME:", Sys.time() - private$.time, " secs")
         },
-        # This callback matches pathmodel's renderFun, not the semPlot images.
         .showModelDiagram = function(image, ggtheme, theme, ...) {
-            if (!self$options$meddiagram || is.null(image$state$modelDiagram)) {
-                return()
-            }
-            plot_model_diagram(image$state$modelDiagram)
-            return(TRUE)
+            state <- image$state
+            if (!is.null(state$modelDiagram))
+                state <- new_plot_state(state$modelDiagram)
+            render_plot_state(state, plot_model_diagram)
         },
         .showDiagram = function(image, ggtheme, theme, ...) {
-            if (self$options$diagram == FALSE) {
-                return()
-            }
-            if (!is.something(image$state$semModel)) {
-                return()
-            }
-            options <- private$.plotter_machine$semPathsOptions
-            res <- try_hard(
-                semPlot::semPaths(
-                    object = image$state$semModel,
-                    layout = options$layout,
-                    residuals = options$residuals,
-                    rotation = options$rotation,
-                    intercepts = options$intercepts,
-                    nodeLabels = options$nodeLabels,
-                    whatLabels = options$whatLabels,
-                    sizeMan = options$sizeMan,
-                    sizeMan2 = options$sizeMan2,
-                    curve = options$curve,
-                    shapeMan = options$shapeMan,
-                    edge.label.cex = options$edge.label.cex
-                )
-            )
-            note <- FALSE
-
-            if (!isFALSE(res$error)) {
-                if (length(grep("Circle layout only supported", res$error, fixed = TRUE)) > 0) {
-                    res$error <- PLOT_WARNS[["nocircle"]]
-                    note <- TRUE
-                }
-                if (length(grep("graph_from_edgelist", res$error, fixed = TRUE)) > 0) {
-                    res$error <- PLOT_WARNS[["nocircle"]]
-                    note <- TRUE
-                }
-                if (length(grep("subscript out of", res$error, fixed = TRUE)) > 0) {
-                    res$error <- PLOT_WARNS[["fail"]]
-                    note <- TRUE
-                }
-            }
-
-            if (!isFALSE(res$error)) {
-                self$results$pathgroup$notes$addRow("err", list(message = res$error))
-                note <- TRUE
-            }
-            if (!isFALSE(res$warning)) {
-                self$results$pathgroup$notes$addRow("war", list(message = res$warning))
-                note <- TRUE
-            }
-
-            if (note) {
-                self$results$pathgroup$notes$setVisible(TRUE)
-            }
-
-            return(TRUE)
+            render_plot_state(image$state, draw_path_diagram)
         },
+        
         .marshalFormula = function(formula, data, name) {
             formula <- lapply(formula, expand.formula)
 
@@ -205,9 +158,11 @@ jammGLMClass <- R6::R6Class(
             deps <- sapply(formula, function(equation) jmvcore::marshalFormula(equation, data, from = "lhs"))
             ivs <- unique(unlist(sapply(formula, function(equation) jmvcore::marshalFormula(equation, data, from = "rhs"))))
             factors <- unique(unlist(sapply(formula, function(equation) jmvcore::marshalFormula(equation, data, from = "rhs", permitted = "factor"))))
-            covs <- setdiff(ivs, factors)
             dep <- setdiff(deps, ivs)
             meds <- intersect(deps, ivs)
+            # Covariates are the continuous independent variables: mediators are
+            # predictors in the full model too, but they are not covariates.
+            covs <- setdiff(ivs, c(factors, meds))
 
             if (name == "dep") {
                 if (length(dep) > 1) {
@@ -260,30 +215,42 @@ jammGLMClass <- R6::R6Class(
             paste0("list(", paste(sapply(models, function(model) paste0('"', model$value, '"')), collapse = ","), ")")
         },
         .sourcifyOption = function(option) {
-            name <- option$name
             value <- option$value
+           
+          ## mod_terms is weired, hanlde it here
+           if (option$name=="mod_terms") {
+             test<-all(sapply(value,function(a) length(a)==0))
+             if (test) return('')
+             
+             meds<-self$options$mediators
+             mods<-character()
+             for (i in seq_along(meds)) {
+               if (length(value[[i]])>0 ) {
+                 variables <- paste(quote_name(value[[i]]), collapse = ", ")
+                 mods <- c(mods,paste0(quote_name(meds[[i]]), " = c(", variables, ")"))
+               }
+             }
+             
+             mods <- paste0("mod_terms = list(", paste(mods, collapse = ", "), ")")
+             return(mods)
+           }
 
-            if (!is.something(value)) {
-                return("")
-            }
-            if (name %in% c("factors", "endogenous", "covs", "endogenousTerms")) {
-                return("")
-            }
-            if (name == "scaling") {
-                vec <- sourcifyList(option, "none")
-                return(vec)
-            }
-            if (name == "contrasts") {
-                vec <- sourcifyList(option, "simple")
-                return(vec)
-            }
-            if (name == "varcov") {
-                vec <- lapply(self$options$varcov, function(covariance) c(covariance$i1, covariance$i2))
-                vec <- paste0("varcov=list(", paste(vec, collapse = ","), ")", collapse = "")
-                return(vec)
-            }
 
-            super$.sourcifyOption(option)
+            if (option$name %in% NO_R_OPTS) 
+              return("")
+
+            # LEGACY (jAMM < 2.0): never write the deprecated option into generated
+            # syntax; its value is already in `mod_terms`. Remove with R/legacy.R.
+            if (option$name == "moderatorsTerms")
+              return("")
+            
+            # since OptionsArray has not embedded default, we pass them as ARRAY_DEFAULTS defined
+            # in constants.R. Other option classes ignore it.
+            
+            return(sourcifyOption(option, ARRAY_DEFAULTS))
+            
+            
+
         }
     )
 )

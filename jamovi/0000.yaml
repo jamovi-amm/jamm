@@ -1,12 +1,12 @@
 ---
 title: Advanced Mediation Models
 name: jamm
-version: 2.0.0
+version: 2.0.1
 jms: '1.0'
 authors:
   - Marcello Gallucci
 maintainer: Marcello Gallucci <mcfanda@gmail.com>
-date: 2019-1-1
+date: '2026-11-18'
 type: R
 description: >-
   A suite for the estimation of mediational models, including multiple
@@ -30,7 +30,15 @@ datasets:
       - Mediation
       - Conditional mediation
       - Moderation
+  - name: pathjdata
+    path: pathjdata.csv
+    description: >-
+      Simulated dataset with several continuous and two categorical variables to
+      test mediation and path analysis models
+    tags:
+      - Mediation
+      - Path Analysis
 usesNative: true
-minApp: 1.0.8
+minApp: 2.5.0
 
 ...

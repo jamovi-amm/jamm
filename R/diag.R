@@ -3,7 +3,7 @@
 model_diagram_data <- function(options) {
   mediators <- jmvcore::toB64(options$mediators)
   dependent <- jmvcore::toB64(options$dep)
-  moderators <- unique(jmvcore::toB64(unlist(options$moderatorsTerms)))
+  moderators <- unique(jmvcore::toB64(unlist(options$mod_terms)))
   outcomes <- c(mediators, dependent)
   equations <- c(options$mediatorsTerms, list(options$modelTerms))
   sources <- vector("list", length(outcomes))
@@ -55,9 +55,9 @@ model_diagram_data <- function(options) {
   if (suggested && any(paths == "S"))
     diagram$notes <- c(diagram$notes, "Green paths indicate suggested coefficients")
   if (length(moderators) > 0)
-    diagram$notes <- c(diagram$notes, "Moderators main effects are not shown")
+    diagram$notes <- c(diagram$notes, "Moderators' main effects are not shown.")
   if (length(independents) > 1)
-    diagram$notes <- c(diagram$notes, "Covariances among IV are estimated but not shown")
+    diagram$notes <- c(diagram$notes, "Covariances among IVs are estimated but not shown")
   if (any(options$factors %in% unlist(c(options$mediatorsTerms, options$modelTerms))))
     diagram$notes <- c(diagram$notes,
       "Categorical independent variables are shown with one rectangle; their effects are estimated using contrast variables")

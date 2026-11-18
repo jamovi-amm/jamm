@@ -30,10 +30,11 @@ Estimate <- R6::R6Class("Estimate",
                             
                             # fit indices
                             alist<-list()
-                            alist[[length(alist)+1]]<-c(info="Estimation Method",value=self$model@Options$estimator)
-                            alist[[length(alist)+1]]<-c(info="Number of observations",value=lavaan::lavInspect(self$model,"ntotal")) 
-                            alist[[length(alist)+1]]<-c(info="Converged",value=self$model@Fit@converged) 
-                            alist[[length(alist)+1]]<-c(info="",value="")
+                            estimator<-lavaan::lavInspect(self$model,"options")$estimator
+                            alist[[length(alist)+1]]<-c(info="Estimation Method",value=estimator,desc=estimator_description(estimator))
+                            alist[[length(alist)+1]]<-c(info="Number of observations",value=lavaan::lavInspect(self$model,"ntotal"),desc="") 
+                            alist[[length(alist)+1]]<-c(info="Converged",value=lavaan::lavInspect(self$model,"converged"),desc="")
+                            alist[[length(alist)+1]]<-c(info="",value="",desc="")
                             
                             self$tab_info<-alist
                             
@@ -53,7 +54,7 @@ Estimate <- R6::R6Class("Estimate",
                              for (i in seq_along(end$r2)) 
                                     if (end$r2[[i]]>1 | end$r2[[i]]<0)  {
                                       end$r2[[i]]<-NA
-                                      self$warning<-list(topic="models_r2",message="Some R-square indexex cannot be computed for this model")
+                                      self$warning<-list(topic="models_r2",message="Some R-squared indices cannot be computed for this model.")
                                     }
                             
                               ### https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3821705/
@@ -69,11 +70,13 @@ Estimate <- R6::R6Class("Estimate",
                               rupper<-(exp(2*fupper)-1)/(1+exp(2*fupper))
                               rupper<-rupper^2
                               rlower<-(exp(2*flower)-1)/(1+exp(2*flower))
-                              rlower<-rlower^2
+                              rlower<-pmax(rlower,0)^2
                               end$ci.upper<-rupper
                               end$ci.lower<-rlower
                               ####
                             self$tab_r2<-end
+                            if (self$options$ciType != "none")
+                              self$warning<-list(topic="models_r2",message="R-squared confidence intervals are approximate (Fisher z).")
 
 
                         }
@@ -95,7 +98,9 @@ Estimate <- R6::R6Class("Estimate",
                              } else {
                                ci<-TRUE
                                se="bootstrap"
-                               bootci=self$options$ciType
+                               # 'bca' is the option value saved by jAMM 1.x; lavaan calls
+                               # the bias-corrected (non-accelerated) interval 'bca.simple'.
+                               bootci <- switch(self$options$ciType, bca = "bca.simple", self$options$ciType)
                              }
                            } 
                            
@@ -110,27 +115,58 @@ Estimate <- R6::R6Class("Estimate",
                            )
                            
                            ## estimate the models
-                           results<-try_hard({do.call(lavaan::lavaan,lavoptions)  })
+                           results<-try_hard({
+                             model<-do.call(lavaan::lavaan,lavoptions)
+                             parameters<-lavaan::parameterestimates(
+                               model,
+                               ci=ci,
+                               standardized = TRUE,
+                               level = self$ciwidth,
+                               boot.ci.type = bootci
+                             )
+                             list(model=model,parameters=parameters)
+                           })
                            
                            
                            
-                           self$warning<-list(topic="infotab",message=results$warning)
+                           self$warning<-list(topic="jamovi",message=results$warning)
                            if (!isFALSE(results$error)) {
-                             details<-fromb64(results$error,ref=self$vars)
+                             details<-fromb64(results$error)
                              if (grepl("infinite or missing",details,fixed=TRUE))
                                details<-paste(ERRS[["noluck"]],details)
+                             if (!isFALSE(results$warning)) {
+                               warnings<-unique(fromb64(
+                                 unlist(results$warning,use.names=FALSE)
+                               ))
+                               details<-paste(
+                                 paste(warnings,collapse="\n"),
+                                 paste("Final error:",details),sep="\n"
+                               )
+                             }
                              self$stop(paste("Model cannot be estimated:",details))
                            }
-                           
+
+                           # A fit that lavaan returns without an error can still be unusable:
+                           # stop if it did not converge, or if lavaan warned that the sample
+                           # covariance matrix is not positive definite (its "icov" warning,
+                           # e.g. with perfectly collinear predictors). lavaan 0.6 stops by itself
+                           # in that case, lavaan 0.7 returns a non-converged fit holding the
+                           # starting values, which must not be shown as estimates.
+                           warnings<-character(0)
+                           if (!isFALSE(results$warning))
+                             warnings<-unique(fromb64(unlist(results$warning,use.names=FALSE)))
+                           icov<-grepl("icov\\(\\)|sample covariance matrix is not positive.definite",warnings)
+                           converged<-isTRUE(lavaan::lavInspect(results$obj$model,"converged"))
+                           if (!converged || any(icov)) {
+                             reason<-if (!converged) "the estimation did not converge." else
+                                       "the sample covariance matrix is not positive definite."
+                             details<-paste(c(reason,warnings),collapse="\n")
+                             self$stop(paste("Model cannot be estimated:",details))
+                           }
+
                            ## ask for the paramters estimates
-                           self$model<-results$obj
-                           .lav_params<-lavaan::parameterestimates(
-                             self$model,
-                             ci=ci,
-                             standardized = T,
-                             level = self$ciwidth,
-                             boot.ci.type = bootci
-                           )
+                           self$model<-results$obj$model
+                           .lav_params<-results$obj$parameters
                            
                            ## we need some info initialized by Syntax regarding the parameters properties
                            private$.lav_structure<-.lav_params

@@ -4,6 +4,7 @@ Datamatic <- R6::R6Class(
   class=FALSE,
   inherit = Scaffold,
   public=list(
+    dep=NULL,
     vars=NULL,
     factors=NULL,
     factors_scale=NULL,
@@ -13,9 +14,14 @@ Datamatic <- R6::R6Class(
     contrasts_names=NULL,
     continuous=NULL,
     continuous_scale=NULL,
+    # Mean and SD removed by each continuous variable's scaling, set by
+    # cleandata(): original value = model value * spread + center.
+    continuous_center=list(),
+    continuous_spread=list(),
     initialize=function(jmvobj,data=jmvobj$data) {
       super$initialize(jmvobj)
       options<-self$options
+      self$dep<-options$dep
       self$vars<-unlist(c(options$dep,options$mediators,options$factors,options$covs))
       self$factors<-options$factors
       self$factors_scale<-sapply(options$contrasts, function(a) a$type)
@@ -29,18 +35,28 @@ Datamatic <- R6::R6Class(
       
       data64 <- jmvcore::naOmit(data)
       names(data64)<-tob64(names(data))
+      ### dependent variable
+      dep64<-tob64(self$dep)
+      if (inherits(data64[[dep64]],"factor")) {
+             private$.warn_categorical(self$dep,data64[[dep64]])
+             data64[[dep64]] <- private$.continuous_value(data64[[dep64]],method = NULL)
+      }
       for (cont in self$continuous) {
         cont64<-tob64(cont)
-        if (class(data64[[cont64]]) == "factor")
-              self$warning<-list(topic="infotab",message=DATA_WARNS[["fac_to_cont"]])
-        data64[[cont64]] <- private$.continuous_value(data64[[cont64]],self$continuous_scale[[cont]])
+        if (inherits(data64[[cont64]],"factor"))
+              private$.warn_categorical(cont,data64[[cont64]])
+        method<-self$scaling_method(cont)
+        raw<-jmvcore::toNumeric(data64[[cont64]])
+        self$continuous_center[[cont]]<-if (method %in% c("centered","standardized")) mean(raw) else 0
+        self$continuous_spread[[cont]]<-if (method=="standardized") stats::sd(raw) else 1
+        data64[[cont64]] <- private$.continuous_value(data64[[cont64]],method)
       }
       for (factor in self$factors) {
         factor64<-tob64(factor)
         ### we need this for Rinterface ####
         nlevels<-length(self$factors_levels[[factor]])
         stats::contrasts(data64[[factor64]]) <- self$contrasts_values[[factor]]
-        dummies<-model.matrix(as.formula(paste0("~",factor64)),data=data64)
+        dummies<-stats::model.matrix(stats::as.formula(paste0("~",factor64)),data=data64)
         dummies<-dummies[,-1]
         dummies<-data.frame(dummies)
         onames<-names(data64)
@@ -52,24 +68,42 @@ Datamatic <- R6::R6Class(
         for (int in interactions) {
           int<-trimws(int)
           terms<-strsplit(int,INTERACTION_SYMBOL,fixed = T)[[1]]
-          terms<-paste0("data64$",trimws(terms))
-          head<-paste0("data64$",int,"<-")
-          op<-paste(terms,collapse = " * ")
-          synt<-paste0(head,op)
-          eval(parse(text=synt))
+          data64[[int]]<-Reduce(`*`,data64[trimws(terms)])
         }
         
       data64<-as.data.frame(data64)     
       return(data64)
-      
-      
-      
-        
+    },
+    # The scaling of a covariate or mediator. A variable missing from `scaling`
+    # is centered, the documented default: analyses saved with jAMM 1.x list
+    # only the covariates there, never the mediators.
+    scaling_method=function(var) {
+      if (var %in% names(self$continuous_scale))
+        return(self$continuous_scale[[var]])
+      "centered"
+    },
+    # A value of a continuous variable on its original scale, from its value on
+    # the scale used in the model (centered or standardized by cleandata()).
+    original_value=function(var, value) {
+      center<-self$continuous_center[[var]]
+      spread<-self$continuous_spread[[var]]
+      if (is.null(center) || is.null(spread))
+        return(value)
+      value*spread+center
     }
     ), ### end of public
    private=list(
+     # A categorical variable used where a continuous one is expected (dependent
+     # variable, mediator, covariate) is analysed with its numeric values. jamovi
+     # passes ordinal variables as ordered factors and nominal ones as factors:
+     # the note says which, naming the variable.
+     .warn_categorical=function(name, column) {
+       key<-if (inherits(column,"ordered")) "ord_to_cont" else "fac_to_cont"
+       message<-gsub("{var}",name,DATA_WARNS[[key]],fixed=TRUE)
+       self$warning<-list(topic="infotab",message=message)
+     },
      .inspect_data=function(data) {
-            names(data)<-jmvcore::toB64(names(data))
+            names(data)<-tob64(names(data))
             for (factor in self$factors) {
                     self$factors_levels[[factor]]<-levels(data[,tob64(factor)])
                     for (i in seq_along(levels(data[,tob64(factor)])))
@@ -230,21 +264,29 @@ Datamatic <- R6::R6Class(
 
  .continuous_value=function(var,method,by=NULL) {
 
+        nvar<-jmvcore::toNumeric(var)
+        
+        if (!is.numeric(nvar))
+          stop("The variable cannot be converted to numeric.", call. = FALSE)
+        
+        if (any(is.na(nvar) & !is.na(var)))
+          stop("Conversion to numeric introduced missing values.", call. = FALSE)
+        
         if (is.null(method))
-           return(as.numeric(var))
+           return(nvar)
    
-
+  
        if (method=="centered") 
-         var<-scale(var,scale = F)  
+         nvar<-scale(nvar,scale = F)  
        if (method=="cluster-based centered") {    
-         var<-unlist(tapply(var,by,scale,scale=F))
+         nvar<-unlist(tapply(nvar,by,scale,scale=F))
        }
        if (method=="standardized") 
-         var<-scale(var,scale = T)  
+         nvar<-scale(nvar,scale = T)  
        if (method=="cluster-based standardized")     
-         var<-unlist(tapply(var,by,scale,scale=T))
+         nvar<-unlist(tapply(nvar,by,scale,scale=T))
 
-       as.numeric(var)
+       as.numeric(nvar)
        
      }
      

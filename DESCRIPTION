@@ -1,16 +1,27 @@
 Package: jamm
 Type: Package
 Title: Advanced Mediational Models
-Version: 2.0.0
+Version: 2.0.1
 Author: Marcello Gallucci
 Maintainer: Marcello Gallucci <mcfanda@gmail.com>
-Description: A suite for estimation of mediational models, including multiple mediators, and conditional mediation
-License: GPL-2
+Description: A suite for the estimation of mediational models, including multiple mediators
+    and conditional mediation. It is the R engine of the jamovi module jAMM.
+License: GPL-2+
 Encoding: UTF-8
 LazyData: true
-Imports: jmvcore (>= 0.8.0), diagram, gridExtra, lavaan (>= 0.7-3)
-Depends: jmvcore
-Suggests: testthat (>= 3.0.0), V8, knitr
+Imports:
+    diagram,
+    jmvcore (>= 2.4.7),
+    lavaan (>= 0.6-21),
+    methods,
+    R6,
+    rlang,
+    semPlot,
+    shape,
+    stats,
+    stringr,
+    utils
+Suggests: graphics, testthat (>= 3.0.0), V8, knitr, yaml
 Config/testthat/edition: 3
 Exports: jammGLM
 Config/roxygen2/version: 8.0.0

@@ -6,21 +6,21 @@ readiness <- function(options) {
   if(length(options$dep) == 0) {
     result$ready <- FALSE
     result$report <- TRUE
-    result$reason <- glue::glue("we need a dependent variable")
+    result$reason <- "A dependent variable is needed."
     return(result)
   } 
 
   if(length(options$mediators) == 0) {
     result$ready <- FALSE
     result$report <- TRUE
-    result$reason <- glue::glue("we need at least 1 mediator variable")
+    result$reason <- "At least one mediator variable is needed."
     return(result)
   } 
   
   if((length(options$factors) == 0) & (length(options$covs) == 0)) {
     result$ready <- FALSE
     result$report <- TRUE
-    result$reason <- glue::glue("we need at least 1 independent variable")
+    result$reason <- "At least one independent variable is needed."
     return(result)
   } 
   
@@ -28,24 +28,26 @@ readiness <- function(options) {
   if (check< length(options$mediators)) {
     result$ready <- FALSE
     result$report <- TRUE
-    result$reason <- glue::glue("Predictors not specified for {length(options$mediators)-check} mediator variable")
+    missing <- length(options$mediators) - check
+    result$reason <- sprintf("Predictors are not specified for %s mediator %s.", missing,
+                            if (missing == 1) "variable" else "variables")
     return(result)
   }
 
   # UI restoration or direct R calls must not bypass the predictor-role rule.
   predictors <- unique(c(options$factors, options$covs))
-  moderators <- unique(unlist(options$moderatorsTerms))
+  moderators <- unique(unlist(options$mod_terms))
   if (length(setdiff(predictors, moderators)) == 0) {
     result$ready <- FALSE
     result$report <- TRUE
-    result$reason <- "At least one independent variable must remain outside the moderators"
+    result$reason <- "At least one independent variable must remain outside the moderators."
     return(result)
   }
 
   if (length(options$modelTerms)==0) {
     result$ready <- FALSE
     result$report <- TRUE
-    result$reason <- glue::glue("The full model is not specified")
+    result$reason <- "The full model is not specified."
     return(result)
   }
   

@@ -5,6 +5,7 @@
 \title{GLM Mediation Model}
 \usage{
 jammGLM(
+  formula,
   data,
   dep = NULL,
   mediators = NULL,
@@ -25,9 +26,9 @@ jammGLM(
   tableOptions = list("beta", "component"),
   pathOptions = list("suggested"),
   mediatorsTerms = list(list()),
-  moderatorsTerms = list(list()),
-  meddiagram = FALSE,
-  diagram = FALSE,
+  mod_terms = list(list()),
+  model_diagram = TRUE,
+  path_diagram = FALSE,
   diag_paths = "est",
   diag_resid = FALSE,
   diag_labsize = "medium",
@@ -35,101 +36,151 @@ jammGLM(
   diag_type = "mediation",
   diag_shape = "rectangle",
   diag_abbrev = "0",
-  formula
+  moderatorsTerms = NULL
 )
 }
 \arguments{
-\item{data}{the data as a data frame}
+\item{formula}{(suggested) the regression equations of the model, one per
+endogenous variable (each mediator and the dependent variable), given either
+as a single string in lavaan style, with equations separated by semicolons or
+new lines, e.g. \code{"m ~ x; y ~ m + x"}, or as a list with one equation per
+element, as strings or formulas, e.g. \code{list("m ~ x", "y ~ m + x")} or
+\code{list(m ~ x, y ~ m + x)}. Interactions are written with \code{:} or
+\code{*} (\code{x * w} expands to \code{x + w + x:w}).
+From the equations, jamm derives \code{dep} (the variable that is only
+predicted), \code{mediators} (variables that are both predicted and
+predictors), \code{factors} (predictors that are factors in \code{data}),
+\code{covs} (the other predictors), \code{mediatorsTerms} and
+\code{modelTerms}. Any of these given explicitly takes precedence over the
+formula. Moderators are not derived from the formula: give them with
+\code{mod_terms}.}
 
-\item{dep}{a string naming the dependent variable from \code{data},
-variable must be numeric}
+\item{data}{the data as a data frame. Categorical variables used as
+\code{factors} must be factors.}
 
-\item{mediators}{a vector of strings naming the mediators from \code{data}}
+\item{dep}{a string naming the dependent variable from \code{data}; the
+variable must be numeric. Required unless \code{formula} is given.}
 
-\item{factors}{a vector of strings naming the fixed factors from
-\code{data}}
+\item{mediators}{a vector of strings naming the mediators from \code{data}.
+Required unless \code{formula} is given.}
 
-\item{covs}{a vector of strings naming the covariates from \code{data}}
+\item{factors}{a vector of strings naming the categorical independent
+variables (factors) from \code{data}. Derived from \code{formula} when it is
+given; otherwise at least one of \code{factors} or \code{covs} is required.}
 
-\item{modelTerms}{a list of character vectors describing fixed effects
-terms}
+\item{covs}{a vector of strings naming the continuous independent variables
+(covariates) from \code{data}. Derived from \code{formula} when it is
+given; otherwise at least one of \code{factors} or \code{covs} is required.}
 
-\item{ciType}{Choose the confidence interval type}
+\item{modelTerms}{a list of terms (character vectors) predicting the
+dependent variable in the full model, e.g.
+\code{list("m", "x", c("m", "w"))} for \code{y ~ m + x + m:w}.
+Required unless \code{formula} is given.}
+
+\item{ciType}{confidence interval type: \code{'standard'} (default, delta
+method), \code{'bca'} (bias-corrected bootstrap), \code{'perc'}
+(percentile bootstrap), \code{'norm'} (normal bootstrap), or \code{'none'}.}
 
 \item{ciWidth}{a number between 50 and 99.9 (default: 95) specifying the
 confidence interval width for the parameter estimates}
 
-\item{bootN}{number of bootstrap samples for estimating confidence
-intervals}
+\item{bootN}{integer number of bootstrap samples (at least 50) for estimating
+confidence intervals}
 
-\item{contrasts}{a list of lists specifying the factor and type of contrast
-to use, one of \code{'deviation'}, \code{'simple'}, \code{'difference'},
-\code{'helmert'}, \code{'repeated'} or \code{'polynomial'}}
+\item{contrasts}{the coding of each factor, one of \code{'simple'},
+\code{'deviation'}, \code{'dummy'}, \code{'difference'}, \code{'helmert'},
+\code{'repeated'} or \code{'polynomial'}, given either as a list of lists,
+e.g. \code{list(list(var = "group", type = "dummy"))}, or as a named vector,
+e.g. \code{c(group = "dummy")}. Factors not listed use \code{'simple'}
+coding (the default, as in jamovi).}
 
-\item{showRealNames}{\code{TRUE} or \code{FALSE} (default), provide raw
-names of the contrasts variables}
+\item{showRealNames}{\code{TRUE} (default) or \code{FALSE}; when the model has
+factors, show which variable each contrast is and what it compares: a
+Contrast column in the indirect and total effects table, with the comparison
+each contrast makes (e.g. \code{2 - 1}), and a Names column in the regression
+tables, with the name of each contrast variable (e.g. \code{group1}) next to
+the Effect column, which shows the comparison.}
 
 \item{showContrastCode}{\code{TRUE} or \code{FALSE} (default), provide
 contrast coefficients tables}
 
-\item{simpleScale}{\code{'mean_sd'} (default), \code{'custom'} , or
-\code{'custom_percent'}. Use to condition the covariates (if any)}
+\item{simpleScale}{\code{'mean_sd'} (default) uses the mean and offsets of
+\code{cvalue} standard deviations; \code{'percent'} uses the median and
+percentile offsets of \code{percvalue} for continuous moderators.}
 
-\item{cvalue}{offset value for conditioning}
+\item{cvalue}{standard-deviation offset for conditioning (at least 0.1)}
 
-\item{percvalue}{offset value for conditioning}
+\item{percvalue}{percentile offset from the median, between 5 and 50 (default: 25).}
 
-\item{simpleScaleLabels}{.}
+\item{simpleScaleLabels}{moderator setting labels: \code{'labels'} (default),
+\code{'values'}, or \code{'values_labels'}.}
 
-\item{scaling}{a list of lists specifying the covariates scaling, one of
-\code{'centered to the mean'}, \code{'standardized'}, or \code{'none'}.
-\code{'none'} leaves the variable as it is}
+\item{scaling}{the scaling of each covariate and mediator, one of
+\code{'centered'}, \code{'standardized'} or \code{'none'} (the variable is
+left as it is), given either as a list of lists, e.g.
+\code{list(list(var = "x", type = "standardized"))}, or as a named vector,
+e.g. \code{c(x = "standardized")}. Covariates and mediators not listed are
+centered (the default, as in jamovi).}
 
-\item{tableOptions}{.}
+\item{tableOptions}{optional table content: \code{'beta'} and \code{'component'}
+(both selected by default), and \code{'regression'}.}
 
-\item{pathOptions}{.}
+\item{pathOptions}{include \code{'suggested'} (default) to show suggested
+paths in the conceptual model diagram without changing the fitted model.}
 
-\item{mediatorsTerms}{a list of lists specifying the models for with the
-mediators as dependent variables.}
+\item{mediatorsTerms}{a list with one element per mediator, in the order of
+\code{mediators}, each a list of terms (character vectors) predicting that
+mediator, e.g. \code{list(list("x", "w", c("x", "w")))} for
+\code{m ~ x + w + x:w}. Required unless \code{formula} is given.}
 
-\item{moderatorsTerms}{a list of lists specifying the the IV which
-moderatorate each mediated effect.
+\item{mod_terms}{(optional) a list with one element per mediator, in the
+order of \code{mediators}, each listing the variables that moderate that
+mediated effect, e.g. \code{list(list("w"))}. The interactions themselves
+must be included in \code{mediatorsTerms} and \code{modelTerms} (or in
+\code{formula}). Not derived from \code{formula}.
 Categorical moderators include each factor level and an Average setting
 at the equal-level contrast centroid (zero for centered factor coding).
 Indirect effects at Average are products of the centered-factor slopes,
 not averages of the level-specific indirect effects.}
 
-\item{meddiagram}{\code{TRUE} or \code{FALSE} (default), produce a path
-diagram}
+\item{model_diagram}{\code{TRUE} (default) or \code{FALSE}; show the conceptual
+model diagram based on the specified regression terms.}
 
-\item{diagram}{\code{TRUE} or \code{FALSE} (default), produce a path
-diagram}
+\item{path_diagram}{\code{TRUE} or \code{FALSE} (default); show the statistical
+path diagram based on the fitted model.}
 
-\item{diag_paths}{Choose the diagram labels}
+\item{diag_paths}{statistical path labels: \code{'est'} (default) for
+coefficients, \code{'stand'} for standardized coefficients, \code{'name'}
+for parameter labels, or \code{'hide'} for no labels.}
 
-\item{diag_resid}{\code{TRUE} or \code{FALSE} (default), produce a path
-diagram}
+\item{diag_resid}{\code{TRUE} or \code{FALSE} (default); show residuals in
+the statistical path diagram.}
 
-\item{diag_labsize}{Choose the diagram labels}
+\item{diag_labsize}{statistical diagram node size: \code{'small'},
+\code{'medium'} (default), \code{'large'}, or \code{'vlarge'}.}
 
-\item{diag_rotate}{Choose the diagram labels}
+\item{diag_rotate}{exogenous-node position in the statistical diagram:
+\code{'1'} (top, default), \code{'2'} (left), \code{'3'} (bottom), or
+\code{'4'} (right). The mediation-like layout uses fixed positions.}
 
-\item{diag_type}{Choose the path diagram layout, including a mediation-like
-layout}
+\item{diag_type}{statistical diagram layout: \code{'mediation'} (default),
+\code{'circle'}, \code{'circle2'}, \code{'tree2'}, \code{'tree'}, or \code{'spring'}.}
 
-\item{diag_shape}{Choose the diagram labels}
+\item{diag_shape}{statistical diagram node shape: \code{'rectangle'} (default),
+\code{'square'}, \code{'circle'}, \code{'ellipse'}, or \code{'diamond'}.}
 
-\item{diag_abbrev}{Choose the diagram labels}
+\item{diag_abbrev}{minimum abbreviation length for statistical diagram node
+labels: \code{'0'} (default, no abbreviation), \code{'5'}, \code{'10'},
+\code{'15'}, \code{'20'}, or \code{'25'}.}
 
-\item{formula}{(optional) the formula to use, see the examples}
+\item{moderatorsTerms}{deprecated, use \code{mod_terms}. Accepted (with a
+warning) for scripts written for jAMM 1.x; ignored when \code{mod_terms}
+is also given.}
 }
 \value{
 A results object containing:
 \tabular{llllll}{
   \code{results$model} \tab \tab \tab \tab \tab The underlying \code{lavaan} object \cr
-  \code{results$info} \tab \tab \tab \tab \tab a html \cr
-  \code{results$extrainfo} \tab \tab \tab \tab \tab a html \cr
-  \code{results$issues} \tab \tab \tab \tab \tab a html \cr
   \code{results$infotab} \tab \tab \tab \tab \tab a table \cr
   \code{results$models$r2} \tab \tab \tab \tab \tab a table \cr
   \code{results$models$interactions} \tab \tab \tab \tab \tab a table \cr

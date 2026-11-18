@@ -59,7 +59,7 @@ Runner <- R6::R6Class(
         .regression_values = function(key, dep, terms, total = FALSE) {
             # ANOVA and coefficient providers share one fit per equation.
             if (is.null(private$.regressions[[key]]))
-                private$.regressions[[key]] <- regression_values(dep, terms, self$estimator,
+                private$.regressions[[key]] <- regression_values(dep, terms, self$estimator, self$datamatic,
                                                                self$data, self$options$ciWidth / 100, total)
             private$.regressions[[key]]
         }

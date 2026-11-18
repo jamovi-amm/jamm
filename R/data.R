@@ -1,15 +1,3 @@
-#' PATHj example data
-#'
-#' Data for testing pathj package
-#'
-#' @docType data
-#' @name pathjdata
-#' @usage data(pathjdata)
-#' @keywords datasets
-#' @examples
-#' data(pathjdata)
-NULL
-
 #' coopmedmod
 #'
 #' Data for testing mediation and moderated mediation
@@ -20,5 +8,17 @@ NULL
 #' @keywords datasets
 #' @examples
 #' data(coopmedmod)
+NULL
+
+#' pathjdata
+#'
+#' Data for testing mediation and path analysis models
+#'
+#' @docType data
+#' @name pathjdata
+#' @usage data(pathjdata)
+#' @keywords datasets
+#' @examples
+#' data(pathjdata)
 NULL
 

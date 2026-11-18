@@ -1,8 +1,8 @@
-const DEBUG=true;
+const DEBUG=false;
 
 const events = {
     update: function(ui) {
-      console.log("general update");
+      log("general update");
       initializeAll(ui, this);
     },
 
@@ -33,7 +33,7 @@ const events = {
        fromSupplierToModelTerms(ui,this);
     },
     onUpdate_modelSupplier: function(ui) {
-       console.log("modelUpated");
+       log("modelUpated");
     },
 
     onChange_mediatorsSupplier: function(ui) {
@@ -85,7 +85,7 @@ const events = {
         // Ignore notifications emitted while restoring the saved controls.
         if (this.workspace.initializing || this.workspace.revertingModerators)
             return;
-        console.log("moderators have changed");
+        log("moderators have changed");
         fromModeratorsToOthers(ui,this);
    },
   
@@ -102,7 +102,7 @@ const events = {
     },
     
      onEvent_nothing: function(ui) {
-      console.log("I did not do anything");
+      log("I did not do anything");
     },
 
 
@@ -111,6 +111,10 @@ const events = {
 
 
 var initializeAll = function(ui, context) {
+    // LEGACY (jAMM < 2.0): must run before the snapshots below. Remove with
+    // migrateLegacyModerators().
+    migrateLegacyModerators(ui, context);
+
     // Seed change tracking before supplier updates can emit change events.
     var factors = context.cloneArray(ui.factors.value(), []);
     var covariates = context.cloneArray(ui.covs.value(), []);
@@ -120,15 +124,18 @@ var initializeAll = function(ui, context) {
     context.workspace.mediatorsSupplierList = context.cloneArray(components);
     context.workspace.moderatorsSupplierList = factors.concat(covariates);
     context.workspace.mediatorsTerms = context.cloneArray(ui.mediatorsTerms.value(), []);
-    context.workspace.moderatorsTerms = context.cloneArray(ui.moderatorsTerms.value(), []);
+    context.workspace.mod_terms = context.cloneArray(ui.mod_terms.value(), []);
     context.workspace.impliedModelTerms = impliedModelTerms(ui, context);
 
     // Saved outcome terms are authoritative, even if defaults would differ.
     context.workspace.initializing = true;
     try {
        updateSuppliers(ui,context);
+       // Analyses saved with jAMM 1.x list only the covariates in `scaling`:
+       // add the mediators (centered, the default) so the panel shows them.
+       updateScaling(ui,context);
        labelize(ui.mediatorsTerms, mediators, "Mediator");
-       labelize(ui.moderatorsTerms, mediators, "Mediator");
+       labelize(ui.mod_terms, mediators, "Mediator");
     }
     finally {
        context.workspace.initializing = false;
@@ -166,7 +173,7 @@ var fromSupplierToMediatorsTerms= function(ui,context) {
          return;
      var mediators = context.cloneArray(ui.mediators.value(),[]);
      var mediatorsTerms = context.cloneArray(ui.mediatorsTerms.value(),[]);
-     var moderatorsTerms = context.cloneArray(ui.moderatorsTerms.value(),[]);
+     var mod_terms = context.cloneArray(ui.mod_terms.value(),[]);
 
      var factors =  context.cloneArray(ui.factors.value(),[]);
      var covs =  context.cloneArray(ui.covs.value(),[]);
@@ -183,8 +190,8 @@ var fromSupplierToMediatorsTerms= function(ui,context) {
          var aList = mediatorsTerms[i] === undefined ? [] : mediatorsTerms[i] ;
          var add = aList.length === 0 ? inds : removeFromList(mediators,diff.added,context);
          var add = addToList(add,aList,context);
-         light[i] = combine(moderatorsTerms[i],add,context,0);
-         light[i] = cleanInteractions(moderatorsTerms[i],light[i],context);
+         light[i] = combine(mod_terms[i],add,context,0);
+         light[i] = cleanInteractions(mod_terms[i],light[i],context);
      }
      
      // we remove the independent variables removed from the ui, if any
@@ -202,18 +209,18 @@ var fromMediatorsTerms= function(ui,context) {
 
     var mediators = context.cloneArray(ui.mediators.value(), []);
     var mediatorsTerms = context.cloneArray(ui.mediatorsTerms.value(),[]);
-    var moderatorsTerms= context.cloneArray(ui.moderatorsTerms.value(),[]);
+    var mod_terms= context.cloneArray(ui.mod_terms.value(),[]);
 
     for (var i = 0; i < mediators.length; i++)
         mediatorsTerms[i]=removeFromList(mediators[i],mediatorsTerms[i],context,1);
     
     var diff=findChangesMulti("mediatorsTerms",mediatorsTerms,context);
     if (diff.index>-1 && diff.index<mediatorsTerms.length) {
-         moderatorsTerms[diff.index]=removeFromList(diff.changes[diff.index].removed,moderatorsTerms[diff.index],context,1) ;
+         mod_terms[diff.index]=removeFromList(diff.changes[diff.index].removed,mod_terms[diff.index],context,1) ;
          mediatorsTerms[diff.index]=removeFromList(diff.changes[diff.index].removed,mediatorsTerms[diff.index],context,1) ;
        }
         ui.mediatorsTerms.setValue(mediatorsTerms);
-        ui.moderatorsTerms.setValue(moderatorsTerms);
+        ui.mod_terms.setValue(mod_terms);
 };
 var fromSupplierToModeratorsTerms= function(ui,context) {
 
@@ -221,9 +228,9 @@ var fromSupplierToModeratorsTerms= function(ui,context) {
 
      var moderatorsSupplierList = context.cloneArray(context.itemsToValues(ui.moderatorsSupplier.value()),[]);
      var diff = context.findChanges("moderatorsSupplierList",moderatorsSupplierList,context);
-     var moderatorsTerms = context.cloneArray(ui.moderatorsTerms.value(),[]);
-     var  light = removeFromMultiList(diff.removed,moderatorsTerms,context,1);
-     ui.moderatorsTerms.setValue(light);    
+     var mod_terms = context.cloneArray(ui.mod_terms.value(),[]);
+     var  light = removeFromMultiList(diff.removed,mod_terms,context,1);
+     ui.mod_terms.setValue(light);
 
 };
 
@@ -242,26 +249,26 @@ var fromSupplierToModelTerms= function(ui,context) {
 
 
 var updateModeratorsTerms= function(ui,context) {
-    console.log("update moderators");
+    log("update moderators");
 
     var mediators = context.cloneArray(ui.mediators.value(),[]);
-    var moderatorsTerms = context.cloneArray(ui.moderatorsTerms.value(),[]);
+    var mod_terms = context.cloneArray(ui.mod_terms.value(),[]);
     var light = new Array(mediators.length);
 
      for (var i = 0; i < mediators.length; i++) {
-         light[i]= moderatorsTerms[i] === undefined ? [] : moderatorsTerms[i] ;
+         light[i]= mod_terms[i] === undefined ? [] : mod_terms[i] ;
      }
     
-    ui.moderatorsTerms.setValue(light);
-    labelize(ui.moderatorsTerms,mediators, "Mediator");
+    ui.mod_terms.setValue(light);
+    labelize(ui.mod_terms,mediators, "Mediator");
 
 };
 
 
 var fromModeratorsToOthers = function(ui,context) {
-    console.log("from moderators to others");
+    log("from moderators to others");
     var mediators = context.cloneArray(ui.mediators.value(),[]);
-    var moderatorsTerms = context.cloneArray(ui.moderatorsTerms.value(),[]);
+    var mod_terms = context.cloneArray(ui.mod_terms.value(),[]);
     var mediatorsTerms = context.cloneArray(ui.mediatorsTerms.value(),[]);
     var modelTerms = context.cloneArray(ui.modelTerms.value(),[]);
     // Reserve at least one independent variable across all moderator blocks.
@@ -269,47 +276,47 @@ var fromModeratorsToOthers = function(ui,context) {
     var predictors = context.cloneArray(ui.factors.value(), []).concat(
         context.cloneArray(ui.covs.value(), []));
     var selected = [];
-    moderatorsTerms.forEach(function(block) {
+    mod_terms.forEach(function(block) {
         normalize(block).forEach(function(term) {
             selected = selected.concat(term);
         });
     });
-    var pending = findChangesMulti("moderatorsTerms",moderatorsTerms,context,false);
+    var pending = findChangesMulti("mod_terms",mod_terms,context,false);
     if (predictors.length > 0 && predictors.every(function(predictor) {
         return selected.indexOf(predictor) > -1;
     })) {
         // Reject the transfer before it can add interactions to either model.
         // Preserve removals made in the same edit, and suppress rollback events.
-        moderatorsTerms = moderatorsTerms.map(function(block, index) {
+        mod_terms = mod_terms.map(function(block, index) {
             return removeFromList(pending.changes[index].added, block, context, 0);
         });
         // A refresh can snapshot the invalid selection before this handler runs.
         // In that case there are no additions to undo: reserve the last predictor.
         var remaining = [];
-        moderatorsTerms.forEach(function(block) {
+        mod_terms.forEach(function(block) {
             normalize(block).forEach(function(term) { remaining = remaining.concat(term); });
         });
         if (predictors.every(function(predictor) { return remaining.indexOf(predictor) > -1; })) {
-            moderatorsTerms = moderatorsTerms.map(function(block) {
+            mod_terms = mod_terms.map(function(block) {
                 return removeFromList([predictors[predictors.length - 1]], block, context, 1);
             });
         }
         context.workspace.revertingModerators = true;
         try {
-            ui.moderatorsTerms.setValue(moderatorsTerms);
+            ui.mod_terms.setValue(mod_terms);
         } finally {
             context.workspace.revertingModerators = false;
         }
     }
     // Save the baseline before updating controls that can emit change events.
-    var diff = findChangesMulti("moderatorsTerms",moderatorsTerms,context,true);
+    var diff = findChangesMulti("mod_terms",mod_terms,context,true);
          if (diff.index > -1) {
           // add interactions to mediators and full model terms if there are new moderators
            for (var i = 0; i < diff.changes[diff.index].added.length; i++) {
              var newTerm=diff.changes[diff.index].added[i];
          // add interactions to mediators terms if there are new moderators
              mediatorsTerms[diff.index]=combine(mediatorsTerms[diff.index],newTerm,context,0);
-             mediatorsTerms[diff.index]=cleanInteractions(moderatorsTerms[diff.index],mediatorsTerms[diff.index],context);
+             mediatorsTerms[diff.index]=cleanInteractions(mod_terms[diff.index],mediatorsTerms[diff.index],context);
           // add interactions to full model terms if there are new moderators
           // we should add interactions with the other IV and only the selected mediator
           var others=combine(mediatorsTerms[diff.index],newTerm,context,1);
@@ -359,10 +366,10 @@ var impliedModelTerms = function(ui,context) {
      var mediatorsTerms = flatMulti(context.cloneArray(ui.mediatorsTerms.value(),[]),context);
      var modelTerms = [];
      modelTerms = addToList(mediatorsTerms,mediators,context);
-     var moderatorsTerms = context.cloneArray(ui.moderatorsTerms.value(),[]);
+     var mod_terms = context.cloneArray(ui.mod_terms.value(),[]);
      var meds=[];
      for (var i = 0; i < mediators.length; i++) {
-           var ameds=combine(moderatorsTerms[i],mediators[i],context,0);
+           var ameds=combine(mod_terms[i],mediators[i],context,0);
            meds=meds.concat(ameds);
      }
     modelTerms=addToList(unique(meds),modelTerms,context);
@@ -392,7 +399,9 @@ var updateScaling = function(ui,context) {
             list3.push(found);
     }
 
-    ui.scaling.setValue(list3);
+    // Leave a complete, unchanged list alone: restoring a file is not an edit.
+    if (JSON.stringify(list3) !== JSON.stringify(currentList))
+        ui.scaling.setValue(list3);
 };
 
 var updateContrasts = function(ui, context) {
@@ -639,6 +648,39 @@ var   cleanInteractions= function(quantum,cosmos,context){
 }
  return cosmos;
   
+};
+
+
+// ---------------------------------------------------------------------------
+// LEGACY (jAMM < 2.0): `moderatorsTerms` -> `mod_terms`
+// jAMM 1.x saved the moderators in `moderatorsTerms`. In 2.x that option is
+// hidden (no control) and kept only so old .omv files still load. jamovi still
+// exposes it here as ui.moderatorsTerms. When the panel opens, move its content
+// into `mod_terms` (unless that is already set) and empty it, so the file is
+// migrated the next time it is saved. R/legacy.R does the same on the R side,
+// which also covers analyses that are re-run without opening the panel.
+// TO REMOVE: delete this function, its call in initializeAll(), the hidden
+// option in jammglm.a.yaml and R/legacy.R.
+// ---------------------------------------------------------------------------
+var migrateLegacyModerators = function(ui, context) {
+    if (ui.moderatorsTerms === undefined)
+        return;
+    var hasTerms = function(blocks) {
+        return blocks.some(function(block) { return block && block.length > 0; });
+    };
+    var legacy = context.cloneArray(ui.moderatorsTerms.value(), []);
+    if ( ! hasTerms(legacy))
+        return;
+    var wasInitializing = context.workspace.initializing;
+    context.workspace.initializing = true;
+    try {
+        if ( ! hasTerms(context.cloneArray(ui.mod_terms.value(), [])))
+            ui.mod_terms.setValue(legacy);
+        ui.moderatorsTerms.setValue([[]]);
+    }
+    finally {
+        context.workspace.initializing = wasInitializing;
+    }
 };
 
 

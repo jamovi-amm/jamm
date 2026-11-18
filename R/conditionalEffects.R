@@ -1,7 +1,7 @@
 # Moderator settings use the same transformed columns and contrast coding as
 # the fitted model, rather than assuming that every moderator is centered.
 moderator_settings <- function(options, datamatic, data = NULL) {
-    moderators <- unique(unlist(options$moderatorsTerms))
+    moderators <- unique(unlist(options$mod_terms))
     settings <- lapply(moderators, function(moderator) {
         if (moderator %in% options$factors) {
             levels <- datamatic$factors_levels[[moderator]]
@@ -32,10 +32,12 @@ moderator_settings <- function(options, datamatic, data = NULL) {
         } else {
             c(paste0("Mean - ", options$cvalue, " SD"), "Mean", paste0("Mean + ", options$cvalue, " SD"))
         }
+        # The model uses the scaled column; labels show the moderator's own values.
+        shown <- format(round(datamatic$original_value(moderator, values), 3), trim = TRUE)
         if (options$simpleScaleLabels == "values")
-            labels <- format(round(values, 3), trim = TRUE)
+            labels <- shown
         if (options$simpleScaleLabels == "values_labels")
-            labels <- paste(labels, format(round(values, 3), trim = TRUE), sep = " = ")
+            labels <- paste(labels, shown, sep = " = ")
         lapply(seq_along(values), function(index) {
             list(values = stats::setNames(values[[index]], column),
                  label = paste(moderator, labels[[index]], sep = " = "))
@@ -73,13 +75,19 @@ conditional_effects <- function(options, datamatic, parameters, chains, data = N
         paste0("(", paste(summands, collapse = "+"), ")")
     }
     rows <- list()
-    add <- function(type, effect, expression, condition, from, to) {
+    # fixed = TRUE marks a direct effect the full model fixes to 0: it is shown
+    # in the table but is not defined as a lavaan parameter.
+    add <- function(type, effect, expression, condition, from, to, fixed = FALSE) {
         scale <- if (is.null(data)) NA_real_ else stats::sd(data[[from]]) / stats::sd(data[[to]])
+        # The Contrast column: the comparison of the factor contrast the effect
+        # starts from, empty for continuous variables.
+        contrast <- contrast_comparison(from, datamatic)
         rows[[length(rows) + 1]] <<- list(
             parameter = paste0("CE", length(rows) + 1), type = type, effect = effect,
-            expression = expression, condition = condition, scale = scale)
+            expression = expression, condition = condition, scale = scale, fixed = fixed,
+            contrast = if (is.null(contrast)) "" else contrast)
     }
-    endpoints <- vapply(chains, function(chain) paste(chain[[1]], tail(chain, 1), sep = ":"), character(1))
+    endpoints <- vapply(chains, function(chain) paste(chain[[1]], utils::tail(chain, 1), sep = ":"), character(1))
     for (setting in moderator_settings(options, datamatic, data)) {
         products <- character(length(chains))
         for (index in seq_along(chains)) {
@@ -89,7 +97,7 @@ conditional_effects <- function(options, datamatic, parameters, chains, data = N
             }, character(1))
             products[[index]] <- paste(components, collapse = "*")
             add("Indirect", paste(fromb64(chain), collapse = " \U21d2 "), products[[index]],
-                setting$label, chain[[1]], tail(chain, 1))
+                setting$label, chain[[1]], utils::tail(chain, 1))
             if ("component" %in% options$tableOptions) {
                 for (edge in seq_along(components)) {
                     add("Component", paste(fromb64(chain[c(edge, edge + 1)]), collapse = " \U21d2 "),
@@ -101,12 +109,21 @@ conditional_effects <- function(options, datamatic, parameters, chains, data = N
             matching <- which(endpoints == endpoint)
             chain <- chains[[matching[[1]]]]
             from <- chain[[1]]
-            to <- tail(chain, 1)
+            to <- utils::tail(chain, 1)
             label <- paste(fromb64(c(from, to)), collapse = " \U21d2 ")
             direct <- slope(from, to, setting$values)
-            add("Direct", label, direct, setting$label, from, to)
-            add("Total", label, paste(c(direct, products[matching]), collapse = "+"),
-                setting$label, from, to)
+            # slope() returns "0" when the full model has no direct path X -> Y
+            # (full mediation): the Direct row shows it fixed to 0, as for
+            # unmoderated models, and the total is the sum of the indirect effects.
+            if (direct == "0") {
+                add("Direct", label, "0", setting$label, from, to, fixed = TRUE)
+                add("Total", label, paste(products[matching], collapse = "+"),
+                    setting$label, from, to)
+            } else {
+                add("Direct", label, direct, setting$label, from, to)
+                add("Total", label, paste(c(direct, products[matching]), collapse = "+"),
+                    setting$label, from, to)
+            }
         }
     }
     rows

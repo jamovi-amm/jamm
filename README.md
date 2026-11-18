@@ -1,7 +1,7 @@
 # jAMM: A Suite for Mediation Models
 
 jamovi Advanced Mediation Models 
-version 1.*
+version 2.*
 
 # Docs and help
 
@@ -40,6 +40,11 @@ classes. `R/jammglm.f.R` maintains the public `jammGLM()` R interface and its
 documentation. As in GAMLj, `export: false` in `jamovi/jammglm.a.yaml` prevents
 the jamovi compiler from generating a duplicate interface in the header;
 the function remains exported through its roxygen declaration and `NAMESPACE`.
+
+For the reusable state-only image rendering lifecycle, see
+[the plot-state pattern](docs/plot-state-pattern.md). Both model and path diagrams
+store drawing data and options rather than depending on a previously run
+analysis instance during export.
 
 ## Conditional mediation effects
 

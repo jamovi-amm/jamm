@@ -44,17 +44,25 @@ mark <- function(...) {
   
 }
 
-is.something <- function(x, ...) UseMethod(".is.something")
-
-.is.something.default <- function(obj) (!is.null(obj))
-
-.is.something.list <- function(obj) (length(obj) > 0)
-
-.is.something.numeric <- function(obj) (length(obj) > 0)
-
-.is.something.character <- function(obj) (length(obj) > 0)
-
-.is.something.logical <- function(obj) !is.na(obj)
+# Returns FALSE for "empty" values: NULL, zero-length vectors and lists, NA.
+# Chooses the rule with plain tests rather than UseMethod(".is.something"): a
+# generic whose method prefix (".is.something") differs from its own name only
+# dispatches when called by name, and fails with "no applicable method" from the
+# console or when passed as a function (Filter(is.something, x)).
+# Results are identical to the former S3 methods, including two quirks: a logical
+# vector gives one value per element, and objects with their own class (factor,
+# data.frame, formula, R6, S4, ...) always count as something.
+is.something <- function(x, ...) {
+  if (is.null(x))
+    return(FALSE)
+  if (is.object(x) && !inherits(x, c("list", "numeric", "integer", "character", "logical")))
+    return(TRUE)
+  if (is.logical(x))
+    return(!is.na(x))
+  if (is.list(x) || is.numeric(x) || is.character(x))
+    return(length(x) > 0)
+  TRUE
+}
 
 is.there<-function(pattern,string) length(grep(pattern,string,fixed=T))>0
 
@@ -97,81 +105,22 @@ try_hard<-function(exp,max_warn=5, silent=FALSE) {
   return(.results)
 }
 
-#### handle b64
 
-tob64<- function(x,...) UseMethod(".tob64")
 
-.tob64.default<-function(obj,ref=NULL) {
-  
-  if (is.null(obj))
-    return()
-  
-  if (is.null(ref)) {
-    obj<-jmvcore::toB64(obj)
-  } else {
-    for (r in ref) {
-      reg<-paste0("(?<=[\\s*~=]|^)",r,"(?=[\\s*~=]|$)")
-      obj<-stringr::str_replace_all(obj,reg,jmvcore::toB64(r))
-    }
-  }
-  obj
+# Chooses the method the way UseMethod() would (the first class of the option
+# that has a method), but without UseMethod(".sourcifyOption"): a generic whose
+# method prefix differs from its own name only dispatches when called by name,
+# and fails with "no applicable method" from the console or as a callback.
+sourcifyOption<- function(x,...) {
+  methods<-list(OptionVariables=.sourcifyOption.OptionVariables,
+                OptionTerms=.sourcifyOption.OptionTerms,
+                OptionArray=.sourcifyOption.OptionArray,
+                OptionList=.sourcifyOption.OptionList)
+  for (cl in class(x))
+    if (cl %in% names(methods))
+      return(methods[[cl]](x,...))
+  .sourcifyOption.default(x,...)
 }
-
-.tob64.list<-function(obj,ref=NULL) {
-  lapply(obj,bogustob64,ref)
-}
-
-bogustob64<-function(obj,ref) tob64(obj,ref)
-
-fromb64<- function(x,...) UseMethod(".fromb64")
-
-.fromb64.default<-function(obj,ref=NULL) {
-  
-  if (!is.something(obj))
-    return(obj)
-  
-  if (length(obj)>1)
-    return(unlist(sapply(obj, bogusfromb64,ref=ref,USE.NAMES = F)))
-  
-  int<-strsplit(obj,INTERACTION_SYMBOL,fixed=T)[[1]]
-  if (length(int)>1)
-    return(paste0(unlist(sapply(int,bogusfromb64,ref=ref)),collapse = ":"))
-  
-  if (is.null(ref)) {
-    fac<-strsplit(obj,FACTOR_SYMBOL,fixed=T)[[1]]
-    if (length(fac)==0)
-      return(obj)
-    encoded<-fac[[1]]
-    if (!grepl("^X[A-Za-z0-9._]*$",encoded))
-      return(obj)
-    decoded<-tryCatch({
-      value<-jmvcore::fromB64(encoded)
-      if (identical(jmvcore::toB64(value),encoded)) value else NULL
-    },error=function(error) NULL)
-    if (is.null(decoded))
-      return(obj)
-    obj<-decoded
-    if (length(fac)>1) obj<-paste0(obj,fac[[2]])
-  } else {
-    for (r in ref)
-      obj<-gsub(jmvcore::toB64(r),r,obj,fixed = T)
-    obj<-gsub(FACTOR_SYMBOL,"",obj,fixed = T)
-    obj<-gsub(INTERACTION_SYMBOL,":",obj,fixed = T)
-  }
-  
-  obj
-}
-
-.fromb64.list<-function(obj,ref=NULL) {
-  lapply(obj,bogusfromb64,ref=ref)
-}
-
-bogusfromb64<-function(obj,ref=NULL) fromb64(obj,ref=ref)
-
-### end
-
-
-sourcifyOption<- function(x,...) UseMethod(".sourcifyOption")
 
 .sourcifyOption.default=function(option,def=NULL) {
   
@@ -208,15 +157,22 @@ sourcifyOption<- function(x,...) UseMethod(".sourcifyOption")
      .sourcifyOption.default(option,def)
   
 .sourcifyOption.OptionArray<-function(option,def=NULL) {
+  
   alist<-option$value
   if (length(alist)==0)
-      return('')
+    return('')
   if (is.something(def) & option$name %in% names(def)) {
     test<-all(sapply(alist,function(a) a$type)==def[[option$name]])
     if (test)
       return('')
   }
-  paste0(option$name,"=c(",paste(sapply(alist,function(a) paste0(sourcifyName(a$var),' = \"',a$type,'\"')),collapse=", "),")")
+  test<-all(sapply(alist,function(a) ("var" %in% names(a) & "type" %in% names(a))))
+  if (test)
+    return(paste0(option$name,"=c(",paste(sapply(alist,function(a) paste0(sourcifyName(a$var),' = \"',a$type,'\"')),collapse=", "),")"))
+  test<-all(sapply(alist,function(a) length(a)==0))
+  if (test) 
+     return('')
+  return(.sourcifyOption.default(option, def))
 }
 
 
@@ -306,72 +262,6 @@ ebind_square<-function(...) {
 }
 
 
-sourcifyOption<- function(x,...) UseMethod(".sourcifyOption")
-
-.sourcifyOption.default=function(option,def=NULL) {
-  
-  if (option$name == 'data')
-    return('data = data')
-  
-  if (startsWith(option$name, 'results/'))
-    return('')
-  
-  value <- option$value
-  def <- option$default
-  
-  if ( ! ((is.numeric(value) && isTRUE(all.equal(value, def))) || base::identical(value, def))) {
-    valueAsSource <- option$valueAsSource
-    if ( ! identical(valueAsSource, ''))
-      return(paste0(option$name, ' = ', valueAsSource))
-  }
-  ''
-}
-.sourcifyOption.OptionVariables<-function(option,def=NULL) {
-  
-  if (is.null(option$value))
-    return('')
-  
-  values<-sourcifyName(option$value)
-  
-  if (length(values)==1)
-    return(paste0(option$name,"=",values))
-  else
-    return(paste0(option$name,"=c(",paste0(values,collapse = ","),")"))
-}
-
-.sourcifyOption.OptionTerms<-function(option,def=NULL)
-  .sourcifyOption.default(option,def)
-
-.sourcifyOption.OptionArray<-function(option,def=NULL) {
-  alist<-option$value
-  if (length(alist)==0)
-    return('')
-  if (is.something(def) & option$name %in% names(def)) {
-    test<-all(sapply(alist,function(a) a$type)==def[[option$name]])
-    if (test)
-      return('')
-  }
-  paste0(option$name,"=c(",paste(sapply(alist,function(a) paste0(sourcifyName(a$var),' = \"',a$type,'\"')),collapse=", "),")")
-}
-
-
-.sourcifyOption.OptionList<-function(option,def=NULL) {
-  
-  if (length(option$value)==0)
-    return('')
-  if (option$value==option$default)
-    return('')
-  paste0(option$name,"='",option$value,"'")
-}
-
-
-sourcifyName<-function(name) {
-  
-  what<-which(make.names(name)!=name)
-  for (i in what)
-    name[[i]]<-paste0('"',name[[i]],'"')
-  name
-}
 
 
 
@@ -421,6 +311,10 @@ is.joption <- function(obj, option) {
 
 ### formatting and stuff ###
 
+quote_name <- function(value) {
+  encodeString(value, quote = '"')
+}
+
 format5<-function(x) format(x,digits=5)
 
 
@@ -461,5 +355,18 @@ escape_regex <- function(x) {
   for (char in special)
     x <- gsub(char, paste0("\\", char), x, fixed=TRUE)
   x
+}
+
+.setContent <- function(element, value) {
+  if (requireNamespace("knitr", quietly = TRUE)) {
+    progress <- knitr::opts_knit$get("progress")
+    knitr::opts_knit$set(progress = FALSE)
+    on.exit(knitr::opts_knit$set(progress = progress))
+  }
+  element$setContent(value)
+}
+
+dispatch_message_cleaner <- function(jmvobj) {
+  lapply(jmvobj$results$items, function(x) if ("Html" %in% class(x)) .setContent(x, " "))
 }
 
