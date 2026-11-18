@@ -351,18 +351,12 @@ Syntax <- R6::R6Class(
               models<-lapply(seq_along(terms), function(i)
                 jmvcore::constructFormula(dep=endogenous[i],terms[[i]]))
               
-              private$.lav_models<-lapply(models,function(m) {
-                res<-gsub(":",INTERACTION_SYMBOL,m)
-                if (res!=m) {
-                  self$hasInteractions=TRUE
-                  int<-strsplit(res,"+",fixed = T)[[1]]
-
-                  ind<-grep(INTERACTION_SYMBOL,int,fixed = TRUE)
-                  for (j in ind)
-                    self$interactions[[length(self$interactions)+1]]<-trimws(int[j])
-                }
-                res
-              })
+              interactions<-Filter(function(term) length(term)>1, unlist(terms,recursive=FALSE))
+              self$interactions<-unique(lapply(interactions, function(term)
+                paste(term,collapse=INTERACTION_SYMBOL)))
+              self$hasInteractions<-length(self$interactions)>0
+              private$.lav_models<-lapply(models,function(model)
+                gsub(":",INTERACTION_SYMBOL,model,fixed=TRUE))
             
             },
             

@@ -32,10 +32,12 @@ moderator_settings <- function(options, datamatic, data = NULL) {
         } else {
             c(paste0("Mean - ", options$cvalue, " SD"), "Mean", paste0("Mean + ", options$cvalue, " SD"))
         }
+        # The model uses the scaled column; labels show the moderator's own values.
+        shown <- format(round(datamatic$original_value(moderator, values), 3), trim = TRUE)
         if (options$simpleScaleLabels == "values")
-            labels <- format(round(values, 3), trim = TRUE)
+            labels <- shown
         if (options$simpleScaleLabels == "values_labels")
-            labels <- paste(labels, format(round(values, 3), trim = TRUE), sep = " = ")
+            labels <- paste(labels, shown, sep = " = ")
         lapply(seq_along(values), function(index) {
             list(values = stats::setNames(values[[index]], column),
                  label = paste(moderator, labels[[index]], sep = " = "))

@@ -14,6 +14,10 @@ Datamatic <- R6::R6Class(
     contrasts_names=NULL,
     continuous=NULL,
     continuous_scale=NULL,
+    # Mean and SD removed by each continuous variable's scaling, set by
+    # cleandata(): original value = model value * spread + center.
+    continuous_center=list(),
+    continuous_spread=list(),
     initialize=function(jmvobj,data=jmvobj$data) {
       super$initialize(jmvobj)
       options<-self$options
@@ -41,7 +45,11 @@ Datamatic <- R6::R6Class(
         cont64<-tob64(cont)
         if (inherits(data64[[cont64]],"factor"))
               private$.warn_categorical(cont,data64[[cont64]])
-        data64[[cont64]] <- private$.continuous_value(data64[[cont64]],self$continuous_scale[[cont]])
+        method<-self$scaling_method(cont)
+        raw<-jmvcore::toNumeric(data64[[cont64]])
+        self$continuous_center[[cont]]<-if (method %in% c("centered","standardized")) mean(raw) else 0
+        self$continuous_spread[[cont]]<-if (method=="standardized") stats::sd(raw) else 1
+        data64[[cont64]] <- private$.continuous_value(data64[[cont64]],method)
       }
       for (factor in self$factors) {
         factor64<-tob64(factor)
@@ -65,10 +73,23 @@ Datamatic <- R6::R6Class(
         
       data64<-as.data.frame(data64)     
       return(data64)
-      
-      
-      
-        
+    },
+    # The scaling of a covariate or mediator. A variable missing from `scaling`
+    # is centered, the documented default: analyses saved with jAMM 1.x list
+    # only the covariates there, never the mediators.
+    scaling_method=function(var) {
+      if (var %in% names(self$continuous_scale))
+        return(self$continuous_scale[[var]])
+      "centered"
+    },
+    # A value of a continuous variable on its original scale, from its value on
+    # the scale used in the model (centered or standardized by cleandata()).
+    original_value=function(var, value) {
+      center<-self$continuous_center[[var]]
+      spread<-self$continuous_spread[[var]]
+      if (is.null(center) || is.null(spread))
+        return(value)
+      value*spread+center
     }
     ), ### end of public
    private=list(

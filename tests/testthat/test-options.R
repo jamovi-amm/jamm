@@ -459,7 +459,32 @@ test_that("cvalue sets the number of standard deviations and values labels show 
                        mod_terms = list(list("SVO")), cvalue = 2, simpleScaleLabels = "values")
     s <- 2 * stats::sd(coopmedmod$SVO)
     expect_identical(unique(results$models$coefficients$asDF$condition),
-                     paste("SVO =", format(round(c(-s, 0, s), 3), trim = TRUE)))
+                     paste("SVO =", format(round(mean(coopmedmod$SVO) + c(-s, 0, s), 3), trim = TRUE)))
+})
+
+test_that("values labels show the moderator's own values, not the centered ones", {
+    data <- coopmedmod
+    data$W <- data$SVO + 10
+    formula <- "EXP ~ cprime*W; BEH ~ EXP + cprime*W"
+    s <- stats::sd(data$W)
+    for (scaling in c("centered", "standardized", "none")) {
+        meanSD <- jammGLM(formula = formula, data = data, mod_terms = list(list("W")),
+                          scaling = c(W = scaling), simpleScaleLabels = "values")
+        expect_identical(unique(meanSD$models$coefficients$asDF$condition),
+                         paste("W =", format(round(mean(data$W) + c(-s, 0, s), 3), trim = TRUE)),
+                         info = scaling)
+        percent <- jammGLM(formula = formula, data = data, mod_terms = list(list("W")),
+                           scaling = c(W = scaling), simpleScale = "percent",
+                           simpleScaleLabels = "values_labels")
+        values <- format(round(stats::quantile(data$W, c(.25, .5, .75)), 3), trim = TRUE)
+        expect_identical(unique(percent$models$coefficients$asDF$condition),
+                         paste0("W = ", c("25%", "50%", "75%"), " = ", values), info = scaling)
+    }
+    # Only the labels change: the effects are still computed on the model's scale.
+    shifted <- jammGLM(formula = formula, data = data, mod_terms = list(list("W")))
+    original <- jammGLM(formula = "EXP ~ cprime*SVO; BEH ~ EXP + cprime*SVO", data = coopmedmod,
+                        mod_terms = list(list("SVO")))
+    expect_equal(shifted$models$coefficients$asDF$est, original$models$coefficients$asDF$est)
 })
 
 test_that("simpleScale 'percent' conditions on percentiles set by percvalue", {
@@ -468,8 +493,7 @@ test_that("simpleScale 'percent' conditions on percentiles set by percvalue", {
                           modelTerms = list("EXP", "cprime", "SVO", c("EXP", "SVO"), c("cprime", "SVO")),
                           mod_terms = list(list("SVO")), simpleScale = "percent", percvalue = 10,
                           simpleScaleLabels = "values_labels")
-    centered <- coopmedmod$SVO - mean(coopmedmod$SVO)
-    values <- format(round(stats::quantile(centered, c(.4, .5, .6)), 3), trim = TRUE)
+    values <- format(round(stats::quantile(coopmedmod$SVO, c(.4, .5, .6)), 3), trim = TRUE)
     expect_identical(unique(withValues$models$coefficients$asDF$condition),
                      paste0("SVO = ", c("40%", "50%", "60%"), " = ", values))
     labelsOnly <- jammGLM(data = coopmedmod, dep = "BEH", mediators = "EXP", covs = c("cprime", "SVO"),

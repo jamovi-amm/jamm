@@ -75,8 +75,15 @@ regression_values <- function(dep, terms, estimator, datamatic, data, ciWidth, t
     formula <- estimator$modelFormula64(dep, terms)
     tables <- .regression_tables(formula, data, ciWidth)
     layout <- regression_layout(dep, terms, estimator, datamatic, total)
+    term_key <- function(term) paste(sort(term), collapse = ":")
+    coefficient_keys <- vapply(strsplit(rownames(tables[[1]]), ":", fixed = TRUE),
+                               term_key, character(1))
+    term_keys <- vapply(estimator$expandTerms(terms, b64 = TRUE), term_key, character(1))
+    matched <- match(term_keys, coefficient_keys)
+    if (anyNA(matched))
+        stop("Regression terms could not be matched to fitted coefficients.", call. = FALSE)
     rows <- lapply(seq_along(layout$regression), function(index) {
-        c(layout$regression[[index]], as.list(tables[[1]][index, , drop = FALSE]))
+        c(layout$regression[[index]], as.list(tables[[1]][matched[[index]], , drop = FALSE]))
     })
     list(anova = list(c(layout$anova[[1]], tables[[2]])), regression = rows)
 }

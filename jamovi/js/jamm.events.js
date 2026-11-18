@@ -131,6 +131,9 @@ var initializeAll = function(ui, context) {
     context.workspace.initializing = true;
     try {
        updateSuppliers(ui,context);
+       // Analyses saved with jAMM 1.x list only the covariates in `scaling`:
+       // add the mediators (centered, the default) so the panel shows them.
+       updateScaling(ui,context);
        labelize(ui.mediatorsTerms, mediators, "Mediator");
        labelize(ui.mod_terms, mediators, "Mediator");
     }
@@ -396,7 +399,9 @@ var updateScaling = function(ui,context) {
             list3.push(found);
     }
 
-    ui.scaling.setValue(list3);
+    // Leave a complete, unchanged list alone: restoring a file is not an edit.
+    if (JSON.stringify(list3) !== JSON.stringify(currentList))
+        ui.scaling.setValue(list3);
 };
 
 var updateContrasts = function(ui, context) {

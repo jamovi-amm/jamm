@@ -39,6 +39,6 @@ datasets:
       - Mediation
       - Path Analysis
 usesNative: true
-minApp: 1.0.8
+minApp: 2.5.0
 
 ...

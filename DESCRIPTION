@@ -11,7 +11,7 @@ Encoding: UTF-8
 LazyData: true
 Imports:
     diagram,
-    jmvcore (>= 0.8.0),
+    jmvcore (>= 2.4.7),
     lavaan (>= 0.6-21),
     methods,
     R6,

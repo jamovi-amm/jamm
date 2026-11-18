@@ -321,3 +321,45 @@ test_that("the menu entry is defined in the analysis file and matches the manife
     expect_identical(read_jamovi_yaml("0000.yaml")$version,
                      as.character(utils::packageVersion("jamm")))
 })
+
+# ---- files saved by jAMM 1.x: scaling without the mediators -------------------
+
+test_that("a jAMM 1.x scaling list (covariates only) runs, centering the mediators", {
+    # jAMM 1.x put only the covariates in `scaling`; jamovi restores it as saved.
+    old <- jammGLMOptions$new(dep = "BEH", mediators = "EXP", covs = "SVO",
+                              mediatorsTerms = list(list("SVO")), modelTerms = list("EXP", "SVO"),
+                              scaling = list(list(var = "SVO", type = "standardized")))
+    analysis <- jammGLMClass$new(options = old, data = coopmedmod)
+    expect_no_error(analysis$run())
+    complete <- jammGLMOptions$new(dep = "BEH", mediators = "EXP", covs = "SVO",
+                                   mediatorsTerms = list(list("SVO")), modelTerms = list("EXP", "SVO"),
+                                   scaling = list(list(var = "SVO", type = "standardized"),
+                                                  list(var = "EXP", type = "centered")))
+    reference <- jammGLMClass$new(options = complete, data = coopmedmod)
+    reference$run()
+    expect_equal(analysis$results$models$coefficients$asDF, reference$results$models$coefficients$asDF)
+})
+
+test_that("opening the panel adds the mediators to a 1.x scaling list, keeping saved choices", {
+    engine <- events_engine()
+    engine$eval("
+        var copy = function(value) { return JSON.parse(JSON.stringify(value)); };
+        var sets = 0;
+        var control = function(value) {
+            return { current: value, value: function() { return this.current; },
+                     setValue: function(value) { sets++; this.current = copy(value); } };
+        };
+        var context = { cloneArray: function(value, fallback) { return copy(value === undefined ? fallback : value); } };
+        var ui = { covs: control(['SVO']), mediators: control(['EXP']),
+                   scaling: control([{ var: 'SVO', type: 'standardized' }]) };
+        updateScaling(ui, context);
+        var repaired = JSON.stringify(ui.scaling.value());
+        var setsAfterRepair = sets;
+        updateScaling(ui, context);
+    ")
+    expect_identical(engine$get("repaired"),
+                     '[{"var":"SVO","type":"standardized"},{"var":"EXP","type":"centered"}]')
+    # A complete list is left alone, so restoring a 2.x file changes no option.
+    expect_identical(engine$get("setsAfterRepair"), 1L)
+    expect_identical(engine$get("sets"), 1L)
+})
