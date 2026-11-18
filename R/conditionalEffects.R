@@ -113,7 +113,7 @@ conditional_effects <- function(options, datamatic, parameters, chains, data = N
             label <- paste(fromb64(c(from, to)), collapse = " \U21d2 ")
             direct <- slope(from, to, setting$values)
             # slope() returns "0" when the full model has no direct path X -> Y
-            # (full mediation): the Direct row shows it fixed to 0, as for
+            # (untested unsaturated model): the Direct row shows it fixed to 0, as for
             # unmoderated models, and the total is the sum of the indirect effects.
             if (direct == "0") {
                 add("Direct", label, "0", setting$label, from, to, fixed = TRUE)

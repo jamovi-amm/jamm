@@ -189,8 +189,10 @@ sourcifyOption<- function(x,...) {
 sourcifyName<-function(name) {
   
   what<-which(make.names(name)!=name)
+  # quote_name() escapes quotes and backslashes, so a name cannot break out
+  # of its string literal in the generated syntax.
   for (i in what)
-    name[[i]]<-paste0('"',name[[i]],'"')
+    name[[i]]<-quote_name(name[[i]])
   name
 }
 

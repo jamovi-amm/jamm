@@ -263,7 +263,7 @@ Syntax <- R6::R6Class(
               # Indirect and total effects are found by their parameter names
               # (IE1, IE2, ... from .indirect(); TOT1, TOT2, ... from .total(), in
               # the same order), not by their expression: lavaan expands a total
-              # made of a single indirect effect (TOT1 := IE1, full mediation)
+              # made of a single indirect effect (TOT1 := IE1, untested unsaturated model)
               # into the same expression as that indirect effect.
               for (i in seq_along(self$indirect_names)) {
                 arow<-.lav_structure[.lav_structure$op==":=" & .lav_structure$lhs==paste0("IE",i),]
