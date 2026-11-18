@@ -148,3 +148,22 @@ test_that("messages from lavaan name the variables, not their internal codes", {
     expect_false(grepl("b_b_b", message, fixed = TRUE))
     expect_false(grepl("XU1ZP", message, fixed = TRUE))
 })
+
+test_that("jamovi's syntax works when the dependent variable and mediators have non-syntactic names", {
+    data <- coopmedmod
+    names(data)[names(data) == "BEH"] <- "my behaviour"
+    names(data)[names(data) == "EXP"] <- "exp-1"
+    names(data)[names(data) == "SVO"] <- "S V O (é)"
+    options <- jammGLMOptions$new(dep = "my behaviour", mediators = "exp-1", covs = c("cprime", "S V O (é)"),
+        mediatorsTerms = list(list("cprime", "S V O (é)", c("cprime", "S V O (é)"))),
+        modelTerms = list("exp-1", "cprime", "S V O (é)", c("cprime", "S V O (é)")),
+        mod_terms = list(list("S V O (é)")), tableOptions = list("regression"),
+        scaling = lapply(c("cprime", "S V O (é)", "exp-1"), function(v) list(var = v, type = "centered")))
+    analysis <- jammGLMClass$new(options = options, data = data)
+    analysis$init()
+    analysis$run()
+    # The left-hand sides of the generated formulas must keep their backticks.
+    fromSyntax <- eval(parse(text = analysis$asSource()), list(data = data))
+    expect_equal(fromSyntax$models$coefficients$asDF, analysis$results$models$coefficients$asDF)
+    expect_equal(fromSyntax$regressions$full$regression$asDF, analysis$results$regressions$full$regression$asDF)
+})

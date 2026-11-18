@@ -226,11 +226,6 @@ jammGLM <- function(
                 formula=formula,
                 data=`if`( ! missing(data), data, NULL),
                 name="modelTerms")
-        if (missing(mod_terms))
-            mod_terms <- jammGLMClass$private_methods$.marshalFormula(
-                formula=formula,
-                data=`if`( ! missing(data), data, NULL),
-                name="mod_terms")
         if (missing(simpleScale))
             simpleScale <- jammGLMClass$private_methods$.marshalFormula(
                 formula=formula,

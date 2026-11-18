@@ -10,10 +10,11 @@
 #   R/jammglm.b.R            call to migrate_legacy_options() in .init(), and
 #                            the skip in .sourcifyOption()
 #   R/jammglm.f.R            deprecated `moderatorsTerms` argument
-#   tests/testthat/test-legacy-options.R
+#   tests/testthat/test-options.R and tests/testthat/test-jamovi-guards.R
+#                            (the tests mentioning moderatorsTerms)
 #
-# TO REMOVE when the deprecation takes effect: delete this file and the test
-# file, delete every block tagged "LEGACY (jAMM < 2.0)" (grep for it), then run
+# TO REMOVE when the deprecation takes effect: delete this file and those
+# tests, delete every block tagged "LEGACY (jAMM < 2.0)" (grep for it), then run
 # jmvtools::prepare() to regenerate R/jammglm.h.R.
 # ============================================================================
 

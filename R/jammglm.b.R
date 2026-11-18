@@ -25,7 +25,6 @@ jammGLMClass <- R6::R6Class(
             }
 
             # Set up the R6 workhorse classes, retaining jAMM's data API.
-            dispatch_message_cleaner(self)
             data_machine <- Datamatic$new(self)
             runner_machine <- Runner$new(self, data_machine)
             private$.smartObjs <- list()

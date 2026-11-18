@@ -6,7 +6,7 @@ jms: '1.0'
 authors:
   - Marcello Gallucci
 maintainer: Marcello Gallucci <mcfanda@gmail.com>
-date: 2019-1-1
+date: '2026-11-18'
 type: R
 description: >-
   A suite for the estimation of mediational models, including multiple
@@ -33,8 +33,8 @@ datasets:
   - name: pathjdata
     path: pathjdata.csv
     description: >-
-      Mute dataset with several continuous and two categorical variables to test
-      mediation and path analysis models
+      Simulated dataset with several continuous and two categorical variables to
+      test mediation and path analysis models
     tags:
       - Mediation
       - Path Analysis

@@ -76,6 +76,8 @@ Syntax <- R6::R6Class(
                 private$.check_models()
                 ### check if there are interactions and warn if variables are not centered
                 private$.check_interactions()
+                ### suggest more bootstrap samples when few are requested
+                private$.check_bootstrap()
                 ### check and build constraints and defined parameter lavaan directives
                 private$.check_constraints()
 
@@ -383,6 +385,18 @@ Syntax <- R6::R6Class(
                             }
                             
 
+            },
+            .check_bootstrap=function() {
+                            types<-c(bca="bias-corrected",perc="percentile",norm="normal")
+                            if (!(self$options$ciType %in% names(types)))
+                                    return()
+                            w<-gsub("{type}",types[[self$options$ciType]],WARNS[["bootci"]],fixed = TRUE)
+                            w<-gsub("{n}",self$options$bootN,w,fixed = TRUE)
+                            self$warning<-list(topic="models_coefficients",message=w)
+                            if (self$options$bootN >= 5000)
+                                    return()
+                            w<-gsub("{n}",self$options$bootN,WARNS[["fewboot"]],fixed = TRUE)
+                            self$warning<-list(topic="infotab",message=w)
             },
             .factorlist=function(terms,factorslen) {
               for (f in names(factorslen)) {

@@ -1,13 +1,4 @@
 
-.setContent <- function(element, value) {
-  if (requireNamespace("knitr", quietly = TRUE)) {
-    progress <- knitr::opts_knit$get("progress")
-    knitr::opts_knit$set(progress = FALSE)
-    on.exit(knitr::opts_knit$set(progress = progress))
-  }
-  element$setContent(value)
-}
-
 ginfo<-function(what=NULL,obj=NULL) {
   if (j_INFO) {
     if (!is.null(what))
@@ -30,7 +21,10 @@ expand.formula<-function(aform) {
             aform<-stats::as.formula(aform)
             if (length(aform) != 3)
               stop("Each equation must have a dependent variable and predictors, for example 'y ~ x'.", call. = FALSE)
-            af<-paste(aform[[2]],paste(attr(stats::terms(aform),"term.labels"),collapse = " + "),sep=" ~ ")
+            # deparse() keeps the backticks of a non-syntactic name (`my var`);
+            # paste() on the symbol would drop them and break the formula.
+            lhs<-paste(deparse(aform[[2]],backtick=TRUE),collapse=" ")
+            af<-paste(lhs,paste(attr(stats::terms(aform),"term.labels"),collapse = " + "),sep=" ~ ")
             af<-stats::as.formula(af)
             af
 }

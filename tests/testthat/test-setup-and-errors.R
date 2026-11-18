@@ -65,3 +65,39 @@ test_that("a model without indirect paths says so and still estimates", {
 })
 
 # Models that do not converge: see test-convergence.R.
+
+test_that("fewer than 5000 bootstrap samples add a note under the info table", {
+    fit <- function(ciType, bootN) {
+        jammGLM(formula = "EXP ~ SVO; BEH ~ EXP + SVO", data = coopmedmod, ciType = ciType, bootN = bootN)
+    }
+    notes <- function(results) vapply(results$infotab$notes, function(note) note$note, character(1))
+    few <- notes(fit("perc", 100))
+    expect_length(grep("based on 100 bootstrap samples", few, fixed = TRUE), 1)
+    expect_true(any(grepl("at least 5000", few, fixed = TRUE)))
+    # No note without bootstrap, or with enough samples.
+    expect_false(any(grepl("bootstrap samples", notes(fit("standard", 100)), fixed = TRUE)))
+    # The note is set when the analysis is initialised: check 5000 without estimating.
+    enough <- jammGLMClass$new(options = jammGLMOptions$new(dep = "BEH", mediators = "EXP", covs = "SVO",
+                                   mediatorsTerms = list(list("SVO")), modelTerms = list("EXP", "SVO"),
+                                   ciType = "perc", bootN = 5000), data = coopmedmod)
+    enough$init()
+    expect_false(any(grepl("bootstrap samples", notes(enough$results), fixed = TRUE)))
+    fewInit <- jammGLMClass$new(options = jammGLMOptions$new(dep = "BEH", mediators = "EXP", covs = "SVO",
+                                   mediatorsTerms = list(list("SVO")), modelTerms = list("EXP", "SVO"),
+                                   ciType = "perc", bootN = 4999), data = coopmedmod)
+    fewInit$init()
+    expect_true(any(grepl("based on 4999 bootstrap samples", notes(fewInit$results), fixed = TRUE)))
+})
+
+test_that("bootstrap intervals are footnoted under the indirect and total effects", {
+    fit <- function(ciType) {
+        jammGLM(formula = "EXP ~ SVO; BEH ~ EXP + SVO", data = coopmedmod, ciType = ciType, bootN = 60)
+    }
+    notes <- function(results) vapply(results$models$coefficients$notes, function(note) note$note, character(1))
+    types <- c(bca = "bias-corrected", perc = "percentile", norm = "normal")
+    for (ciType in names(types))
+        expect_true(any(grepl(paste0("bootstrap method (", types[[ciType]], ", 60 bootstrap samples)"),
+                              notes(fit(ciType)), fixed = TRUE)), info = ciType)
+    for (ciType in c("standard", "none"))
+        expect_false(any(grepl("bootstrap", notes(fit(ciType)), fixed = TRUE)), info = ciType)
+})

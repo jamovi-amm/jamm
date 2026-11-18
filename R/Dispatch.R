@@ -79,25 +79,6 @@ Dispatch <- R6::R6Class(
             table <- private$.find_table(path)
             if (!is.something(table)) stop("SCAFFOLD: a message was sent to a non-existing result object: ", obj$topic)
 
-            if (inherits(table, "Html")) {
-                if (self$interface == "R") {
-                    switch(obj$head,
-                        info = {
-                            message(obj$message)
-                            return()
-                        },
-                        {
-                            warning(obj$message, call. = FALSE)
-                            return()
-                        }
-                    )
-                } else {
-                    content <- private$.process_html(table$content, obj)
-                    .setContent(table, content)
-                    table$setVisible(TRUE)
-                    return()
-                }
-            }
             init <- (hasName(obj, "initOnly") && obj[["initOnly"]])
 
             .fun <- function(table, id, msg, init) {
@@ -139,12 +120,7 @@ Dispatch <- R6::R6Class(
             path <- stringr::str_split(obj$topic, "_")[[1]]
             table <- private$.find_table(path)
 
-            if (inherits(table, "Html")) {
-                obj$head <- "error"
-                .setContent(table, private$.process_html(NULL, obj))
-            } else {
-                table$setError(obj$message)
-            }
+            table$setError(obj$message)
             table$setVisible(TRUE)
         },
         warnings_topics = function() {
@@ -181,52 +157,6 @@ Dispatch <- R6::R6Class(
             notice$setContent(paste(unique(unlist(messages, use.names = FALSE)), collapse = "\n\n"))
             notice$setVisible(TRUE)
         },
-        .process_html = function(content, obj) {
-            style <- ""
-            title <- ""
-            # Contenitore dell'icona con flex e padding
-            icon_container_style <- "display: flex; align-items: center; padding: 10px;"
-
-            # Dimensioni fisse per l'icona e colore di default
-            icon_style <- "font-size: 50px; flex-shrink: 0;"
-            if (is.something(obj$head)) {
-                switch(obj$head,
-                    "info" = {
-                        # SVG per messaggio informativo
-                        head <- paste0("<div style='", icon_container_style, "'><svg width='50' height='50' xmlns='http://www.w3.org/2000/svg'><circle cx='25' cy='25' r='20' fill='#3e6da9'></circle><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='30' font-family='Arial Black'>i</text></svg></div>")
-                        style <- "border-color: #3e6da9;"
-                    },
-                    "warning" = {
-                        # SVG per messaggio di avviso
-                        head <- paste0("<div style='", icon_container_style, "'><svg width='50' height='50' xmlns='http://www.w3.org/2000/svg'><circle cx='25' cy='25' r='20' fill='orange'></circle><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='30' font-family='Arial Black'>!</text></svg></div>")
-                        style <- "border-left-color: orange;"
-                        title <- "<h2 style='color:orange;'> Warning</h2>"
-                    },
-                    "error" = {
-                        # SVG per messaggio di errore
-                        head <- paste0("<div style='", icon_container_style, "'><svg width='50' height='50' xmlns='http://www.w3.org/2000/svg'><circle cx='25' cy='25' r='20' fill='red'></circle><text x='50%' y='55%' dominant-baseline='middle' text-anchor='middle' fill='white' font-size='25' font-family='Arial Black'>X</text></svg></div>")
-                        style <- "border-color: red;"
-                        title <- "<h2 style='color:red;'> Error</h2>"
-                    },
-                    {
-                        head <- obj$head
-                    }
-                )
-            } else {
-                head <- "<div><i>Note:</i></div>"
-            }
-
-            test <- grep(obj$message, content, fixed = TRUE)
-            if (length(test) == 0) {
-                type <- paste0("<div id='", obj$head, "'></div>")
-                if (length(grep(type, content, fixed = T)) > 0) {
-                    content <- gsub(type, paste("<div>", obj$message, "</div>", type), content, fixed = T)
-                } else {
-                    content <- paste0(content, "<div class='notice-box' style='", style, "'>", head, "<div class='content'><div style='display:block'>", title, "<div>", obj$message, "</div>", type, "</div></div></div>")
-                }
-            }
-            return(content)
-        },
         .find_table = function(path) {
             tableobj <- self$tables
             found <- FALSE
@@ -244,11 +174,3 @@ Dispatch <- R6::R6Class(
         }
     ) # end of private
 ) # end of class
-
-
-
-### this is for cleaning all html message widgets otherwise some message sticks
-
-dispatch_message_cleaner <- function(jmvobj) {
-    lapply(jmvobj$results$items, function(x) if ("Html" %in% class(x)) .setContent(x, " "))
-}
