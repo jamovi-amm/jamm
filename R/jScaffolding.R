@@ -36,13 +36,19 @@ Scaffold <- R6::R6Class("Scaffold",
                                 return(NULL)
                             },
                             
-                            stop=function(msg) {
+                            stop=function(msg, return=TRUE) {
 
                                 if (self$option(".interface","R")) stop(gsub("<[^>]+>", "", msg),call.=FALSE)
                                     
-                                # jamovi shows the error and greys the results.
                                 self$ok <- FALSE
-                                stop(msg,call.=FALSE)
+                                if (exists("ERROR_TABLE") & ERROR_TABLE!="jamovi") {
+                                 self$warning<-list(topic=ERROR_TABLE,message=msg,head="error")
+                                 if (return) {
+                                       call <- rlang::expr(return()) 
+                                       rlang::eval_bare(call, env = parent.frame())
+                                 }
+                              } else
+                                 stop(msg,call.=FALSE)
                               
                             }
                           ), ## end of public

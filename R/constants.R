@@ -7,7 +7,7 @@ NO_R_OPTS <- c("mediators","mediatorsTerms","covs","factors","dep","modelTerms")
 WARNS<-list()
 WARNS[["nocenterd"]]<-"Variables {vars} are not centered. Consider using the Covariate Scaling options for easier interpretation of lower-order effects."
 WARNS[["noindirect"]]<-"Indirect effects cannot be computed for this model."
-WARNS[["fewboot"]]<-"Bootstrap confidence intervals are based on {n} bootstrap samples. Increasing the number of bootstrap samples to at least 5000 is suggested, for intervals that do not change from one run to the next."
+WARNS[["fewboot"]]<-"Bootstrap confidence intervals are based on {n} bootstrap samples. Increasing the number of bootstrap samples to at least 5000 is suggested, for more stable intervals."
 WARNS[["bootci"]]<-"Confidence intervals are computed with the bootstrap method ({type}, {n} bootstrap samples)."
 WARNS[["fixeddirect"]]<-"Direct effects with estimate 0 and no standard error are not in the full model: they are fixed to 0, not estimated."
 
