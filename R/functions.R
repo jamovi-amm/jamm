@@ -19,14 +19,6 @@ ginfo<-function(what=NULL,obj=NULL) {
   }
 }
 
-sourcifyList<-function(option,def) {
-  alist<-option$value
-  test<-all(sapply(alist,function(a) a$type)==def)
-  if (test)
-    return("")
-  paste0(option$name,"=c(",paste(sapply(alist,function(a) paste0(a$var,' = \"',a$type,'\"')),collapse=", "),")")
-}
-
 expand.formula<-function(aform) {
             if (!inherits(aform, "formula")) {
               if (!is.character(aform) || length(aform) != 1 || is.na(aform) || !nzchar(trimws(aform)))

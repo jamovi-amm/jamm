@@ -210,7 +210,6 @@ jammGLMClass <- R6::R6Class(
             paste0("list(", paste(sapply(models, function(model) paste0('"', model$value, '"')), collapse = ","), ")")
         },
         .sourcifyOption = function(option) {
-            name <- option$name
             value <- option$value
            
           ## mod_terms is weired, hanlde it here
@@ -241,28 +240,7 @@ jammGLMClass <- R6::R6Class(
             return(sourcifyOption(option, ARRAY_DEFAULTS))
             
             
-            ### this is the old to be remove
-            if (!is.something(value)) {
-                return("")
-            }
-            if (name %in% c("factors", "endogenous", "covs", "endogenousTerms")) {
-                return("")
-            }
-            if (name == "scaling") {
-                vec <- sourcifyList(option, "none")
-                return(vec)
-            }
-            if (name == "contrasts") {
-                vec <- sourcifyList(option, "simple")
-                return(vec)
-            }
-            if (name == "varcov") {
-                vec <- lapply(self$options$varcov, function(covariance) c(covariance$i1, covariance$i2))
-                vec <- paste0("varcov=list(", paste(vec, collapse = ","), ")", collapse = "")
-                return(vec)
-            }
 
-            super$.sourcifyOption(option)
         }
     )
 )

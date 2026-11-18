@@ -245,6 +245,7 @@ children:
                         name: cvalue
                         label: null
                         format: number
+                        enable: (simpleScale_mean_sd)
                   - name: simpleScale_percent
                     type: RadioButton
                     optionName: simpleScale
@@ -313,9 +314,11 @@ children:
                 label: Interval
                 suffix: '%'
                 format: number
+                enable: (!ciType:none)
               - type: TextBox
                 name: bootN
                 format: number
+                enable: (ciType:bca.simple || ciType:perc || ciType:norm)
           - type: Label
             label: Display in Tables
             margin: large

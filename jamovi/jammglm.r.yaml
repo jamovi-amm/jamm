@@ -9,14 +9,6 @@ items:
     type: Property
     description: The underlying `lavaan` object
 
-## these are handled by SmartInfo class
-  -   name: info
-      title: Introduction
-      type: Html
-  -   name: extrainfo
-      title: Extra Info
-      type: Html
-      visible: false
   -   name: issues
       title: Issues
       type: Html
