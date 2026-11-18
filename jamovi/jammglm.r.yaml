@@ -22,6 +22,9 @@ items:
       type: Html
       visible: false
 
+## tables are filled with SmartTabs class which requires that the clearWith field be complete and accurate
+## Double check that the options listed in clearWith are correct for all tables.
+
   - name: infotab
     title: Models Info
     type: Table
@@ -34,13 +37,26 @@ items:
        - name: value
          type: text
          title: ""
-    clearWith:
+    clearWith: &modelDependencies
+        - data
         - dep
         - mediators
         - factors
         - covs
         - modelTerms
+        - mediatorsTerms
         - moderatorsTerms
+        - contrasts
+        - scaling
+        - ciType
+        - ciWidth
+        - bootN
+        - simpleScale
+        - cvalue
+        - percvalue
+        - simpleScaleLabels
+        - tableOptions
+        - showRealNames
     refs: jamm
 
 
@@ -50,23 +66,13 @@ items:
     title: "Mediation"
     type: Group
     visible: false
-    clearWith:
-        - dep
-        - mediators
-        - factors
-        - covs
+    clearWith: *modelDependencies
     items:
     
           - name: r2
             title: R-squared
             type: Table
-            clearWith:
-                  - dep
-                  - mediators
-                  - covs
-                  - factors
-                  - ciType
-                  - data
+            clearWith: *modelDependencies
 
             columns:
                     - name: lhs
@@ -91,11 +97,7 @@ items:
             title: Moderation effects (interactions)
             visible: false
             type: Table
-            clearWith:
-                     - dep
-                     - modelTerms
-                     - contrasts
-                     - simpleScale
+            clearWith: *modelDependencies
             columns:
                     - name: lhs
                       title: "Dependent"
@@ -135,20 +137,7 @@ items:
             title: Indirect and Total Effects
             type: Table
             refs: lavaan
-            clearWith:
-                     - dep
-                     - modelTerms
-                     - contrasts
-                     - simpleScale
-                     - ciType
-                     - mediatorsTerms
-                     - moderatorsTerms
-                     - scaling
-                     - cvalue
-                     - percvalue
-                     - simpleScaleLabels
-                     - tableOptions
-                     - data
+            clearWith: *modelDependencies
             columns:
                     - name: condition
                       title: Moderator levels
@@ -197,6 +186,11 @@ items:
             title: Contrasts Definition
             type: Table
             visible: false
+            clearWith:
+                - data
+                - factors
+                - contrasts
+                - showRealNames
             columns:
                          - name: rname
                            title: 'Name'
@@ -210,7 +204,7 @@ items:
             type: Array
             visible: (showContrastCode)
             items: (factors)
-            clearWith:
+            clearWith: &contrastTableDependencies
                 - factors
                 - contrasts
                 - showContrastCode
@@ -218,6 +212,7 @@ items:
             template:
                 title: $key
                 type: Table
+                clearWith: *contrastTableDependencies
                 columns:
                     - name: cname
                       title: Name
@@ -232,10 +227,7 @@ items:
     title: ""
     visible: (tableOptions:regression)
 
-    clearWith:
-        - dep
-        - contrasts
-        - scaling
+    clearWith: *modelDependencies
         
     items:
           - name: overall
@@ -243,16 +235,14 @@ items:
             type: Group
             visible: (tableOptions:regression)
 
-            clearWith: 
-                     - dep
-                     - contrasts
-                     - scaling
+            clearWith: *modelDependencies
 
             items:
                - name: anova
                  title: ANOVA Table
                  type: Table
                  visible: (tableOptions:regression)
+                 clearWith: *modelDependencies
                  columns:
                     - name: dep
                       title: Variable
@@ -277,6 +267,7 @@ items:
                  title: Regression Table
                  type: Table
                  visible: (tableOptions:regression)
+                 clearWith: *modelDependencies
 
                  columns:
                     - name: source
@@ -320,19 +311,17 @@ items:
             title: Mediator Models
             type: Array
             description: an array of regressions for the mediators
-            clearWith: 
-                     - dep
-                     - contrasts
-                     - scaling
+            clearWith: *modelDependencies
 
             template:
-                clearWith: []
+                clearWith: *modelDependencies
                 title:  "Regression model for"
                 type: Group
                 items:
                    - name: anova
                      type: Table
                      title: ANOVA
+                     clearWith: *modelDependencies
                      columns:
                          - name: lhs
                            title: Variable
@@ -356,6 +345,7 @@ items:
                    - name: regression
                      type: Table
                      title: Regression
+                     clearWith: *modelDependencies
                      visible: (tableOptions:regression)
                      columns:
                          - name: lhs
@@ -398,15 +388,13 @@ items:
             title: Full model effects
             type: Group
             visible: (tableOptions:regression)
-            clearWith: 
-                     - dep
-                     - contrasts
-                     - scaling
+            clearWith: *modelDependencies
             items:
                - name: anova
                  title: ANOVA Table
                  type: Table
                  visible: (tableOptions:regression)
+                 clearWith: *modelDependencies
                  columns:
                     - name: lhs
                       title: Dependent
@@ -432,6 +420,7 @@ items:
                  title: Regression Table
                  visible: (tableOptions:regression)
                  type: Table
+                 clearWith: *modelDependencies
                  columns:
                     - name: lhs
                       title: Dependent
@@ -473,23 +462,24 @@ items:
     type: Group
     title: Path Model
     visible: (diagram | meddiagram)
-    clearWith:
+    clearWith: &pathDiagramDependencies
                   - data
-
-    items:
-            - name: pathmodel
-              title: Model Diagram
-              visible: (meddiagram)
-              type: Image
-              description: a model diagram
-              width: 600
-              height: 500
-              renderFun: .showModelDiagram
-              clearWith:
                   - dep
+                  - mediators
+                  - factors
+                  - covs
                   - mediatorsTerms
                   - modelTerms
                   - moderatorsTerms
+                  - contrasts
+                  - scaling
+                  - ciType
+                  - ciWidth
+                  - bootN
+                  - simpleScale
+                  - cvalue
+                  - percvalue
+                  - simpleScaleLabels
                   - pathOptions
                   - meddiagram
                   - diagram
@@ -500,11 +490,33 @@ items:
                   - diag_type
                   - diag_shape
                   - diag_abbrev
+
+    items:
+            - name: pathmodel
+              title: Model Diagram
+              visible: (meddiagram)
+              type: Image
+              description: a model diagram
+              width: 600
+              height: 500
+              renderFun: .showModelDiagram
+              clearWith: &modelDiagramDependencies
+                  - data
+                  - dep
+                  - mediators
+                  - factors
+                  - covs
+                  - mediatorsTerms
+                  - modelTerms
+                  - moderatorsTerms
+                  - pathOptions
+                  - meddiagram
               refs: diagram    
             - name: pathnotes
               type: Table
               title: ""
               visible: false
+              clearWith: *modelDiagramDependencies
               columns:
                   - name: info
                     type: text
@@ -515,26 +527,14 @@ items:
               type: Array
               description: an array of path diagrams
               visible: (diagram)
+              clearWith: *pathDiagramDependencies
               template:
                    title: $key
                    type: Image
                    renderFun: .showDiagram
                    width: 700
                    height: 500
-                   clearWith:
-                      - pathOptions
-                      - meddiagram
-                      - diagram
-                      - diag_resid
-                      - diag_paths
-                      - diag_labsize
-                      - diag_rotate
-                      - diag_type
-                      - diag_shape
-                      - diag_abbrev
-                      - modelTerms
-                      - mediatorsTerms
-                      - data
+                   clearWith: *pathDiagramDependencies
 
               refs: semplot
              
@@ -542,6 +542,7 @@ items:
               type: Table
               title: ""
               visible: false
+              clearWith: *pathDiagramDependencies
               columns:
                   - name: message
                     type: text

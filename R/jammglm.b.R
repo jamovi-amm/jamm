@@ -145,6 +145,7 @@ jammGLMClass <- R6::R6Class(
         .showDiagram = function(image, ggtheme, theme, ...) {
             render_plot_state(image$state, draw_path_diagram)
         },
+        
         .marshalFormula = function(formula, data, name) {
             formula <- lapply(formula, expand.formula)
 
@@ -211,7 +212,36 @@ jammGLMClass <- R6::R6Class(
         .sourcifyOption = function(option) {
             name <- option$name
             value <- option$value
+           
+          ## moderatorsTerms is weired, hanlde it here
+           if (option$name=="moderatorsTerms") {
+             test<-all(sapply(value,function(a) length(a)==0))
+             if (test) return('')
+             
+             meds<-self$options$mediators
+             mods<-character()
+             for (i in seq_along(meds)) {
+               if (length(value[[i]])>0 ) {
+                 variables <- paste(quote_name(value[[i]]), collapse = ", ")
+                 mods <- c(mods,paste0(quote_name(meds[[i]]), " = c(", variables, ")"))
+               }
+             }
+             
+             mods <- paste0("moderatorsTerms = list(", paste(mods, collapse = ", "), ")")
+             return(mods)
+           }
 
+
+            if (option$name %in% NO_R_OPTS) 
+              return("")
+            
+            # since OptionsArray has not embedded default, we pass them as ARRAY_DEFAULTS defined
+            # in constants.R. Other option classes ignore it.
+            
+            return(sourcifyOption(option, ARRAY_DEFAULTS))
+            
+            
+            ### this is the old to be remove
             if (!is.something(value)) {
                 return("")
             }

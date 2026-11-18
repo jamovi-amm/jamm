@@ -21,7 +21,7 @@ Imports:
     stats,
     stringr,
     utils
-Suggests: testthat (>= 3.0.0), V8, knitr
+Suggests: testthat (>= 3.0.0), V8, knitr, yaml
 Config/testthat/edition: 3
 Exports: jammGLM
 Config/roxygen2/version: 8.0.0

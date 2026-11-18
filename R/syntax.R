@@ -366,8 +366,8 @@ Syntax <- R6::R6Class(
 
             },
             .factorlist=function(terms,factorslen) {
-              .terms<-list()
               for (f in names(factorslen)) {
+                .terms<-list()
                 for (term in terms) {
                   ind<-which(term==f)
                   for (i in ind) {
@@ -405,7 +405,6 @@ Syntax <- R6::R6Class(
               if (is.something(self$moderators)) {
                 sel<-!(tab$rhs %in% private$.lav_moderators)
                 tab<-tab[sel,]
-                mark(tab)
               }
               # select the path rows
               sel<-tab$op=="~" 

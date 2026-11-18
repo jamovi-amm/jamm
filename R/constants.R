@@ -3,6 +3,11 @@ ERROR_TABLE="jamovi"
 INTERACTION_SYMBOL="__XX__XX__"
 FACTOR_SYMBOL="._._._."
 
+ARRAY_DEFAULTS <- c(scaling = "centered", contrasts = "simple")
+NO_R_OPTS <- c("mediators","mediatorsTerms","covs","factors","dep","modelTerms")
+  
+
+
 NOTES<-list()
 
 NOTES[["ci"]]<-list("standard"="Standard (Delta method)",

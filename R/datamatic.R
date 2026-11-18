@@ -4,6 +4,7 @@ Datamatic <- R6::R6Class(
   class=FALSE,
   inherit = Scaffold,
   public=list(
+    dep=NULL,
     vars=NULL,
     factors=NULL,
     factors_scale=NULL,
@@ -16,6 +17,7 @@ Datamatic <- R6::R6Class(
     initialize=function(jmvobj,data=jmvobj$data) {
       super$initialize(jmvobj)
       options<-self$options
+      self$dep<-options$dep
       self$vars<-unlist(c(options$dep,options$mediators,options$factors,options$covs))
       self$factors<-options$factors
       self$factors_scale<-sapply(options$contrasts, function(a) a$type)
@@ -29,9 +31,15 @@ Datamatic <- R6::R6Class(
       
       data64 <- jmvcore::naOmit(data)
       names(data64)<-tob64(names(data))
+      ### dependent variable
+      dep64<-tob64(self$dep)
+      if (inherits(data64[[dep64]],"factor")) {
+             self$warning<-list(topic="infotab",message=DATA_WARNS[["fac_to_cont"]])
+             data64[[dep64]] <- private$.continuous_value(data64[[dep64]],method = NULL)
+      }
       for (cont in self$continuous) {
         cont64<-tob64(cont)
-        if (class(data64[[cont64]]) == "factor")
+        if (inherits(data64[[cont64]],"factor"))
               self$warning<-list(topic="infotab",message=DATA_WARNS[["fac_to_cont"]])
         data64[[cont64]] <- private$.continuous_value(data64[[cont64]],self$continuous_scale[[cont]])
       }
@@ -226,21 +234,29 @@ Datamatic <- R6::R6Class(
 
  .continuous_value=function(var,method,by=NULL) {
 
+        nvar<-jmvcore::toNumeric(var)
+        
+        if (!is.numeric(nvar))
+          stop("The variable cannot be converted to numeric.", call. = FALSE)
+        
+        if (any(is.na(nvar) & !is.na(var)))
+          stop("Conversion to numeric introduced missing values.", call. = FALSE)
+        
         if (is.null(method))
-           return(as.numeric(var))
+           return(nvar)
    
-
+  
        if (method=="centered") 
-         var<-scale(var,scale = F)  
+         nvar<-scale(nvar,scale = F)  
        if (method=="cluster-based centered") {    
-         var<-unlist(tapply(var,by,scale,scale=F))
+         nvar<-unlist(tapply(nvar,by,scale,scale=F))
        }
        if (method=="standardized") 
-         var<-scale(var,scale = T)  
+         nvar<-scale(nvar,scale = T)  
        if (method=="cluster-based standardized")     
-         var<-unlist(tapply(var,by,scale,scale=T))
+         nvar<-unlist(tapply(nvar,by,scale,scale=T))
 
-       as.numeric(var)
+       as.numeric(nvar)
        
      }
      
