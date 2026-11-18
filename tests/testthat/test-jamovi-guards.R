@@ -166,8 +166,9 @@ test_that("in jamovi, a model that does not converge is an analysis error", {
     invisible(utils::capture.output(analysis$run(noThrow = TRUE)))
     expect_identical(analysis$status, "error")
     error <- analysis$results$.__enclos_env__$private$.error
-    expect_true(is.character(error) && grepl("[Cc]onverge", error),
-                info = "the analysis error should say that the model did not converge")
+    # lavaan 0.7: "did not converge"; lavaan 0.6 (jamovi's): "not positive-definite".
+    expect_true(is.character(error) && grepl("Model cannot be estimated.*(converge|positive.definite)", error),
+                info = "the analysis error should say why the model cannot be estimated")
     expect_true(all(is.na(analysis$results$models$coefficients$asDF$est)))
 })
 

@@ -57,7 +57,7 @@ model_diagram_data <- function(options) {
   if (length(moderators) > 0)
     diagram$notes <- c(diagram$notes, "Moderators' main effects are not shown.")
   if (length(independents) > 1)
-    diagram$notes <- c(diagram$notes, "Covariances among IV are estimated but not shown")
+    diagram$notes <- c(diagram$notes, "Covariances among IVs are estimated but not shown")
   if (any(options$factors %in% unlist(c(options$mediatorsTerms, options$modelTerms))))
     diagram$notes <- c(diagram$notes,
       "Categorical independent variables are shown with one rectangle; their effects are estimated using contrast variables")

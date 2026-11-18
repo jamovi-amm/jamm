@@ -404,7 +404,6 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
     inherit = jmvcore::Group,
     active = list(
         model = function() private$..model,
-        issues = function() private$.items[["issues"]],
         infotab = function() private$.items[["infotab"]],
         models = function() private$.items[["models"]],
         regressions = function() private$.items[["regressions"]],
@@ -416,13 +415,8 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             super$initialize(
                 options=options,
                 name="",
-                title="GLM Mediation Analysis")
+                title="GLM Mediation Model")
             private$..model <- NULL
-            self$add(jmvcore::Html$new(
-                options=options,
-                name="issues",
-                title="Issues",
-                visible=FALSE))
             self$add(jmvcore::Table$new(
                 options=options,
                 name="infotab",

@@ -34,13 +34,13 @@ Datamatic <- R6::R6Class(
       ### dependent variable
       dep64<-tob64(self$dep)
       if (inherits(data64[[dep64]],"factor")) {
-             self$warning<-list(topic="infotab",message=DATA_WARNS[["fac_to_cont"]])
+             private$.warn_categorical(self$dep,data64[[dep64]])
              data64[[dep64]] <- private$.continuous_value(data64[[dep64]],method = NULL)
       }
       for (cont in self$continuous) {
         cont64<-tob64(cont)
         if (inherits(data64[[cont64]],"factor"))
-              self$warning<-list(topic="infotab",message=DATA_WARNS[["fac_to_cont"]])
+              private$.warn_categorical(cont,data64[[cont64]])
         data64[[cont64]] <- private$.continuous_value(data64[[cont64]],self$continuous_scale[[cont]])
       }
       for (factor in self$factors) {
@@ -72,6 +72,15 @@ Datamatic <- R6::R6Class(
     }
     ), ### end of public
    private=list(
+     # A categorical variable used where a continuous one is expected (dependent
+     # variable, mediator, covariate) is analysed with its numeric values. jamovi
+     # passes ordinal variables as ordered factors and nominal ones as factors:
+     # the note says which, naming the variable.
+     .warn_categorical=function(name, column) {
+       key<-if (inherits(column,"ordered")) "ord_to_cont" else "fac_to_cont"
+       message<-gsub("{var}",name,DATA_WARNS[[key]],fixed=TRUE)
+       self$warning<-list(topic="infotab",message=message)
+     },
      .inspect_data=function(data) {
             names(data)<-tob64(names(data))
             for (factor in self$factors) {

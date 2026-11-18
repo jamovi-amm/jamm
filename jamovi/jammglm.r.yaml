@@ -1,6 +1,6 @@
 ---
 name:  jammGLM
-title: GLM Mediation Analysis
+title: GLM Mediation Model
 jrs: '1.0'
 
 
@@ -8,11 +8,6 @@ items:
   - name: model
     type: Property
     description: The underlying `lavaan` object
-
-  -   name: issues
-      title: Issues
-      type: Html
-      visible: false
 
 ## tables are filled with SmartTabs class which requires that the clearWith field be complete and accurate
 ## Double check that the options listed in clearWith are correct for all tables.

@@ -110,7 +110,6 @@
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$model} \tab \tab \tab \tab \tab The underlying \code{lavaan} object \cr
-#'   \code{results$issues} \tab \tab \tab \tab \tab a html \cr
 #'   \code{results$infotab} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$models$r2} \tab \tab \tab \tab \tab a table \cr
 #'   \code{results$models$interactions} \tab \tab \tab \tab \tab a table \cr

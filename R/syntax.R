@@ -276,7 +276,7 @@ Syntax <- R6::R6Class(
                   for (j in 1:nrow(rows)) {
                     arow<-rows[j,]
                     arow$type<-"Component"
-                    arow$effect<-paste(arow$rhs," \U21d2 ",arow$lhs)
+                    arow$effect<-paste(arow$rhs,arow$lhs,sep=" \U21d2 ")
                     # only the path leaving the contrast variable is a comparison
                     arow$label<-if (identical(arow$rhs,fromb64(start))) private$.comparison(start) else ""
                     self$tab_coefficients[[length(self$tab_coefficients)+1]]<-arow
@@ -525,7 +525,7 @@ Syntax <- R6::R6Class(
                 key<-paste(from,to,sep="\r")
                 if (is.null(pairs[[key]])) {
                   direct<-tab$label[tab$op=="~" & tab$rhs==from & tab$lhs==to]  # character(0) if absent
-                  pairs[[key]]<-list(name=paste0(fromb64(from),"\U21d2",fromb64(to)),
+                  pairs[[key]]<-list(name=paste(fromb64(from),fromb64(to),sep=" \U21d2 "),
                                      direct=direct, indirect=character(),
                                      contrast=private$.comparison(from))
                 }

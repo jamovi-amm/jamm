@@ -159,9 +159,11 @@ jammGLMClass <- R6::R6Class(
             deps <- sapply(formula, function(equation) jmvcore::marshalFormula(equation, data, from = "lhs"))
             ivs <- unique(unlist(sapply(formula, function(equation) jmvcore::marshalFormula(equation, data, from = "rhs"))))
             factors <- unique(unlist(sapply(formula, function(equation) jmvcore::marshalFormula(equation, data, from = "rhs", permitted = "factor"))))
-            covs <- setdiff(ivs, factors)
             dep <- setdiff(deps, ivs)
             meds <- intersect(deps, ivs)
+            # Covariates are the continuous independent variables: mediators are
+            # predictors in the full model too, but they are not covariates.
+            covs <- setdiff(ivs, c(factors, meds))
 
             if (name == "dep") {
                 if (length(dep) > 1) {

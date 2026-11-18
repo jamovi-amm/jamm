@@ -4,9 +4,11 @@
 # had: the info table says "Converged FALSE" and the effects table is filled
 # with meaningless values (all zeros in the example below), with no error.
 #
-# Expected behaviour (what these tests check): the analysis stops with an error
-# saying that the model did not converge, as it already does for models that
-# cannot be estimated at all ("Model cannot be estimated: ...").
+# Expected behaviour (what these tests check): the analysis stops with a
+# "Model cannot be estimated: ..." error. With lavaan 0.7 the message says that
+# the estimation did not converge; lavaan 0.6 (the version shipped with jamovi)
+# stops earlier, saying that the sample covariance matrix is not positive
+# definite. Both are accepted.
 #
 # Example model: SVO2 is exactly twice SVO, so their separate effects cannot be
 # estimated and lavaan does not converge.
@@ -29,7 +31,7 @@ test_that("jammGLM() stops with a clear error when the model does not converge",
             jammGLM(data = dat, dep = "BEH", mediators = "EXP", covs = c("SVO", "SVO2"),
                     mediatorsTerms = list(list("SVO", "SVO2")),
                     modelTerms = list("EXP", "SVO", "SVO2"))),
-        "[Cc]onverge")
+        "Model cannot be estimated.*(converge|positive.definite)")
 })
 
 

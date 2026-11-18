@@ -188,3 +188,38 @@ test_that("the formula interface gives the same model as the explicit arguments"
     expect_error(jammGLM(formula = list("EXP ~ SVO", "~ SVO"), data = coopmedmod),
                  "Invalid formula entry 2")
 })
+
+test_that("the formula interface assigns each variable one role", {
+    # Mediators are predictors in the full model, but they are not covariates.
+    dat <- pathjdata
+    dat$groups_a <- factor(dat$groups_a)
+    results <- jammGLM(formula = "y3 ~ x1 * x2 + groups_a; y1 ~ y3 + x1 + x2", data = dat)
+    expect_identical(results$options$dep, "y1")
+    expect_identical(results$options$mediators, "y3")
+    expect_setequal(results$options$covs, c("x1", "x2"))
+    expect_identical(results$options$factors, "groups_a")
+    # Serial mediation: both mediators are left out of the covariates.
+    serial <- jammGLM(formula = "y2 ~ x1; y3 ~ x1 + y2; y1 ~ y2 + y3 + x1", data = pathjdata)
+    expect_setequal(serial$options$mediators, c("y2", "y3"))
+    expect_identical(serial$options$covs, "x1")
+})
+
+test_that("categorical variables used as continuous get a note saying which kind they are", {
+    # jamovi passes ordinal variables as ordered factors and nominal ones as
+    # factors; integer columns carry their numeric values.
+    dat <- coopmedmod
+    dat$ordSVO <- factor(round(dat$SVO), ordered = TRUE)
+    attr(dat$ordSVO, "values") <- as.integer(levels(dat$ordSVO))
+    dat$nomPrime <- factor(dat$cprime)
+    attr(dat$nomPrime, "values") <- as.integer(levels(dat$nomPrime))
+    results <- jammGLM(data = dat, dep = "BEH", mediators = "EXP", covs = c("ordSVO", "nomPrime"),
+                       mediatorsTerms = list(list("ordSVO", "nomPrime")),
+                       modelTerms = list("EXP", "ordSVO", "nomPrime"))
+    notes <- vapply(results$infotab$notes, function(note) note$note, character(1))
+    expect_true("ordSVO is an ordinal variable: it is used as a continuous variable, with its numeric values." %in% notes)
+    expect_true(any(startsWith(notes, "nomPrime is a nominal variable")))
+    # Numeric variables get no note.
+    plain <- jammGLM(data = coopmedmod, dep = "BEH", mediators = "EXP", covs = "SVO",
+                     mediatorsTerms = list(list("SVO")), modelTerms = list("EXP", "SVO"))
+    expect_length(plain$infotab$notes, 0)
+})

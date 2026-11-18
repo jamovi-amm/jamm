@@ -12,7 +12,7 @@ LazyData: true
 Imports:
     diagram,
     jmvcore (>= 0.8.0),
-    lavaan (>= 0.7-3),
+    lavaan (>= 0.6-21),
     methods,
     R6,
     rlang,

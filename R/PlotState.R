@@ -23,7 +23,7 @@
 #' @return A list with \code{version = 1L}, \code{data}, and \code{options}.
 #'   Invalid options or non-plain values cause an error.
 #' @seealso \code{render_plot_state()}
-#' @export
+#' @noRd
 #' @examples
 #' state <- new_plot_state(
 #'     list(x = c(1, 2, 3), y = c(2, 4, 3)),
@@ -77,7 +77,7 @@ new_plot_state <- function(data, options = list()) {
 #'   unsupported state, errors during drawing, or an explicit \code{FALSE}
 #'   returned by \code{draw}.
 #' @seealso \code{new_plot_state()}
-#' @export
+#' @noRd
 #' @examples
 #' state <- new_plot_state(
 #'     list(x = c(1, 2, 3), y = c(2, 4, 3)),

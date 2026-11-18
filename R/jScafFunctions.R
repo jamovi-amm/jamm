@@ -107,7 +107,20 @@ try_hard<-function(exp,max_warn=5, silent=FALSE) {
 
 
 
-sourcifyOption<- function(x,...) UseMethod(".sourcifyOption")
+# Chooses the method the way UseMethod() would (the first class of the option
+# that has a method), but without UseMethod(".sourcifyOption"): a generic whose
+# method prefix differs from its own name only dispatches when called by name,
+# and fails with "no applicable method" from the console or as a callback.
+sourcifyOption<- function(x,...) {
+  methods<-list(OptionVariables=.sourcifyOption.OptionVariables,
+                OptionTerms=.sourcifyOption.OptionTerms,
+                OptionArray=.sourcifyOption.OptionArray,
+                OptionList=.sourcifyOption.OptionList)
+  for (cl in class(x))
+    if (cl %in% names(methods))
+      return(methods[[cl]](x,...))
+  .sourcifyOption.default(x,...)
+}
 
 .sourcifyOption.default=function(option,def=NULL) {
   
