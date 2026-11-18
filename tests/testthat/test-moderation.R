@@ -77,7 +77,7 @@ test_that("a categorical moderator conditions on each level and on their average
                  stats::coef(stats::lm(EXP ~ SVO, coop))[["SVO"]], tolerance = 1e-6)
 })
 
-test_that("moderated full mediation shows the direct effect fixed to 0 in every condition", {
+test_that("moderated untested unsaturated model shows the direct effect fixed to 0 in every condition", {
     results <- jammGLM(data = coopmedmod, dep = "BEH", mediators = "EXP", covs = c("cprime", "SVO"),
                        mediatorsTerms = list(list("cprime", "SVO", c("cprime", "SVO"))),
                        modelTerms = list("EXP", "SVO", c("EXP", "SVO")),

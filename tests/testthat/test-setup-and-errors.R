@@ -1,6 +1,6 @@
 # What the user sees while a model is incomplete, and when it cannot be estimated.
 
-test_that("an incomplete model shows what is missing instead of results", {
+test_that("an incomplete setup shows what is missing instead of results", {
     setup <- function(results) {
         info <- results$infotab$asDF
         info$value[info$info %in% "Setup"]

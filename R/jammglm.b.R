@@ -212,7 +212,9 @@ jammGLMClass <- R6::R6Class(
                 return("")
             }
             models <- private$.runner_machine$estimator$models()
-            paste0("list(", paste(sapply(models, function(model) paste0('"', model$value, '"')), collapse = ","), ")")
+            # Escape each formula as an R string literal: names are already
+            # backticked inside it, but a quote in a name must not end the string.
+            paste0("list(", paste(sapply(models, function(model) encodeString(model$value, quote = '"')), collapse = ","), ")")
         },
         .sourcifyOption = function(option) {
             value <- option$value

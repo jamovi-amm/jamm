@@ -109,7 +109,7 @@ test_that("two factors and a covariate estimate together and match lm", {
     expect_equal(sum(effects$type == "Indirect"), 4)
 })
 
-test_that("full mediation shows the direct effect fixed to 0 and the total equal to the indirect", {
+test_that("untested unsaturated model shows the direct effect fixed to 0 and the total equal to the indirect", {
     results <- jammGLM(data = coopmedmod, dep = "BEH", mediators = "EXP", covs = "SVO",
                        mediatorsTerms = list(list("SVO")), modelTerms = list("EXP"))
     a <- stats::coef(stats::lm(EXP ~ SVO, coopmedmod))[["SVO"]]
