@@ -19,7 +19,7 @@ jammGLMClass <- R6::R6Class(
             private$.ready <- readiness(self$options)
             if (!private$.ready$ready) {
                 if (private$.ready$report) {
-                    self$results$infotab$addRow("info", list(info = "Setup", value = private$.ready$reason))
+                    self$results$infotab$addRow("info", list(info = "Setup", value = private$.ready$reason, desc = ""))
                 }
                 return()
             }

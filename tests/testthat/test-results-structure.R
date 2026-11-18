@@ -46,8 +46,12 @@ test_that("the info table describes estimation, the models and the indirect effe
     results <- jammGLM(data = coopmedmod, dep = "BEH", mediators = "EXP", covs = "SVO",
                        mediatorsTerms = list(list("SVO")), modelTerms = list("EXP", "SVO"))
     info <- results$infotab$asDF
-    expect_identical(names(info), c("info", "value"))
+    expect_identical(names(info), c("info", "value", "desc"))
     value <- function(label) info$value[!is.na(info$info) & info$info == label]
+    desc <- function(label) info$desc[!is.na(info$info) & info$info == label]
+    expect_identical(desc("Estimation Method"), "Maximum likelihood")
+    expect_identical(desc("Model"), c("Mediator", "Full"))
+    expect_identical(desc("Indirect effects"), "IE1")
     expect_identical(value("Estimation Method"), "ML")
     expect_identical(value("Number of observations"), "100")
     expect_identical(value("Converged"), "TRUE")

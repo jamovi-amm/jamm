@@ -30,10 +30,11 @@ Estimate <- R6::R6Class("Estimate",
                             
                             # fit indices
                             alist<-list()
-                            alist[[length(alist)+1]]<-c(info="Estimation Method",value=lavaan::lavInspect(self$model,"options")$estimator)
-                            alist[[length(alist)+1]]<-c(info="Number of observations",value=lavaan::lavInspect(self$model,"ntotal")) 
-                            alist[[length(alist)+1]]<-c(info="Converged",value=lavaan::lavInspect(self$model,"converged"))
-                            alist[[length(alist)+1]]<-c(info="",value="")
+                            estimator<-lavaan::lavInspect(self$model,"options")$estimator
+                            alist[[length(alist)+1]]<-c(info="Estimation Method",value=estimator,desc=estimator_description(estimator))
+                            alist[[length(alist)+1]]<-c(info="Number of observations",value=lavaan::lavInspect(self$model,"ntotal"),desc="") 
+                            alist[[length(alist)+1]]<-c(info="Converged",value=lavaan::lavInspect(self$model,"converged"),desc="")
+                            alist[[length(alist)+1]]<-c(info="",value="",desc="")
                             
                             self$tab_info<-alist
                             

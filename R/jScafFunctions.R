@@ -107,7 +107,20 @@ try_hard<-function(exp,max_warn=5, silent=FALSE) {
 
 
 
-sourcifyOption<- function(x,...) UseMethod(".sourcifyOption")
+# Chooses the method the way UseMethod() would (the first class of the option
+# that has a method), but without UseMethod(".sourcifyOption"): a generic whose
+# method prefix differs from its own name only dispatches when called by name,
+# and fails with "no applicable method" from the console or as a callback.
+sourcifyOption<- function(x,...) {
+  methods<-list(OptionVariables=.sourcifyOption.OptionVariables,
+                OptionTerms=.sourcifyOption.OptionTerms,
+                OptionArray=.sourcifyOption.OptionArray,
+                OptionList=.sourcifyOption.OptionList)
+  for (cl in class(x))
+    if (cl %in% names(methods))
+      return(methods[[cl]](x,...))
+  .sourcifyOption.default(x,...)
+}
 
 .sourcifyOption.default=function(option,def=NULL) {
   
@@ -342,5 +355,18 @@ escape_regex <- function(x) {
   for (char in special)
     x <- gsub(char, paste0("\\", char), x, fixed=TRUE)
   x
+}
+
+.setContent <- function(element, value) {
+  if (requireNamespace("knitr", quietly = TRUE)) {
+    progress <- knitr::opts_knit$get("progress")
+    knitr::opts_knit$set(progress = FALSE)
+    on.exit(knitr::opts_knit$set(progress = progress))
+  }
+  element$setContent(value)
+}
+
+dispatch_message_cleaner <- function(jmvobj) {
+  lapply(jmvobj$results$items, function(x) if ("Html" %in% class(x)) .setContent(x, " "))
 }
 

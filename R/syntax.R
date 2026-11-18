@@ -114,7 +114,9 @@ Syntax <- R6::R6Class(
                   lapply(seq_along(self$endogenousTerms),
                        function(i) list(info="Model",
                                         value=as.character(jmvcore::constructFormula(dep=self$endogenous[i],
-                                                                                     self$endogenousTerms[[i]])))
+                                                                                     self$endogenousTerms[[i]])),
+                                        # the last equation predicts the dependent variable
+                                        desc=if (i < length(self$endogenousTerms)) "Mediator" else "Full")
                 )
               },
               ### builds a `dep ~ terms` formula string using the actual B64-named, factor-dummy-expanded
@@ -336,10 +338,13 @@ Syntax <- R6::R6Class(
 
               ### info contains the info table, with some loose information about the model
               alist<-list()
-              alist[[length(alist)+1]]<-c(info="Estimation Method",value="ML")
-              alist[[length(alist)+1]]<-c(info="Number of observations",value="") 
-              alist[[length(alist)+1]]<-c(info="Converged","") 
-              alist[[length(alist)+1]]<-c(info="",value="")
+              alist[[length(alist)+1]]<-c(info="Estimation Method",value="ML",desc=estimator_description("ML"))
+              # "." leaves the cell unfilled until estimation (SmartTabs turns it
+              # into NA, while NA would become a filled ""): a table whose cells
+              # are all filled at init is not run again by SmartTabs.
+              alist[[length(alist)+1]]<-c(info="Number of observations",value=".",desc="") 
+              alist[[length(alist)+1]]<-c(info="Converged",value=".",desc="") 
+              alist[[length(alist)+1]]<-c(info="",value="",desc="")
               
               self$tab_info<-alist
               
@@ -511,7 +516,9 @@ Syntax <- R6::R6Class(
               self$indirect_names<-as.list(fromb64(labs))
               names(self$indirect_names)<-pars
               # save also as a list for the tab_info
-              self$tab_indirect<-lapply(self$indirect_names,function(a) list(info="Indirect effects",value=a))
+              # desc is the name of the indirect effect parameter (IE1, IE2, ...)
+              self$tab_indirect<-lapply(seq_along(self$indirect_names),function(i)
+                list(info="Indirect effects",value=self$indirect_names[[i]],desc=plabs[[i]]))
             },
             
             .total=function() {

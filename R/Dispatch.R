@@ -244,11 +244,3 @@ Dispatch <- R6::R6Class(
         }
     ) # end of private
 ) # end of class
-
-
-
-### this is for cleaning all html message widgets otherwise some message sticks
-
-dispatch_message_cleaner <- function(jmvobj) {
-    lapply(jmvobj$results$items, function(x) if ("Html" %in% class(x)) .setContent(x, " "))
-}

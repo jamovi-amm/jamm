@@ -1,3 +1,4 @@
+ERROR_TABLE="jamovi"
 
 ARRAY_DEFAULTS <- c(scaling = "centered", contrasts = "simple")
 NO_R_OPTS <- c("mediators","mediatorsTerms","covs","factors","dep","modelTerms")
@@ -19,3 +20,9 @@ DATA_WARNS[["fac_to_cont"]]<-"{var} is a nominal variable: it is used as a conti
 
 ERRS<-list()
 ERRS[["noluck"]]<-"The model cannot be estimated. Please refine the model."
+
+# Description shown next to the estimator's code in the Models Info table.
+estimator_description <- function(estimator) {
+  descriptions <- c(ML = "Maximum likelihood")
+  if (estimator %in% names(descriptions)) descriptions[[estimator]] else ""
+}

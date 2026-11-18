@@ -430,6 +430,10 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                     list(
                         `name`="value", 
                         `type`="text", 
+                        `title`=""),
+                    list(
+                        `name`="desc", 
+                        `type`="text", 
                         `title`="")),
                 clearWith=list(
                     "data",

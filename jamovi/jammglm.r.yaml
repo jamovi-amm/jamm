@@ -24,6 +24,10 @@ items:
        - name: value
          type: text
          title: ""
+
+       - name: desc
+         type: text
+         title: ""
     clearWith: &modelDependencies
         - data
         - dep

@@ -28,4 +28,3 @@ expand.formula<-function(aform) {
             af<-stats::as.formula(af)
             af
 }
-
