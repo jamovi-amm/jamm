@@ -75,6 +75,8 @@ Estimate <- R6::R6Class("Estimate",
                               end$ci.lower<-rlower
                               ####
                             self$tab_r2<-end
+                            if (self$options$ciType != "none")
+                              self$warning<-list(topic="models_r2",message="R-squared confidence intervals are approximate (Fisher z).")
 
 
                         }

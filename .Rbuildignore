@@ -10,5 +10,5 @@
 ^docs$
 ^local$
 ^inst/i18n$
-# GPL-2 is a standard licence: R needs no LICENSE file in the package
+# GPL-2+ is a standard licence: R needs no LICENSE file in the package
 ^LICENSE$
