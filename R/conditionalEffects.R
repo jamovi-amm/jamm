@@ -77,9 +77,13 @@ conditional_effects <- function(options, datamatic, parameters, chains, data = N
     # in the table but is not defined as a lavaan parameter.
     add <- function(type, effect, expression, condition, from, to, fixed = FALSE) {
         scale <- if (is.null(data)) NA_real_ else stats::sd(data[[from]]) / stats::sd(data[[to]])
+        # The Contrast column: the comparison of the factor contrast the effect
+        # starts from, empty for continuous variables.
+        contrast <- contrast_comparison(from, datamatic)
         rows[[length(rows) + 1]] <<- list(
             parameter = paste0("CE", length(rows) + 1), type = type, effect = effect,
-            expression = expression, condition = condition, scale = scale, fixed = fixed)
+            expression = expression, condition = condition, scale = scale, fixed = fixed,
+            contrast = if (is.null(contrast)) "" else contrast)
     }
     endpoints <- vapply(chains, function(chain) paste(chain[[1]], utils::tail(chain, 1), sep = ":"), character(1))
     for (setting in moderator_settings(options, datamatic, data)) {

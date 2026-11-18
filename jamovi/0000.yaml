@@ -30,6 +30,14 @@ datasets:
       - Mediation
       - Conditional mediation
       - Moderation
+  - name: pathjdata
+    path: pathjdata.csv
+    description: >-
+      Mute dataset with several continuous and two categorical variables to test
+      mediation and path analysis models
+    tags:
+      - Mediation
+      - Path Analysis
 usesNative: true
 minApp: 1.0.8
 

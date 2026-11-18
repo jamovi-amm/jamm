@@ -155,6 +155,22 @@ test_that("analysis warnings appear as a jamovi notice", {
     expect_match(notice$content, "Indirect effects cannot be computed")
 })
 
+test_that("in jamovi, a model that does not converge is an analysis error", {
+    # Same example as test-convergence.R: SVO2 is exactly twice SVO.
+    dat <- coopmedmod
+    dat$SVO2 <- dat$SVO * 2
+    options <- jammGLMOptions$new(dep = "BEH", mediators = "EXP", covs = c("SVO", "SVO2"),
+                                  mediatorsTerms = list(list("SVO", "SVO2")),
+                                  modelTerms = list("EXP", "SVO", "SVO2"))
+    analysis <- jammGLMClass$new(options = options, data = dat)
+    invisible(utils::capture.output(analysis$run(noThrow = TRUE)))
+    expect_identical(analysis$status, "error")
+    error <- analysis$results$.__enclos_env__$private$.error
+    expect_true(is.character(error) && grepl("[Cc]onverge", error),
+                info = "the analysis error should say that the model did not converge")
+    expect_true(all(is.na(analysis$results$models$coefficients$asDF$est)))
+})
+
 # ---- images redrawn and exported from saved state ---------------------------------
 
 test_that("diagrams redraw from a saved state in an analysis that never ran", {

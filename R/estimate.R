@@ -69,7 +69,7 @@ Estimate <- R6::R6Class("Estimate",
                               rupper<-(exp(2*fupper)-1)/(1+exp(2*fupper))
                               rupper<-rupper^2
                               rlower<-(exp(2*flower)-1)/(1+exp(2*flower))
-                              rlower<-rlower^2
+                              rlower<-pmax(rlower,0)^2
                               end$ci.upper<-rupper
                               end$ci.lower<-rlower
                               ####
@@ -142,7 +142,25 @@ Estimate <- R6::R6Class("Estimate",
                              }
                              self$stop(paste("Model cannot be estimated:",details))
                            }
-                           
+
+                           # A fit that lavaan returns without an error can still be unusable:
+                           # stop if it did not converge, or if lavaan warned that the sample
+                           # covariance matrix is not positive definite (its "icov" warning,
+                           # e.g. with perfectly collinear predictors). lavaan 0.6 stops by itself
+                           # in that case, lavaan 0.7 returns a non-converged fit holding the
+                           # starting values, which must not be shown as estimates.
+                           warnings<-character(0)
+                           if (!isFALSE(results$warning))
+                             warnings<-unique(fromb64(unlist(results$warning,use.names=FALSE)))
+                           icov<-grepl("icov\\(\\)|sample covariance matrix is not positive.definite",warnings)
+                           converged<-isTRUE(lavaan::lavInspect(results$obj$model,"converged"))
+                           if (!converged || any(icov)) {
+                             reason<-if (!converged) "the estimation did not converge." else
+                                       "the sample covariance matrix is not positive definite."
+                             details<-paste(c(reason,warnings),collapse="\n")
+                             self$stop(paste("Model cannot be estimated:",details))
+                           }
+
                            ## ask for the paramters estimates
                            self$model<-results$obj$model
                            .lav_params<-results$obj$parameters

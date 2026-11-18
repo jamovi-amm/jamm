@@ -151,22 +151,127 @@ test_that("tableOptions 'regression' adds ANOVA and coefficient tables that matc
                  tolerance = 1e-6)
 })
 
-test_that("showRealNames shows the names column of the total-effects regression", {
-    shown <- jammGLM(data = coopmedmod, dep = "BEH", mediators = "EXP", covs = "SVO",
-                     mediatorsTerms = list(list("SVO")), modelTerms = list("EXP", "SVO"),
+test_that("regression tables show the comparison each factor contrast makes", {
+    # pathjdata: groups_a has levels 1, 2, 3; with repeated coding the contrasts
+    # compare 1 with 2 and 2 with 3.
+    dat <- pathjdata
+    dat$groups_a <- factor(dat$groups_a)
+    results <- jammGLM(data = dat, dep = "y1", mediators = "y3", covs = "x1", factors = "groups_a",
+                       mediatorsTerms = list(list("x1", "groups_a", c("x1", "groups_a"))),
+                       modelTerms = list("y3", "x1", "groups_a"),
+                       contrasts = c(groups_a = "repeated"), tableOptions = list("regression"))
+    total <- results$regressions$overall$regression$asDF
+    expect_identical(total$label, c("x1", "1 - 2", "2 - 3"))
+    expect_identical(total$source, c("x1", "groups_a1", "groups_a2"))
+    mediator <- results$regressions$mediator_regressions$items[[1]]$regression$asDF
+    # In interactions each comparison is in parentheses.
+    expect_identical(mediator$rhs, c("x1", "1 - 2", "2 - 3", "x1:(1 - 2)", "x1:(2 - 3)"))
+    expect_identical(mediator$source, c("x1", "groups_a1", "groups_a2", "x1:groups_a1", "x1:groups_a2"))
+    full <- results$regressions$full$regression$asDF
+    expect_identical(full$rhs, c("y3", "x1", "1 - 2", "2 - 3"))
+    expect_identical(full$source, c("y3", "x1", "groups_a1", "groups_a2"))
+    # The comparisons are the ones in the Contrasts Definition table.
+    expect_identical(results$models$contrastCodeTable$asDF$clab, c("1 - 2", "2 - 3"))
+})
+
+test_that("the effects table shows the comparison of each factor contrast", {
+    # pathjdata: groups_a has levels 1, 2, 3; simple coding compares 2 and 3 with 1.
+    dat <- pathjdata
+    dat$groups_a <- factor(dat$groups_a)
+    results <- jammGLM(data = dat, dep = "y1", mediators = "y3", covs = "x1", factors = "groups_a",
+                       mediatorsTerms = list(list("x1", "groups_a")), modelTerms = list("y3", "x1", "groups_a"))
+    table <- results$models$coefficients
+    expect_true(table$getColumn("label")$visible)
+    expect_identical(table$getColumn("label")$title, "Contrast")
+    contrast <- function(type, effect) {
+        value <- effect_row(results, type, effect)$label
+        if (is.na(value)) "" else value
+    }
+    for (type in c("Indirect")) {
+        expect_identical(contrast(type, "groups_a1 ⇒ y3 ⇒ y1"), "2 - 1")
+        expect_identical(contrast(type, "groups_a2 ⇒ y3 ⇒ y1"), "3 - 1")
+        expect_identical(contrast(type, "x1 ⇒ y3 ⇒ y1"), "")
+    }
+    for (type in c("Direct", "Total")) {
+        expect_identical(contrast(type, "groups_a1 ⇒ y1"), "2 - 1")
+        expect_identical(contrast(type, "groups_a2 ⇒ y1"), "3 - 1")
+        expect_identical(contrast(type, "x1 ⇒ y1"), "")
+    }
+    # Components: only the path leaving the contrast variable is a comparison.
+    expect_identical(contrast("Component", "groups_a1 ⇒ y3"), "2 - 1")
+    rows <- table$asDF
+    mediatorPaths <- rows$label[rows$type == "Component" & gsub("\\s+", "", rows$effect) == "y3⇒y1"]
+    expect_true(all(is.na(mediatorPaths) | mediatorPaths == ""))
+})
+
+test_that("the Contrast column follows the coding, showRealNames and the presence of factors", {
+    dat <- pathjdata
+    dat$groups_a <- factor(dat$groups_a)
+    repeated <- jammGLM(data = dat, dep = "y1", mediators = "y3", factors = "groups_a",
+                        mediatorsTerms = list(list("groups_a")), modelTerms = list("y3", "groups_a"),
+                        contrasts = c(groups_a = "repeated"))
+    expect_identical(effect_row(repeated, "Indirect", "groups_a2 ⇒ y3 ⇒ y1")$label, "2 - 3")
+    noFactors <- jammGLM(data = pathjdata, dep = "y1", mediators = "y3", covs = "x1",
+                         mediatorsTerms = list(list("x1")), modelTerms = list("y3", "x1"))
+    expect_false(noFactors$models$coefficients$getColumn("label")$visible)
+    # With factors, the column follows showRealNames (TRUE by default).
+    expect_true(repeated$models$coefficients$getColumn("label")$visible)
+    namesOff <- jammGLM(data = dat, dep = "y1", mediators = "y3", factors = "groups_a",
+                        mediatorsTerms = list(list("groups_a")), modelTerms = list("y3", "groups_a"),
+                        showRealNames = FALSE)
+    expect_false(namesOff$models$coefficients$getColumn("label")$visible)
+})
+
+test_that("fixed direct effects and moderated effects show the comparison too", {
+    dat <- pathjdata
+    dat$groups_a <- factor(dat$groups_a)
+    # groups_a is left out of the full model: its direct effect is fixed to 0.
+    fixed <- jammGLM(data = dat, dep = "y1", mediators = "y3", covs = "x1", factors = "groups_a",
+                     mediatorsTerms = list(list("x1", "groups_a")), modelTerms = list("y3", "x1"))
+    expect_identical(effect_row(fixed, "Direct", "groups_a1 ⇒ y1")$label, "2 - 1")
+    expect_identical(effect_row(fixed, "Direct", "groups_a1 ⇒ y1")$est, 0)
+    # x1 moderates the effects of groups_a.
+    moderated <- jammGLM(data = dat, dep = "y1", mediators = "y3", covs = "x1", factors = "groups_a",
+                         mediatorsTerms = list(list("x1", "groups_a", c("x1", "groups_a"))),
+                         modelTerms = list("y3", "x1", "groups_a", c("y3", "x1")),
+                         mod_terms = list(list("x1")))
+    for (condition in c("x1 = Mean - 1 SD", "x1 = Mean", "x1 = Mean + 1 SD")) {
+        expect_identical(effect_row(moderated, "Indirect", "groups_a2 ⇒ y3 ⇒ y1", condition)$label, "3 - 1")
+        expect_identical(effect_row(moderated, "Total", "groups_a1 ⇒ y1", condition)$label, "2 - 1")
+    }
+})
+
+test_that("showRealNames shows the contrast variable names in every regression table", {
+    dat <- pathjdata
+    dat$groups_a <- factor(dat$groups_a)
+    shown <- jammGLM(data = dat, dep = "y1", mediators = "y3", covs = "x1", factors = "groups_a",
+                     mediatorsTerms = list(list("x1", "groups_a")), modelTerms = list("y3", "x1", "groups_a"),
                      tableOptions = list("regression"), showRealNames = TRUE)
-    hidden <- jammGLM(data = coopmedmod, dep = "BEH", mediators = "EXP", covs = "SVO",
-                      mediatorsTerms = list(list("SVO")), modelTerms = list("EXP", "SVO"),
+    hidden <- jammGLM(data = dat, dep = "y1", mediators = "y3", covs = "x1", factors = "groups_a",
+                      mediatorsTerms = list(list("x1", "groups_a")), modelTerms = list("y3", "x1", "groups_a"),
                       tableOptions = list("regression"), showRealNames = FALSE)
-    expect_true(shown$regressions$overall$regression$getColumn("source")$visible)
-    expect_false(hidden$regressions$overall$regression$getColumn("source")$visible)
+    tables <- function(results) list(results$regressions$overall$regression,
+                                     results$regressions$mediator_regressions$items[[1]]$regression,
+                                     results$regressions$full$regression)
+    for (table in tables(shown)) expect_true(table$getColumn("source")$visible)
+    for (table in tables(hidden)) expect_false(table$getColumn("source")$visible)
+    # Without factors the Names column would repeat the Effect column: it is hidden.
+    noFactors <- jammGLM(data = pathjdata, dep = "y1", mediators = "y3", covs = "x1",
+                         mediatorsTerms = list(list("x1")), modelTerms = list("y3", "x1"),
+                         tableOptions = list("regression"), showRealNames = TRUE)
+    for (table in tables(noFactors)) expect_false(table$getColumn("source")$visible)
+    # With the names shown, the two columns differ for the contrasts.
+    total <- shown$regressions$overall$regression$asDF
+    expect_false(identical(total$source, total$label))
 })
 
 # ---- factor coding ------------------------------------------------------------
+# Uses pathjdata: groups_a has 3 levels (1, 2, 3), groups_b has 2 (1, 2). Both are
+# stored as integers and are turned into factors here.
 
 test_that("each contrast type gives the documented codes, labels and estimates", {
-    dat <- coopmedmod
-    dat$group <- factor(rep(c("a", "b", "c"), length.out = nrow(dat)))
+    dat <- pathjdata
+    dat$groups_a <- factor(dat$groups_a)
     codes <- list(
         simple = stats::contr.treatment(3) - 1 / 3,
         dummy = stats::contr.treatment(3),
@@ -175,113 +280,174 @@ test_that("each contrast type gives the documented codes, labels and estimates",
         helmert = matrix(c(2 / 3, -1 / 3, -1 / 3, 0, 1 / 2, -1 / 2), 3),
         repeated = matrix(c(2 / 3, -1 / 3, -1 / 3, 1 / 3, 1 / 3, -2 / 3), 3),
         polynomial = stats::contr.poly(3))
-    labels <- list(simple = c("b - a", "c - a"), dummy = c("b - a", "c - a"),
-                   repeated = c("a - b", "b - c"), polynomial = c("linear", "quadratic"))
+    labels <- list(simple = c("2 - 1", "3 - 1"), dummy = c("2 - 1", "3 - 1"),
+                   repeated = c("1 - 2", "2 - 3"), polynomial = c("linear", "quadratic"))
     for (type in names(codes)) {
-        results <- jammGLM(data = dat, dep = "BEH", mediators = "EXP", factors = "group",
-                           mediatorsTerms = list(list("group")), modelTerms = list("EXP", "group"),
-                           contrasts = list(list(var = "group", type = type)), showContrastCode = TRUE)
-        table <- results$models$contrastCodeTables$get(key = "group")$asDF
-        expect_equal(unname(t(as.matrix(table[c("Level=a", "Level=b", "Level=c")]))),
+        results <- jammGLM(data = dat, dep = "y1", mediators = "y3", factors = "groups_a",
+                           mediatorsTerms = list(list("groups_a")), modelTerms = list("y3", "groups_a"),
+                           contrasts = list(list(var = "groups_a", type = type)), showContrastCode = TRUE)
+        table <- results$models$contrastCodeTables$get(key = "groups_a")$asDF
+        expect_equal(unname(t(as.matrix(table[c("Level=1", "Level=2", "Level=3")]))),
                      unname(codes[[type]]), tolerance = 1e-6, info = type)
         if (!is.null(labels[[type]]))
             expect_identical(results$models$contrastCodeTable$asDF$clab, labels[[type]], info = type)
-        a <- stats::coef(stats::lm(EXP ~ group, dat, contrasts = list(group = codes[[type]])))
-        expect_equal(effect_row(results, "Component", "group1 ⇒ EXP")$est, a[[2]],
+        a <- stats::coef(stats::lm(y3 ~ groups_a, dat, contrasts = list(groups_a = codes[[type]])))
+        expect_equal(effect_row(results, "Component", "groups_a1 ⇒ y3")$est, a[[2]],
                      tolerance = 1e-6, info = type)
     }
 })
 
 test_that("showContrastCode shows one coefficient table per factor", {
-    dat <- coopmedmod
-    dat$prime <- factor(dat$prime, levels = c(0, 1), labels = c("neutral", "coop"))
-    dat$group <- factor(rep(c("a", "b", "c"), length.out = nrow(dat)))
-    hidden <- jammGLM(data = dat, dep = "BEH", mediators = "EXP", factors = c("prime", "group"),
-                      mediatorsTerms = list(list("prime", "group")),
-                      modelTerms = list("EXP", "prime", "group"))
-    shown <- jammGLM(data = dat, dep = "BEH", mediators = "EXP", factors = c("prime", "group"),
-                     mediatorsTerms = list(list("prime", "group")),
-                     modelTerms = list("EXP", "prime", "group"), showContrastCode = TRUE)
+    dat <- pathjdata
+    dat$groups_a <- factor(dat$groups_a)
+    dat$groups_b <- factor(dat$groups_b)
+    hidden <- jammGLM(data = dat, dep = "y1", mediators = "y3", factors = c("groups_a", "groups_b"),
+                      mediatorsTerms = list(list("groups_a", "groups_b")),
+                      modelTerms = list("y3", "groups_a", "groups_b"))
+    shown <- jammGLM(data = dat, dep = "y1", mediators = "y3", factors = c("groups_a", "groups_b"),
+                     mediatorsTerms = list(list("groups_a", "groups_b")),
+                     modelTerms = list("y3", "groups_a", "groups_b"), showContrastCode = TRUE)
     expect_false(hidden$models$contrastCodeTables$visible)
     expect_true(shown$models$contrastCodeTables$visible)
-    expect_identical(shown$models$contrastCodeTables$itemKeys, list("prime", "group"))
+    expect_identical(shown$models$contrastCodeTables$itemKeys, list("groups_a", "groups_b"))
+})
+
+test_that("contrasts given as a named vector equal the list form", {
+    # The named vector is what jamovi's Syntax mode writes.
+    dat <- pathjdata
+    dat$groups_a <- factor(dat$groups_a)
+    dat$groups_b <- factor(dat$groups_b)
+    asList <- jammGLM(data = dat, dep = "y1", mediators = "y3", factors = c("groups_a", "groups_b"),
+                      mediatorsTerms = list(list("groups_a", "groups_b")),
+                      modelTerms = list("y3", "groups_a", "groups_b"),
+                      contrasts = list(list(var = "groups_a", type = "dummy"),
+                                       list(var = "groups_b", type = "deviation")))
+    asVector <- jammGLM(data = dat, dep = "y1", mediators = "y3", factors = c("groups_a", "groups_b"),
+                        mediatorsTerms = list(list("groups_a", "groups_b")),
+                        modelTerms = list("y3", "groups_a", "groups_b"),
+                        contrasts = c(groups_a = "dummy", groups_b = "deviation"))
+    expect_equal(asVector$models$coefficients$asDF, asList$models$coefficients$asDF)
+})
+
+test_that("contrasts listed for some factors use simple coding for the others", {
+    dat <- pathjdata
+    dat$groups_a <- factor(dat$groups_a)
+    dat$groups_b <- factor(dat$groups_b)
+    partial <- jammGLM(data = dat, dep = "y1", mediators = "y3", factors = c("groups_a", "groups_b"),
+                       mediatorsTerms = list(list("groups_a", "groups_b")),
+                       modelTerms = list("y3", "groups_a", "groups_b"),
+                       contrasts = list(list(var = "groups_a", type = "dummy")))
+    complete <- jammGLM(data = dat, dep = "y1", mediators = "y3", factors = c("groups_a", "groups_b"),
+                        mediatorsTerms = list(list("groups_a", "groups_b")),
+                        modelTerms = list("y3", "groups_a", "groups_b"),
+                        contrasts = list(list(var = "groups_a", type = "dummy"),
+                                         list(var = "groups_b", type = "simple")))
+    expect_equal(partial$models$coefficients$asDF, complete$models$coefficients$asDF)
 })
 
 # ---- covariate scaling ------------------------------------------------------
+# Uses pathjdata, whose variables are not centered, so scaling changes the
+# lower-order effects. Model: x1, x2 -> y3 -> y1, with x2 moderating every path.
 
 test_that("scaling changes lower-order effects in a moderated model as documented", {
-    # SVO is shifted so that centering it makes a difference.
-    dat <- coopmedmod
-    dat$SVO <- dat$SVO + 10
     fitScaled <- function(type) {
-        jammGLM(data = dat, dep = "BEH", mediators = "EXP", covs = c("cprime", "SVO"),
-                mediatorsTerms = list(list("cprime", "SVO", c("cprime", "SVO"))),
-                modelTerms = list("EXP", "cprime", "SVO", c("EXP", "SVO"), c("cprime", "SVO")),
-                mod_terms = list(list("SVO")), tableOptions = list("regression"),
-                scaling = list(list(var = "cprime", type = type), list(var = "SVO", type = type),
-                               list(var = "EXP", type = type)))
+        jammGLM(data = pathjdata, dep = "y1", mediators = "y3", covs = c("x1", "x2"),
+                mediatorsTerms = list(list("x1", "x2", c("x1", "x2"))),
+                modelTerms = list("y3", "x1", "x2", c("y3", "x2"), c("x1", "x2")),
+                mod_terms = list(list("x2")), tableOptions = list("regression"),
+                scaling = list(list(var = "x1", type = type), list(var = "x2", type = type),
+                               list(var = "y3", type = type)))
     }
     raw <- fitScaled("none")
     centered <- fitScaled("centered")
     standardized <- fitScaled("standardized")
-    # The cprime -> EXP coefficient of the fitted lavaan model, found through the
-    # regression table so the test does not depend on how jamm names variables
-    # internally.
+    # The x1 -> y3 coefficient, from the mediator's regression table.
     path <- function(results) {
         table <- results$regressions$mediator_regressions$items[[1]]$regression$asDF
-        table$estimate[table$rhs == "cprime"]
+        table$estimate[table$rhs == "x1"]
     }
-    expect_equal(path(raw), stats::coef(stats::lm(EXP ~ cprime * SVO, dat))[["cprime"]],
+    expect_equal(path(raw), stats::coef(stats::lm(y3 ~ x1 * x2, pathjdata))[["x1"]], tolerance = 1e-6)
+    centeredData <- pathjdata
+    centeredData$x1 <- centeredData$x1 - mean(centeredData$x1)
+    centeredData$x2 <- centeredData$x2 - mean(centeredData$x2)
+    expect_equal(path(centered), stats::coef(stats::lm(y3 ~ x1 * x2, centeredData))[["x1"]],
                  tolerance = 1e-6)
-    centeredData <- dat
-    centeredData$cprime <- centeredData$cprime - mean(centeredData$cprime)
-    centeredData$SVO <- centeredData$SVO - mean(centeredData$SVO)
-    expect_equal(path(centered), stats::coef(stats::lm(EXP ~ cprime * SVO, centeredData))[["cprime"]],
-                 tolerance = 1e-6)
-    standardizedData <- dat
-    standardizedData$cprime <- c(scale(standardizedData$cprime))
-    standardizedData$SVO <- c(scale(standardizedData$SVO))
-    standardizedData$EXP <- c(scale(standardizedData$EXP))
+    standardizedData <- pathjdata
+    standardizedData$x1 <- c(scale(standardizedData$x1))
+    standardizedData$x2 <- c(scale(standardizedData$x2))
+    standardizedData$y3 <- c(scale(standardizedData$y3))
     expect_equal(path(standardized),
-                 stats::coef(stats::lm(EXP ~ cprime * SVO, standardizedData))[["cprime"]],
-                 tolerance = 1e-6)
-    # Conditional effects are computed at the same points of SVO, whatever the scaling.
-    expect_equal(effect_row(raw, "Indirect", "cprime ⇒ EXP ⇒ BEH", "SVO = Mean")$est,
-                 effect_row(centered, "Indirect", "cprime ⇒ EXP ⇒ BEH", "SVO = Mean")$est,
+                 stats::coef(stats::lm(y3 ~ x1 * x2, standardizedData))[["x1"]], tolerance = 1e-6)
+    expect_false(isTRUE(all.equal(path(raw), path(centered))))
+    # Conditional effects are computed at the same points of x2, whatever the scaling.
+    expect_equal(effect_row(raw, "Indirect", "x1 ⇒ y3 ⇒ y1", "x2 = Mean")$est,
+                 effect_row(centered, "Indirect", "x1 ⇒ y3 ⇒ y1", "x2 = Mean")$est,
                  tolerance = 1e-6)
 })
 
 test_that("uncentered variables in an interaction raise a note", {
-    results <- jammGLM(data = coopmedmod, dep = "BEH", mediators = "EXP", covs = c("cprime", "SVO"),
-                       mediatorsTerms = list(list("cprime", "SVO", c("cprime", "SVO"))),
-                       modelTerms = list("EXP", "cprime", "SVO", c("EXP", "SVO"), c("cprime", "SVO")),
-                       mod_terms = list(list("SVO")),
-                       scaling = list(list(var = "cprime", type = "none"), list(var = "SVO", type = "none"),
-                                      list(var = "EXP", type = "none")))
+    results <- jammGLM(data = pathjdata, dep = "y1", mediators = "y3", covs = c("x1", "x2"),
+                       mediatorsTerms = list(list("x1", "x2", c("x1", "x2"))),
+                       modelTerms = list("y3", "x1", "x2", c("y3", "x2"), c("x1", "x2")),
+                       mod_terms = list(list("x2")),
+                       scaling = list(list(var = "x1", type = "none"), list(var = "x2", type = "none"),
+                                      list(var = "y3", type = "none")))
     notes <- vapply(results$infotab$notes, function(note) note$note, character(1))
     expect_true(any(grepl("not centered", notes)))
 })
 
-test_that("scaling given only for the covariates leaves the mediators at the default", {
-    expect_no_error(jammGLM(data = coopmedmod, dep = "BEH", mediators = "EXP", covs = "SVO",
-                            mediatorsTerms = list(list("SVO")), modelTerms = list("EXP", "SVO"),
-                            scaling = list(list(var = "SVO", type = "standardized"))))
+test_that("the R default scaling matches jamovi's default (centered)", {
+    byDefault <- jammGLM(data = pathjdata, dep = "y1", mediators = "y3", covs = c("x1", "x2"),
+                         mediatorsTerms = list(list("x1", "x2", c("x1", "x2"))),
+                         modelTerms = list("y3", "x1", "x2", c("y3", "x2"), c("x1", "x2")),
+                         mod_terms = list(list("x2")), tableOptions = list("regression"))
+    centered <- jammGLM(data = pathjdata, dep = "y1", mediators = "y3", covs = c("x1", "x2"),
+                        mediatorsTerms = list(list("x1", "x2", c("x1", "x2"))),
+                        modelTerms = list("y3", "x1", "x2", c("y3", "x2"), c("x1", "x2")),
+                        mod_terms = list(list("x2")), tableOptions = list("regression"),
+                        scaling = list(list(var = "x1", type = "centered"), list(var = "x2", type = "centered"),
+                                       list(var = "y3", type = "centered")))
+    raw <- jammGLM(data = pathjdata, dep = "y1", mediators = "y3", covs = c("x1", "x2"),
+                   mediatorsTerms = list(list("x1", "x2", c("x1", "x2"))),
+                   modelTerms = list("y3", "x1", "x2", c("y3", "x2"), c("x1", "x2")),
+                   mod_terms = list(list("x2")), tableOptions = list("regression"),
+                   scaling = list(list(var = "x1", type = "none"), list(var = "x2", type = "none"),
+                                  list(var = "y3", type = "none")))
+    estimates <- function(results) results$regressions$full$regression$asDF$estimate
+    expect_equal(estimates(byDefault), estimates(centered), tolerance = 1e-6)
+    # With this data, scaling does change the estimates.
+    expect_false(isTRUE(all.equal(estimates(centered), estimates(raw))))
 })
 
-test_that("the R default scaling matches jamovi's default (centered)", {
-    byDefault <- jammGLM(data = coopmedmod, dep = "BEH", mediators = "EXP", covs = c("cprime", "SVO"),
-                         mediatorsTerms = list(list("cprime", "SVO", c("cprime", "SVO"))),
-                         modelTerms = list("EXP", "cprime", "SVO", c("EXP", "SVO"), c("cprime", "SVO")),
-                         mod_terms = list(list("SVO")))
-    explicit <- jammGLM(data = coopmedmod, dep = "BEH", mediators = "EXP", covs = c("cprime", "SVO"),
-                        mediatorsTerms = list(list("cprime", "SVO", c("cprime", "SVO"))),
-                        modelTerms = list("EXP", "cprime", "SVO", c("EXP", "SVO"), c("cprime", "SVO")),
-                        mod_terms = list(list("SVO")),
-                        scaling = list(list(var = "cprime", type = "centered"),
-                                       list(var = "SVO", type = "centered"),
-                                       list(var = "EXP", type = "centered")))
-    expect_equal(lavaan::parameterEstimates(byDefault$model)$est,
-                 lavaan::parameterEstimates(explicit$model)$est, tolerance = 1e-6)
+test_that("scaling listed for some variables centers the others", {
+    partial <- jammGLM(data = pathjdata, dep = "y1", mediators = "y3", covs = c("x1", "x2"),
+                       mediatorsTerms = list(list("x1", "x2")),
+                       modelTerms = list("y3", "x1", "x2", c("y3", "x2")),
+                       tableOptions = list("regression"),
+                       scaling = list(list(var = "x1", type = "standardized")))
+    complete <- jammGLM(data = pathjdata, dep = "y1", mediators = "y3", covs = c("x1", "x2"),
+                        mediatorsTerms = list(list("x1", "x2")),
+                        modelTerms = list("y3", "x1", "x2", c("y3", "x2")),
+                        tableOptions = list("regression"),
+                        scaling = list(list(var = "x1", type = "standardized"),
+                                       list(var = "x2", type = "centered"),
+                                       list(var = "y3", type = "centered")))
+    expect_equal(partial$regressions$full$regression$asDF$estimate,
+                 complete$regressions$full$regression$asDF$estimate, tolerance = 1e-6)
+})
+
+test_that("scaling given as a named vector equals the list form", {
+    # The named vector is what jamovi's Syntax mode writes.
+    asList <- jammGLM(data = pathjdata, dep = "y1", mediators = "y3", covs = c("x1", "x2"),
+                      mediatorsTerms = list(list("x1", "x2")), modelTerms = list("y3", "x1", "x2", c("y3", "x2")),
+                      tableOptions = list("regression"),
+                      scaling = list(list(var = "x1", type = "standardized"), list(var = "x2", type = "none"),
+                                     list(var = "y3", type = "centered")))
+    asVector <- jammGLM(data = pathjdata, dep = "y1", mediators = "y3", covs = c("x1", "x2"),
+                        mediatorsTerms = list(list("x1", "x2")), modelTerms = list("y3", "x1", "x2", c("y3", "x2")),
+                        tableOptions = list("regression"),
+                        scaling = c(x1 = "standardized", x2 = "none", y3 = "centered"))
+    expect_equal(asVector$regressions$full$regression$asDF, asList$regressions$full$regression$asDF)
 })
 
 # ---- conditioning of moderators --------------------------------------------------

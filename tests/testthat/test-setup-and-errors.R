@@ -64,16 +64,4 @@ test_that("a model without indirect paths says so and still estimates", {
     expect_false("Indirect" %in% results$models$coefficients$asDF$type)
 })
 
-test_that("a model that does not converge is not reported as a normal result", {
-    # Two perfectly collinear predictors cannot be estimated separately.
-    dat <- coopmedmod
-    dat$SVO2 <- dat$SVO * 2
-    results <- tryCatch(
-        jammGLM(data = dat, dep = "BEH", mediators = "EXP", covs = c("SVO", "SVO2"),
-                mediatorsTerms = list(list("SVO", "SVO2")), modelTerms = list("EXP", "SVO", "SVO2")),
-        error = function(error) NULL)
-    # Either the analysis stops, or no estimates are shown.
-    if (!is.null(results))
-        expect_true(all(is.na(results$models$coefficients$asDF$est)),
-                    info = "non-converged estimates were reported as results")
-})
+# Models that do not converge: see test-convergence.R.

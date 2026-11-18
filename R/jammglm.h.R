@@ -648,8 +648,8 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `type`="text"),
                                 list(
                                     `name`="label", 
-                                    `title`="Contrasts", 
-                                    `visible`=FALSE, 
+                                    `title`="Contrast", 
+                                    `visible`="(showRealNames && length(factors) > 0)", 
                                     `type`="text"),
                                 list(
                                     `name`="est", 
@@ -876,7 +876,7 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                                 `name`="source", 
                                                 `title`="Names", 
                                                 `type`="text", 
-                                                `visible`="(showRealNames)"),
+                                                `visible`="(showRealNames && length(factors) > 0)"),
                                             list(
                                                 `name`="label", 
                                                 `title`="Effect", 
@@ -1055,6 +1055,11 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                                     `type`="text", 
                                                     `combineBelow`=TRUE),
                                                 list(
+                                                    `name`="source", 
+                                                    `title`="Names", 
+                                                    `type`="text", 
+                                                    `visible`="(showRealNames && length(factors) > 0)"),
+                                                list(
                                                     `name`="rhs", 
                                                     `title`="Effect", 
                                                     `type`="text"),
@@ -1209,6 +1214,11 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                                 `title`="Dependent", 
                                                 `type`="text", 
                                                 `combineBelow`=TRUE),
+                                            list(
+                                                `name`="source", 
+                                                `title`="Names", 
+                                                `type`="text", 
+                                                `visible`="(showRealNames && length(factors) > 0)"),
                                             list(
                                                 `name`="rhs", 
                                                 `title`="Effect", 

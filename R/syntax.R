@@ -265,6 +265,10 @@ Syntax <- R6::R6Class(
                 arow<-.lav_structure[.lav_structure$op==":=" & .lav_structure$lhs==paste0("IE",i),]
                 arow$type<-"Indirect"
                 arow$effect<-self$indirect_names[[i]]
+                # The Contrast column: the comparison of the factor contrast the
+                # effect starts from, empty for continuous variables.
+                start<-private$.indirect_names[[i]][1]
+                arow$label<-private$.comparison(start)
                 self$tab_coefficients[[length(self$tab_coefficients)+1]]<-arow
                 if ("component" %in% self$options$tableOptions) {
                   comps<-stringr::str_split(inames[i],"\\*")[[1]]
@@ -273,6 +277,8 @@ Syntax <- R6::R6Class(
                     arow<-rows[j,]
                     arow$type<-"Component"
                     arow$effect<-paste(arow$rhs," \U21d2 ",arow$lhs)
+                    # only the path leaving the contrast variable is a comparison
+                    arow$label<-if (identical(arow$rhs,fromb64(start))) private$.comparison(start) else ""
                     self$tab_coefficients[[length(self$tab_coefficients)+1]]<-arow
                   }
                 }
@@ -280,11 +286,12 @@ Syntax <- R6::R6Class(
               for (direct in self$direct_effects) {
                 if (is.null(direct$label)) {
                   # Not in the full model: shown as fixed to 0 (see the note set in .total()).
-                  arow<-private$.fixed_direct_row(direct$name)
+                  arow<-private$.fixed_direct_row(direct$name, contrast=direct$contrast)
                 } else {
                   arow<-.lav_structure[.lav_structure$label==direct$label,]
                   arow$type<-"Direct"
                   arow$effect<-direct$name
+                  arow$label<-direct$contrast
                 }
                 self$tab_coefficients[[length(self$tab_coefficients)+1]]<-arow
               }
@@ -293,6 +300,8 @@ Syntax <- R6::R6Class(
                 arow<-.lav_structure[.lav_structure$op==":=" & .lav_structure$lhs==paste0("TOT",i),]
                 arow$type<-"Total"
                 arow$effect<-self$total_names[[i]]
+                # totals are in the same order as direct_effects (see .total())
+                arow$label<-self$direct_effects[[i]]$contrast
                 self$tab_coefficients[[length(self$tab_coefficients)+1]]<-arow
                 }
 
@@ -301,11 +310,12 @@ Syntax <- R6::R6Class(
               if (length(private$.conditional_effects) > 0) {
                 self$tab_coefficients <- lapply(private$.conditional_effects, function(effect) {
                   if (isTRUE(effect$fixed))
-                    return(private$.fixed_direct_row(effect$effect, effect$condition))
+                    return(private$.fixed_direct_row(effect$effect, effect$condition, effect$contrast))
                   row <- .lav_structure[.lav_structure$lhs == effect$parameter & .lav_structure$op == ":=", ]
                   row$type <- effect$type
                   row$effect <- effect$effect
                   row$condition <- effect$condition
+                  row$label <- effect$contrast
                   if ("est" %in% names(row))
                     row$std.all <- row$est * effect$scale
                   row
@@ -516,7 +526,8 @@ Syntax <- R6::R6Class(
                 if (is.null(pairs[[key]])) {
                   direct<-tab$label[tab$op=="~" & tab$rhs==from & tab$lhs==to]  # character(0) if absent
                   pairs[[key]]<-list(name=paste0(fromb64(from),"\U21d2",fromb64(to)),
-                                     direct=direct, indirect=character())
+                                     direct=direct, indirect=character(),
+                                     contrast=private$.comparison(from))
                 }
                 pairs[[key]]$indirect<-c(pairs[[key]]$indirect,inames[i])
               }
@@ -533,15 +544,22 @@ Syntax <- R6::R6Class(
               # the full model is still listed (label NULL): the table shows it as
               # fixed to 0, so the constraint is visible.
               self$direct_effects<-unname(lapply(pairs,function(p)
-                list(name=p$name, label=if (length(p$direct)==1) p$direct else NULL)))
+                list(name=p$name, label=if (length(p$direct)==1) p$direct else NULL,
+                     contrast=p$contrast)))
               if (any(vapply(pairs,function(p) length(p$direct)==0,logical(1))))
                 self$warning<-list(topic="models_coefficients",message=WARNS[["fixeddirect"]])
             },
+            # The comparison made by a factor contrast variable (encoded name), for
+            # the Contrast column of the effects table; "" for other variables.
+            .comparison=function(code) {
+              comparison<-contrast_comparison(code,private$.conditional_datamatic)
+              if (is.null(comparison)) "" else comparison
+            },
             # A Direct row for a path that is not in the full model: its value is
             # fixed to 0 by the model, so it has no standard error, interval or test.
-            .fixed_direct_row=function(name, condition=NULL) {
-              row<-data.frame(type="Direct", effect=name, est=0, se=NA, ci.lower=NA, ci.upper=NA,
-                              std.all=0, z=NA, pvalue=NA, stringsAsFactors=FALSE)
+            .fixed_direct_row=function(name, condition=NULL, contrast="") {
+              row<-data.frame(type="Direct", effect=name, label=contrast, est=0, se=NA, ci.lower=NA,
+                              ci.upper=NA, std.all=0, z=NA, pvalue=NA, stringsAsFactors=FALSE)
               if (!is.null(condition))
                 row$condition<-condition
               row

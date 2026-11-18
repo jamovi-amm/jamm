@@ -35,7 +35,8 @@ options:
     - name: data
       type: Data
       description:
-          R: the data as a data frame
+          R: >
+            the data as a data frame. Categorical variables used as `factors` must be factors.
 
     - name: dep
       title: Dependent variable
@@ -48,8 +49,9 @@ options:
         - numeric
       description:
           R: >
-            a string naming the dependent variable from `data`, variable
-            must be numeric
+            a string naming the dependent variable from `data`; the variable must be numeric. Required unless `formula` is given.
+          ui: >
+            The dependent variable: the final outcome, predicted by the mediators and the independent variables. It must be numeric (continuous or ordinal).
 
     - name: mediators
       title: Mediators
@@ -61,7 +63,10 @@ options:
         - numeric
       default:
       description:
-          R: a vector of strings naming the mediators from `data`
+          R: >
+            a vector of strings naming the mediators from `data`. Required unless `formula` is given.
+          ui: >
+            One or more numeric variables that transmit the effect of the independent variables on the dependent variable. Each mediator has its own regression model, set in Mediator Models.
 
     - name: factors
       title: Factors
@@ -73,7 +78,10 @@ options:
         - factor
       default:
       description:
-          R: a vector of strings naming the fixed factors from `data`
+          R: >
+            a vector of strings naming the categorical independent variables (factors) from `data`. Derived from `formula` when it is given; otherwise at least one of `factors` or `covs` is required.
+          ui: >
+            Categorical independent variables. Each factor enters the models as contrast variables (a factor with k levels gives k-1 contrasts, each with its own effects), coded as set in Factor Coding. At least one factor or covariate is needed.
 
     - name: covs
       title: Covariates
@@ -85,7 +93,10 @@ options:
         - numeric
       default:
       description:
-          R: a vector of strings naming the covariates from `data`
+          R: >
+            a vector of strings naming the continuous independent variables (covariates) from `data`. Derived from `formula` when it is given; otherwise at least one of `factors` or `covs` is required.
+          ui: >
+            Continuous independent variables. They are scaled as set in Covariate Scaling (centered by default). At least one factor or covariate is needed.
 
 
 
@@ -95,7 +106,9 @@ options:
       default:
       description:
           R: >
-            a list of character vectors describing fixed effects terms
+            a list of terms (character vectors) predicting the dependent variable in the full model, e.g. `list("m", "x", c("m", "w"))` for `y ~ m + x + m:w`. Required unless `formula` is given.
+          ui: >
+            Full Model: the terms predicting the dependent variable, that is the mediators, the independent variables with a direct effect, and their interactions. An independent variable left out of the full model has no direct effect: the effects table shows its direct effect fixed to 0.
 
 
     - name: ciType
@@ -115,8 +128,9 @@ options:
       default: standard
       description:
           R: >
-             Confidence interval type: `'standard'` (default, delta method), `'bca'` (bias-corrected
-             bootstrap), `'perc'` (percentile bootstrap), `'norm'` (normal bootstrap), or `'none'`.
+            confidence interval type: `'standard'` (default, delta method), `'bca'` (bias-corrected bootstrap), `'perc'` (percentile bootstrap), `'norm'` (normal bootstrap), or `'none'`.
+          ui: >
+            Confidence intervals of the estimates: Standard (delta method, the default), Bootstrap (BC) for bias-corrected bootstrap intervals, Bootstrap (Percent) for percentile bootstrap intervals, Bootstrap (Normal) for normal-theory bootstrap intervals, or None.
 
 
     - name: ciWidth
@@ -127,8 +141,9 @@ options:
       default: 95
       description:
           R: >
-            a number between 50 and 99.9 (default: 95) specifying the confidence
-            interval width for the parameter estimates
+            a number between 50 and 99.9 (default: 95) specifying the confidence interval width for the parameter estimates
+          ui: >
+            Interval: the confidence level of the intervals, between 50 and 99.9 (default 95%).
 
     - name: bootN
       title: Bootstrap samples
@@ -138,6 +153,8 @@ options:
       description:
           R: >
             integer number of bootstrap samples (at least 50) for estimating confidence intervals
+          ui: >
+            Bootstrap samples: the number of bootstrap samples (at least 50, default 1000) used when a bootstrap interval is selected.
 
     - name: contrasts
       title: Factor Coding
@@ -163,9 +180,9 @@ options:
                 default: simple
       description:
           R: >
-            a list of lists specifying the factor and type of contrast to use,
-            one of `'simple'`, `'deviation'`, `'dummy'`, `'difference'`, `'helmert'`,
-            `'repeated'` or `'polynomial'`
+            the coding of each factor, one of `'simple'`, `'deviation'`, `'dummy'`, `'difference'`, `'helmert'`, `'repeated'` or `'polynomial'`, given either as a list of lists, e.g. `list(list(var = "group", type = "dummy"))`, or as a named vector, e.g. `c(group = "dummy")`. Factors not listed use `'simple'` coding (the default, as in jamovi).
+          ui: >
+            Factor Coding: how each factor is coded into contrast variables. `simple` (default) compares each level with the first one, centered; `deviation` compares each level with the mean of all levels; `dummy` compares each level with the first one, not centered; `difference` compares each level with the mean of the previous levels; `helmert` compares each level with the mean of the following levels; `repeated` compares each level with the next one; `polynomial` estimates linear, quadratic and higher trends. The Contrasts Definition table shows what each contrast compares.
 
 
     - name: showRealNames
@@ -174,7 +191,9 @@ options:
       default: true
       description:
           R: >
-            `TRUE` (default) or `FALSE`; show the original variable names in contrast estimates.
+            `TRUE` (default) or `FALSE`; when the model has factors, show which variable each contrast is and what it compares: a Contrast column in the indirect and total effects table, with the comparison each contrast makes (e.g. `2 - 1`), and a Names column in the regression tables, with the name of each contrast variable (e.g. `group1`) next to the Effect column, which shows the comparison.
+          ui: >
+            Names in estimates table: when the model has factors, adds a Contrast column to the Indirect and Total Effects table, showing the comparison each factor contrast makes (e.g. 2 - 1, as in the Contrasts Definition table; empty for continuous variables), and a Names column to the regression tables (shown when Individual regressions is selected), with the name of each contrast variable (e.g. group1) next to its comparison.
 
 
     - name: showContrastCode
@@ -184,6 +203,8 @@ options:
       description:
           R: >
             `TRUE` or `FALSE` (default), provide contrast coefficients tables
+          ui: >
+            Contrast coefficients tables: shows, for each factor, the values given to each of its levels in each contrast.
 
 
 
@@ -200,8 +221,9 @@ options:
       default: mean_sd
       description:
           R: >
-            `'mean_sd'` (default) uses the mean and offsets of `cvalue` standard deviations;
-            `'percent'` uses the median and percentile offsets of `percvalue` for continuous moderators.
+            `'mean_sd'` (default) uses the mean and offsets of `cvalue` standard deviations; `'percent'` uses the median and percentile offsets of `percvalue` for continuous moderators.
+          ui: >
+            Covariate Conditioning: the values of continuous moderators at which the conditional effects are computed. Mean ± SD uses the mean and the mean plus and minus the number of standard deviations set in the box (default 1); Percentiles 50 ± offset uses the median and the percentiles at the offset set in the box (default 25, i.e. the 25th, 50th and 75th percentiles).
 
 
     - name: cvalue
@@ -211,6 +233,8 @@ options:
       description:
           R: >
             standard-deviation offset for conditioning (at least 0.1)
+          ui: >
+            The number of standard deviations around the mean (at least 0.1, default 1) used by Mean ± SD.
 
     - name: percvalue
       type: Number
@@ -220,6 +244,8 @@ options:
       description:
           R: >
             percentile offset from the median, between 5 and 50 (default: 25).
+          ui: >
+            The percentile offset around the median (between 5 and 50, default 25) used by Percentiles 50 ± offset.
 
     - name: simpleScaleLabels
       title: Covariate Labeling
@@ -232,6 +258,11 @@ options:
         - name: values_labels
           title: Values + labels
       default: labels
+      description:
+          R: >
+            moderator setting labels: `'labels'` (default), `'values'`, or `'values_labels'`.
+          ui: >
+            Covariate Labeling: how the values of continuous moderators are labelled in the tables. Labels shows the setting (e.g. Mean + 1 SD), Values shows the moderator's value, Values + labels shows both.
 
 
 ############ generic with some specs ###########
@@ -258,8 +289,9 @@ options:
                 default: centered 
       description:
           R: >
-            a list of lists specifying the covariates scaling,
-            one of `'centered'`, `'standardized'`, or `'none'`. `'none'` leaves the variable as it is
+            the scaling of each covariate and mediator, one of `'centered'`, `'standardized'` or `'none'` (the variable is left as it is), given either as a list of lists, e.g. `list(list(var = "x", type = "standardized"))`, or as a named vector, e.g. `c(x = "standardized")`. Covariates and mediators not listed are centered (the default, as in jamovi).
+          ui: >
+            Covariate Scaling: how each covariate and mediator is transformed before estimation. `centered` (default) subtracts the mean; `standardized` also divides by the standard deviation; `none` leaves the variable as it is. With interactions in the models, centering makes the lower-order effects the effects at the mean of the other variable.
 
 
 ######### specs here ##########
@@ -277,6 +309,11 @@ options:
       default:
           - beta
           - component
+      description:
+          R: >
+            optional table content: `'beta'` and `'component'` (both selected by default), and `'regression'`.
+          ui: >
+            Display in Tables: Indirect effect components adds the individual paths of each indirect effect; β adds the standardized coefficients; Individual regressions adds ANOVA and coefficient tables for the total-effects model, each mediator model and the full model.
 
     - name: pathOptions
       type: NMXList
@@ -285,6 +322,11 @@ options:
             title: Suggested paths
       default:
           - suggested
+      description:
+          R: >
+            include `'suggested'` (default) to show suggested paths in the conceptual model diagram without changing the fitted model.
+          ui: >
+            Suggested paths: shows in green, in the model diagram, paths that a mediation model usually includes but that are not in the specified models. They are not estimated.
           
     - name: mediatorsTerms
       title: Mediator Models
@@ -294,7 +336,9 @@ options:
           type: Terms
       description:
           R: >
-            a list of lists specifying the models with the mediators as dependent variables.
+            a list with one element per mediator, in the order of `mediators`, each a list of terms (character vectors) predicting that mediator, e.g. `list(list("x", "w", c("x", "w")))` for `m ~ x + w + x:w`. Required unless `formula` is given.
+          ui: >
+            Mediator Models: for each mediator, the terms predicting it, that is the independent variables (and other mediators, for serial mediation) and their interactions.
 
     - name: mod_terms
       title: Moderator Effects
@@ -304,7 +348,9 @@ options:
           type: Terms
       description:
           R: >
-            a list of lists specifying the variables that moderate each mediated effect.
+            (optional) a list with one element per mediator, in the order of `mediators`, each listing the variables that moderate that mediated effect, e.g. `list(list("w"))`. The interactions themselves must be included in `mediatorsTerms` and `modelTerms` (or in `formula`). Not derived from `formula`. Categorical moderators include each factor level and an Average setting at the equal-level contrast centroid (zero for centered factor coding). Indirect effects at Average are products of the centered-factor slopes, not averages of the level-specific indirect effects.
+          ui: >
+            Moderators: for each mediator, the independent variables that moderate its mediated effect. The needed interactions are added to the models automatically. Indirect, direct and total effects are then computed at different values of the moderators: for a continuous moderator as set in Covariate Conditioning, for a categorical moderator at each level and at their average. At least one independent variable must remain outside the moderators.
 
     # ------------------------------------------------------------------
     # LEGACY (jAMM < 2.0): `moderatorsTerms` was renamed `mod_terms` in 2.0.
@@ -323,8 +369,7 @@ options:
           type: Terms
       description:
           R: >
-            deprecated, use `mod_terms`. Accepted only for analyses and
-            scripts written for jAMM 1.x.
+            deprecated, use `mod_terms`. Accepted (with a warning) for scripts written for jAMM 1.x; ignored when `mod_terms` is also given.
 
 #### path diagram ###
 
@@ -335,6 +380,8 @@ options:
       description:
           R: >
             `TRUE` (default) or `FALSE`; show the conceptual model diagram based on the specified regression terms.
+          ui: >
+            Model diagram: shows the conceptual diagram of the specified model, with the moderators on the paths they moderate.
 
 
 
@@ -345,6 +392,8 @@ options:
       description:
           R: >
             `TRUE` or `FALSE` (default); show the statistical path diagram based on the fitted model.
+          ui: >
+            Path diagram: shows the statistical path diagram of the fitted model, with every estimated path. Its appearance is set by the options below.
 
     - name: diag_paths
       title: Path labels
@@ -361,8 +410,9 @@ options:
       default: est
       description:
           R: >
-             Statistical path labels: `'est'` (default) for coefficients, `'stand'` for standardized coefficients,
-             `'name'` for parameter labels, or `'hide'` for no labels.
+            statistical path labels: `'est'` (default) for coefficients, `'stand'` for standardized coefficients, `'name'` for parameter labels, or `'hide'` for no labels.
+          ui: >
+            Paths: the labels shown on the paths of the path diagram: Coefficients (default), Betas (standardized coefficients), Labels (parameter names) or None.
 
     - name: diag_resid
       title: Residuals
@@ -371,6 +421,8 @@ options:
       description:
           R: >
             `TRUE` or `FALSE` (default); show residuals in the statistical path diagram.
+          ui: >
+            Residuals: shows the residual variances in the path diagram.
 
     - name: diag_labsize
       title: Node size
@@ -388,7 +440,9 @@ options:
       default: medium
       description:
           R: >
-             Statistical diagram node size: `'small'`, `'medium'` (default), `'large'`, or `'vlarge'`.
+            statistical diagram node size: `'small'`, `'medium'` (default), `'large'`, or `'vlarge'`.
+          ui: >
+            Node size: the size of the variables' boxes in the path diagram: Small, Medium (default), Large or Very large.
 
     - name: diag_rotate
       title: Rotate
@@ -406,8 +460,9 @@ options:
       default: "1"
       description:
           R: >
-             Exogenous-node position in the statistical diagram: `'1'` (top, default), `'2'` (left),
-             `'3'` (bottom), or `'4'` (right). The mediation-like layout uses fixed positions.
+            exogenous-node position in the statistical diagram: `'1'` (top, default), `'2'` (left), `'3'` (bottom), or `'4'` (right). The mediation-like layout uses fixed positions.
+          ui: >
+            Rotate: where the independent variables are placed in the path diagram: Exogenous top (default), left, bottom or right. Not used by the Mediation-like layout; the circle layouts accept only top or bottom.
     - name: diag_type
       title: Type
       type: List
@@ -429,7 +484,9 @@ options:
       default: "mediation"
       description:
           R: >
-             Statistical diagram layout: `'mediation'` (default), `'circle'`, `'circle2'`, `'tree2'`, `'tree'`, or `'spring'`.
+            statistical diagram layout: `'mediation'` (default), `'circle'`, `'circle2'`, `'tree2'`, `'tree'`, or `'spring'`.
+          ui: >
+            Type: the layout of the path diagram: Mediation-like (default; independent variables, mediators and dependent variable from left to right), Circle, Circle (alternative), Tree-like, Tree-like (alternative) or Spring.
 
     - name: diag_shape
       title: Shapes
@@ -449,7 +506,9 @@ options:
       default: "rectangle"
       description:
           R: >
-             Statistical diagram node shape: `'rectangle'` (default), `'square'`, `'circle'`, `'ellipse'`, or `'diamond'`.
+            statistical diagram node shape: `'rectangle'` (default), `'square'`, `'circle'`, `'ellipse'`, or `'diamond'`.
+          ui: >
+            Shapes: the shape of the variables' boxes in the path diagram: Rectangles (default), Squares, Circles, Ellipses or Diamonds.
 
 
     - name: diag_abbrev
@@ -471,8 +530,9 @@ options:
       default: "0"
       description:
           R: >
-             Minimum abbreviation length for statistical diagram node labels: `'0'` (default, no abbreviation),
-             `'5'`, `'10'`, `'15'`, `'20'`, or `'25'`.
+            minimum abbreviation length for statistical diagram node labels: `'0'` (default, no abbreviation), `'5'`, `'10'`, `'15'`, `'20'`, or `'25'`.
+          ui: >
+            Abbreviate: shortens the variable names in the path diagram to the chosen number of characters (default: no abbreviation).
 
 
 ### end diagram ###

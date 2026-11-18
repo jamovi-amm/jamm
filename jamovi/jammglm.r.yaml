@@ -144,8 +144,8 @@ items:
                       title: "Effect"
                       type: text
                     - name: label
-                      title: "Contrasts"
-                      visible: false
+                      title: "Contrast"
+                      visible: (showRealNames && length(factors) > 0)
                       type: text
                     - name: est
                       title: "Estimate"
@@ -265,7 +265,7 @@ items:
                     - name: source
                       title: "Names"
                       type: text
-                      visible: (showRealNames)
+                      visible: (showRealNames && length(factors) > 0)
                     - name: label
                       title: "Effect"
                       type: text
@@ -344,6 +344,10 @@ items:
                            title: "Dependent"
                            type: text
                            combineBelow: true
+                         - name: source
+                           title: "Names"
+                           type: text
+                           visible: (showRealNames && length(factors) > 0)
                          - name: rhs
                            title: "Effect"
                            type: text
@@ -418,6 +422,10 @@ items:
                       title: Dependent
                       type: text
                       combineBelow: true
+                    - name: source
+                      title: Names
+                      type: text
+                      visible: (showRealNames && length(factors) > 0)
                     - name: rhs
                       title: Effect
                       type: text

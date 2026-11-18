@@ -53,11 +53,11 @@ Initer <- R6::R6Class(
             list(list(dep = self$options$dep))
         },
         init_regressions_overall_regression = function() {
-            regression_layout(self$options$dep, private$.total_terms(), self$estimator, total = TRUE)$regression
+            regression_layout(self$options$dep, private$.total_terms(), self$estimator, self$datamatic, total = TRUE)$regression
         },
         init_regressions_mediator_regressions = function() {
             rows <- lapply(seq_along(self$options$mediators), function(index) {
-                regression_layout(self$options$mediators[[index]], self$options$mediatorsTerms[[index]], self$estimator)
+                regression_layout(self$options$mediators[[index]], self$options$mediatorsTerms[[index]], self$estimator, self$datamatic)
             })
             stats::setNames(rows, self$options$mediators)
         },
@@ -65,7 +65,7 @@ Initer <- R6::R6Class(
             list(list(lhs = self$options$dep))
         },
         init_regressions_full_regression = function() {
-            regression_layout(self$options$dep, self$options$modelTerms, self$estimator)$regression
+            regression_layout(self$options$dep, self$options$modelTerms, self$estimator, self$datamatic)$regression
         }
     ),
     private = list(
