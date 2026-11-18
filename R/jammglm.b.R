@@ -70,10 +70,12 @@ jammGLMClass <- R6::R6Class(
 
                 aSmartObj <- SmartTable$new(self$results$regressions$overall$regression, runner_machine)
                 aSmartObj$title <- paste("Total effects predicting:", self$options$dep)
+                aSmartObj$ci("", self$options$ciWidth)
                 ladd(private$.smartObjs) <- aSmartObj
 
                 # Each mediator owns a group containing ANOVA and coefficients.
                 aSmartObj <- SmartArray$new(self$results$regressions$mediator_regressions, runner_machine)
+                aSmartObj$ci("", self$options$ciWidth)
                 ladd(private$.smartObjs) <- aSmartObj
                 mediatorsSmartObj <- aSmartObj
 
@@ -83,6 +85,7 @@ jammGLMClass <- R6::R6Class(
 
                 aSmartObj <- SmartTable$new(self$results$regressions$full$regression, runner_machine)
                 aSmartObj$title <- paste("Full model predicting", self$options$dep)
+                aSmartObj$ci("", self$options$ciWidth)
                 ladd(private$.smartObjs) <- aSmartObj
             }
 
@@ -132,69 +135,14 @@ jammGLMClass <- R6::R6Class(
             jinfo("RUN TIME:", Sys.time() - runnow, " secs")
             jinfo("TIME:", Sys.time() - private$.time, " secs")
         },
-        # This callback matches pathmodel's renderFun, not the semPlot images.
         .showModelDiagram = function(image, ggtheme, theme, ...) {
-            if (!self$options$meddiagram || is.null(image$state$modelDiagram)) {
-                return()
-            }
-            plot_model_diagram(image$state$modelDiagram)
-            return(TRUE)
+            state <- image$state
+            if (!is.null(state$modelDiagram))
+                state <- new_plot_state(state$modelDiagram)
+            render_plot_state(state, plot_model_diagram)
         },
         .showDiagram = function(image, ggtheme, theme, ...) {
-            if (self$options$diagram == FALSE) {
-                return()
-            }
-            if (!is.something(image$state$semModel)) {
-                return()
-            }
-            options <- private$.plotter_machine$semPathsOptions
-            res <- try_hard(
-                semPlot::semPaths(
-                    object = image$state$semModel,
-                    layout = options$layout,
-                    residuals = options$residuals,
-                    rotation = options$rotation,
-                    intercepts = options$intercepts,
-                    nodeLabels = options$nodeLabels,
-                    whatLabels = options$whatLabels,
-                    sizeMan = options$sizeMan,
-                    sizeMan2 = options$sizeMan2,
-                    curve = options$curve,
-                    shapeMan = options$shapeMan,
-                    edge.label.cex = options$edge.label.cex
-                )
-            )
-            note <- FALSE
-
-            if (!isFALSE(res$error)) {
-                if (length(grep("Circle layout only supported", res$error, fixed = TRUE)) > 0) {
-                    res$error <- PLOT_WARNS[["nocircle"]]
-                    note <- TRUE
-                }
-                if (length(grep("graph_from_edgelist", res$error, fixed = TRUE)) > 0) {
-                    res$error <- PLOT_WARNS[["nocircle"]]
-                    note <- TRUE
-                }
-                if (length(grep("subscript out of", res$error, fixed = TRUE)) > 0) {
-                    res$error <- PLOT_WARNS[["fail"]]
-                    note <- TRUE
-                }
-            }
-
-            if (!isFALSE(res$error)) {
-                self$results$pathgroup$notes$addRow("err", list(message = res$error))
-                note <- TRUE
-            }
-            if (!isFALSE(res$warning)) {
-                self$results$pathgroup$notes$addRow("war", list(message = res$warning))
-                note <- TRUE
-            }
-
-            if (note) {
-                self$results$pathgroup$notes$setVisible(TRUE)
-            }
-
-            return(TRUE)
+            render_plot_state(image$state, draw_path_diagram)
         },
         .marshalFormula = function(formula, data, name) {
             formula <- lapply(formula, expand.formula)

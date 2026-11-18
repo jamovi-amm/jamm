@@ -9,7 +9,7 @@
     res$df<-smr$df[2]
     ci<-confint(model,level = ciWidth)
     res<-cbind(res,ci)
-    colnames(res)<-c("estimate","se","t","p","df","cilow","cihig")
+    colnames(res)<-c("estimate","se","t","p","df","ci.lower","ci.upper")
     res
   })
   if (jmvcore::isError(estimates)) {

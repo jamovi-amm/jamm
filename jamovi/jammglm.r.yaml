@@ -79,12 +79,12 @@ items:
                     - name: ci.lower
                       type: number
                       title: Lower
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ciType != 'none')
                       format: zto
                     - name: ci.upper
                       type: number
                       title: Upper
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ciType != 'none')
                       format: zto
 
     
@@ -115,11 +115,11 @@ items:
                     - name: ci.lower
                       type: number
                       title: Lower
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ciType != 'none')
                     - name: ci.upper
                       type: number
                       title: Upper
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ciType != 'none')
 
                     - name: std.all
                       type: number
@@ -178,11 +178,11 @@ items:
                     - name: ci.lower
                       type: number
                       title: Lower
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ciType != 'none')
                     - name: ci.upper
                       type: number
                       title: Upper
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ciType != 'none')
                     - name: std.all
                       type: number
                       title: β
@@ -295,14 +295,14 @@ items:
                     - name: se
                       title: "SE"
                       type: number
-                    - name: cilow
+                    - name: ci.lower
                       type: number
                       title: Lower
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
-                    - name: cihig
+                      visible: (ciType != 'none')
+                    - name: ci.upper
                       type: number
                       title: Upper
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ciType != 'none')
                     - name: beta
                       type: number
                       title: β
@@ -374,14 +374,14 @@ items:
                          - name: se
                            title: "SE"
                            type: number
-                         - name: cilow
+                         - name: ci.lower
                            type: number
                            title: Lower
-                           visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
-                         - name: cihig
+                           visible: (ciType != 'none')
+                         - name: ci.upper
                            type: number
                            title: Upper
-                           visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                           visible: (ciType != 'none')
                          - name: beta
                            type: number
                            title: β
@@ -449,14 +449,14 @@ items:
                     - name: se
                       title: "SE"
                       type: number
-                    - name: cilow
+                    - name: ci.lower
                       type: number
                       title: Lower
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
-                    - name: cihig
+                      visible: (ciType != 'none')
+                    - name: ci.upper
                       type: number
                       title: Upper
-                      visible: (ciType:standard || ciType:perc || ciType:norm || ciType:bca)
+                      visible: (ciType != 'none')
                     - name: beta
                       type: number
                       title: β

@@ -1,14 +1,14 @@
 Package: jamm
 Type: Package
 Title: Advanced Mediational Models
-Version: 2.0.0
+Version: 2.0.1
 Author: Marcello Gallucci
 Maintainer: Marcello Gallucci <mcfanda@gmail.com>
 Description: A suite for estimation of mediational models, including multiple mediators, and conditional mediation
 License: GPL-2
 Encoding: UTF-8
 LazyData: true
-Imports: jmvcore (>= 0.8.0), diagram, gridExtra, lavaan (>= 0.7-3)
+Imports: jmvcore (>= 0.8.0), diagram, lavaan (>= 0.7-3), semPlot
 Depends: jmvcore
 Suggests: testthat (>= 3.0.0), V8, knitr
 Config/testthat/edition: 3

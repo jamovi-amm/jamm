@@ -5,7 +5,6 @@ Plotter <- R6::R6Class(
   inherit = Scaffold,
   public=list(
       vars=NULL,
-      semPathsOptions=NULL,
       initialize=function(jmvobj,datamatic,operator,resultsplots) {
             super$initialize(jmvobj)
             self$vars<-datamatic$vars
@@ -20,94 +19,64 @@ Plotter <- R6::R6Class(
             private$.plotgroup$diagrams$addItem("0")
             private$.plotgroup$diagrams$get(key = "0")$setTitle("")
       },
-      preparePlots=function(image, ggtheme, theme, ...) {
-        # The conceptual model is independent of the fitted semPlot diagram.
-        # Prepare it before the path-diagram guard, including model-only requests.
+      preparePlots=function() {
         if (self$options$meddiagram)
           private$.prepareModelDiagram()
-
         if (!self$options$diagram)
           return()
-        
-        model<-private$.operator$model
-        ### this is due to the fact that semPaths seems to fail when an inequality constraints is in ###
-        ### check for more lavaanian solution ###
-        check<-grep(">|<",model@ParTable$op,invert = T)
-        par<-model@ParTable
-        model@ParTable<-sapply(par, function(x) x[check],simplify = F)
-        ### end ###
-      
-        
-        ## prepare the semPlotModel object to be passed to .rendefun where
-        ## semPaths will do the actual diagrams
-        
-        ## At the moment (mid-2021) semPaths invokes the graphical device even when DoNotPlot is TRUE,
-        ## which causes a window to pop up in windows and mac when run in jamovi. So, we need to prepare a semPlot object 
-        ## here and make the actual plot in the .renderfun of pathj.b.R with semPaths. 
-        ## for multigroup, we trick the .renderfun semPaths() to believe that there's always only one group
-        ## per call, because the .renderfun is called for each group.
-        
-        
-        sm<-semPlot::semPlotModel(model)
-        groups<-unique(sm@Pars$group)
-        images<-private$.plotgroup$diagrams
-        
-        
-        if (all(groups=="")) {
-          image<-images$get(key = "0")
-          image$setState(list(semModel = sm))
-          } else {
-          for (i in seq_along(images$itemKeys)) {
-            image<-images$get(key = images$itemKeys[[i]])
-            .sm<-sm
-            .sm@Pars<-.sm@Pars[.sm@Pars$group==groups[i],]
-             image$setState(list(semModel = .sm))
+
+        notes <- private$.plotgroup$notes
+        notes$deleteRows()
+        notes$setVisible(FALSE)
+        images <- private$.plotgroup$diagrams
+        images$clear()
+
+        prepared <- try_hard({
+          drawing <- path_diagram_data(private$.operator$model)
+          nodeLabels <- fromb64(drawing$Vars$name)
+          if (self$options$diag_abbrev != "0")
+            nodeLabels <- abbreviate(nodeLabels,
+              minlength = as.numeric(self$options$diag_abbrev), strict = TRUE)
+          size <- switch(self$options$diag_labsize,
+                         small = 8, large = 18, vlarge = 24, 12)
+          size <- size * exp(-length(nodeLabels) / 80) + 1
+          rotation <- as.numeric(self$options$diag_rotate)
+          if (self$options$diag_type %in% c("circle", "circle2") && rotation %in% c(2, 4)) {
+            rotation <- 1
+            notes$addRow("rotation", list(message =
+              "The circle layout requires top or bottom rotation. Rotation has been set to top."))
           }
-
+          options <- list(
+            layout = private$.layout(drawing), residuals = self$options$diag_resid,
+            rotation = rotation, intercepts = FALSE, nodeLabels = nodeLabels,
+            whatLabels = self$options$diag_paths, sizeMan = size, sizeMan2 = size / 2,
+            curve = 2, shapeMan = self$options$diag_shape, edge.label.cex = 1.3)
+          groups <- unique(drawing$Pars$group)
+          for (index in seq_along(groups)) {
+            key <- as.character(index - 1L)
+            if (!key %in% images$itemKeys)
+              images$addItem(key)
+            image <- images$get(key = key)
+            image$setTitle("")
+            parameters <- drawing$Pars[drawing$Pars$group == groups[[index]], , drop = FALSE]
+            thresholds <- drawing$Thresholds
+            if (nrow(thresholds) > 0)
+              thresholds <- thresholds[thresholds$group == groups[[index]], , drop = FALSE]
+            parameters$group <- ""
+            if (nrow(thresholds) > 0)
+              thresholds$group <- ""
+            image$setState(new_plot_state(
+              list(Pars = parameters, Vars = drawing$Vars, Thresholds = thresholds), options))
           }
-
-        ### images are set ####
-        
-        ## now we prepare the options for semPaths
-
-        labs<-self$options$diag_paths
-        nodeLabels<-model@pta$vnames$ov.num[[1]]
-        nodeLabels<-fromb64(nodeLabels)
-        if (self$options$diag_abbrev!="0")
-            nodeLabels<-abbreviate(nodeLabels,minlength = as.numeric(self$options$diag_abbrev),strict = T)
-        
-        size<-12
-        if (self$options$diag_labsize=="small") size<-8
-        if (self$options$diag_labsize=="large") size<-18
-        if (self$options$diag_labsize=="vlarge") size<-24
-        
-        nNodes<-length(nodeLabels)
-        size<-size*exp(-nNodes/80)+1
-        
-        layout<-self$options$diag_type
-        rotation<-as.numeric(self$options$diag_rotate)
-        if (layout %in% c("circle") & rotation %in% c(2,4)) {
-            rotation<-1
-            self$warning<-list(topic="pathgroup_notes",message=PLOT_WARNS[["rotation"]])
-            self$analysis$results$pathgroup$notes$setVisible(TRUE)
+        }, silent = TRUE)
+        if (!isFALSE(prepared$error)) {
+          images$clear()
+          notes$addRow("error", list(message = prepared$error))
         }
-        
-        self$semPathsOptions<-list(
-                      layout = private$.layout(sm),
-                      residuals = self$options$diag_resid,
-                      rotation = rotation ,
-                      intercepts = F
-                      ,nodeLabels=nodeLabels
-                      ,whatLabels=labs
-                      ,sizeMan = size
-                      ,sizeMan2=size/2
-                      , curve=2
-                      , shapeMan=self$options$diag_shape
-                      ,edge.label.cex =1.3)
-        
-
-        
-        return()
+        if (!isFALSE(prepared$warning))
+          notes$addRow("warning", list(message = paste(unique(unlist(prepared$warning)), collapse = "\n")))
+        notes$setVisible(notes$rowCount > 0)
+        invisible(NULL)
       }
       
       
@@ -123,12 +92,10 @@ Plotter <- R6::R6Class(
       # Pathj uses indirect-effect chains to place nodes by mediation stage.
       # jAMM instead exposes fitted regressions, including expanded contrasts
       # and interactions, so derive the same stages from their directed paths.
-      variables <- semModel@Vars$name
-      parameters <- as.data.frame(private$.operator$model@ParTable,
-                                  stringsAsFactors = FALSE)
-      regressions <- parameters[parameters$op == "~" &
-        parameters$lhs %in% variables & parameters$rhs %in% variables,
-        c("lhs", "rhs")]
+      variables <- semModel$Vars$name
+      parameters <- semModel$Pars
+      regressions <- data.frame(lhs = parameters$rhs[parameters$edge == "~>"],
+                                rhs = parameters$lhs[parameters$edge == "~>"])
       stages <- stats::setNames(rep(1, length(variables)), variables)
       remaining <- variables
       while (length(remaining) > 0) {
@@ -162,7 +129,7 @@ Plotter <- R6::R6Class(
     .prepareModelDiagram=function() {
       # Store only plot data in image state so saved analyses can render again.
       state <- model_diagram_data(self$options)
-      private$.plotgroup$pathmodel$setState(list(modelDiagram = state))
+      private$.plotgroup$pathmodel$setState(new_plot_state(state))
       notes <- private$.plotgroup$pathnotes
       notes$deleteRows()
       notes$setVisible(length(state$notes) > 0)

@@ -486,13 +486,13 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `name`="ci.lower", 
                                     `type`="number", 
                                     `title`="Lower", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)", 
+                                    `visible`="(ciType != 'none')", 
                                     `format`="zto"),
                                 list(
                                     `name`="ci.upper", 
                                     `type`="number", 
                                     `title`="Upper", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)", 
+                                    `visible`="(ciType != 'none')", 
                                     `format`="zto"))))
                         self$add(jmvcore::Table$new(
                             options=options,
@@ -527,12 +527,12 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `name`="ci.lower", 
                                     `type`="number", 
                                     `title`="Lower", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                    `visible`="(ciType != 'none')"),
                                 list(
                                     `name`="ci.upper", 
                                     `type`="number", 
                                     `title`="Upper", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                    `visible`="(ciType != 'none')"),
                                 list(
                                     `name`="std.all", 
                                     `type`="number", 
@@ -600,12 +600,12 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                     `name`="ci.lower", 
                                     `type`="number", 
                                     `title`="Lower", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                    `visible`="(ciType != 'none')"),
                                 list(
                                     `name`="ci.upper", 
                                     `type`="number", 
                                     `title`="Upper", 
-                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                    `visible`="(ciType != 'none')"),
                                 list(
                                     `name`="std.all", 
                                     `type`="number", 
@@ -745,15 +745,15 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                                 `title`="SE", 
                                                 `type`="number"),
                                             list(
-                                                `name`="cilow", 
+                                                `name`="ci.lower", 
                                                 `type`="number", 
                                                 `title`="Lower", 
-                                                `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                                `visible`="(ciType != 'none')"),
                                             list(
-                                                `name`="cihig", 
+                                                `name`="ci.upper", 
                                                 `type`="number", 
                                                 `title`="Upper", 
-                                                `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                                `visible`="(ciType != 'none')"),
                                             list(
                                                 `name`="beta", 
                                                 `type`="number", 
@@ -847,15 +847,15 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                                     `title`="SE", 
                                                     `type`="number"),
                                                 list(
-                                                    `name`="cilow", 
+                                                    `name`="ci.lower", 
                                                     `type`="number", 
                                                     `title`="Lower", 
-                                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                                    `visible`="(ciType != 'none')"),
                                                 list(
-                                                    `name`="cihig", 
+                                                    `name`="ci.upper", 
                                                     `type`="number", 
                                                     `title`="Upper", 
-                                                    `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                                    `visible`="(ciType != 'none')"),
                                                 list(
                                                     `name`="beta", 
                                                     `type`="number", 
@@ -946,15 +946,15 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                                 `title`="SE", 
                                                 `type`="number"),
                                             list(
-                                                `name`="cilow", 
+                                                `name`="ci.lower", 
                                                 `type`="number", 
                                                 `title`="Lower", 
-                                                `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                                `visible`="(ciType != 'none')"),
                                             list(
-                                                `name`="cihig", 
+                                                `name`="ci.upper", 
                                                 `type`="number", 
                                                 `title`="Upper", 
-                                                `visible`="(ciType:standard || ciType:perc || ciType:norm || ciType:bca)"),
+                                                `visible`="(ciType != 'none')"),
                                             list(
                                                 `name`="beta", 
                                                 `type`="number", 

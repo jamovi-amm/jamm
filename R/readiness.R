@@ -6,21 +6,21 @@ readiness <- function(options) {
   if(length(options$dep) == 0) {
     result$ready <- FALSE
     result$report <- TRUE
-    result$reason <- glue::glue("we need a dependent variable")
+    result$reason <- "we need a dependent variable"
     return(result)
   } 
 
   if(length(options$mediators) == 0) {
     result$ready <- FALSE
     result$report <- TRUE
-    result$reason <- glue::glue("we need at least 1 mediator variable")
+    result$reason <- "we need at least 1 mediator variable"
     return(result)
   } 
   
   if((length(options$factors) == 0) & (length(options$covs) == 0)) {
     result$ready <- FALSE
     result$report <- TRUE
-    result$reason <- glue::glue("we need at least 1 independent variable")
+    result$reason <- "we need at least 1 independent variable"
     return(result)
   } 
   
@@ -28,7 +28,7 @@ readiness <- function(options) {
   if (check< length(options$mediators)) {
     result$ready <- FALSE
     result$report <- TRUE
-    result$reason <- glue::glue("Predictors not specified for {length(options$mediators)-check} mediator variable")
+    result$reason <- sprintf("Predictors not specified for %s mediator variable", length(options$mediators) - check)
     return(result)
   }
 
@@ -45,7 +45,7 @@ readiness <- function(options) {
   if (length(options$modelTerms)==0) {
     result$ready <- FALSE
     result$report <- TRUE
-    result$reason <- glue::glue("The full model is not specified")
+    result$reason <- "The full model is not specified"
     return(result)
   }
   

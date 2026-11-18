@@ -166,7 +166,7 @@ Syntax <- R6::R6Class(
             ### collapse the informations in the private lists of terms and constraints and produce a lavaan syntax string
             .lavaan_syntax=function() {
                   models<-private$.lav_models
-                  f<-glue::glue_collapse(unlist(models),sep = " ; ")
+                  f<-paste(unlist(models),collapse = " ; ")
                   con<-paste(private$.lav_constraints,collapse = " ; ")
                   f<-paste(f,con,sep=" ; ")
                   est<-paste(private$.lav_defined,collapse = " ; ")
@@ -361,7 +361,7 @@ Syntax <- R6::R6Class(
                             })
                             res<-unique(unlist(res))
                             if (is.something(res)) {
-                                    w<-glue::glue(WARNS[["nocenterd"]],vars=paste(res,collapse = ", "))
+                                    w<-gsub("{vars}",paste(res,collapse = ", "),WARNS[["nocenterd"]],fixed = TRUE)
                                    self$warning<-list(topic="infotab",message=w)
                             }
                             
