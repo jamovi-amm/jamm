@@ -145,6 +145,7 @@ jammGLM <- function(
 
     if ( ! missing(formula)) {
 
+        # formula can be a text (character) or a list of strings
         if (is.character(formula)) {
           if (length(formula) != 1 || is.na(formula))
             stop("'formula' must be a single non-missing string, or a list with one equation per element.", call. = FALSE)
