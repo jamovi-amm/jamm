@@ -44,7 +44,7 @@ Plotter <- R6::R6Class(
           if (self$options$diag_type %in% c("circle", "circle2") && rotation %in% c(2, 4)) {
             rotation <- 1
             notes$addRow("rotation", list(message =
-              "The circle layout requires top or bottom rotation. Rotation has been set to top."))
+              "The circle layout requires Exogenous top or Exogenous bottom rotation. Rotation has been set to Exogenous top."))
           }
           options <- list(
             layout = private$.layout(drawing), residuals = self$options$diag_resid,

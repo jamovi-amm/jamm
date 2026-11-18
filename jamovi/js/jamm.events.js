@@ -1,8 +1,8 @@
-const DEBUG=true;
+const DEBUG=false;
 
 const events = {
     update: function(ui) {
-      console.log("general update");
+      log("general update");
       initializeAll(ui, this);
     },
 
@@ -33,7 +33,7 @@ const events = {
        fromSupplierToModelTerms(ui,this);
     },
     onUpdate_modelSupplier: function(ui) {
-       console.log("modelUpated");
+       log("modelUpated");
     },
 
     onChange_mediatorsSupplier: function(ui) {
@@ -85,7 +85,7 @@ const events = {
         // Ignore notifications emitted while restoring the saved controls.
         if (this.workspace.initializing || this.workspace.revertingModerators)
             return;
-        console.log("moderators have changed");
+        log("moderators have changed");
         fromModeratorsToOthers(ui,this);
    },
   
@@ -102,7 +102,7 @@ const events = {
     },
     
      onEvent_nothing: function(ui) {
-      console.log("I did not do anything");
+      log("I did not do anything");
     },
 
 
@@ -242,7 +242,7 @@ var fromSupplierToModelTerms= function(ui,context) {
 
 
 var updateModeratorsTerms= function(ui,context) {
-    console.log("update moderators");
+    log("update moderators");
 
     var mediators = context.cloneArray(ui.mediators.value(),[]);
     var moderatorsTerms = context.cloneArray(ui.moderatorsTerms.value(),[]);
@@ -259,7 +259,7 @@ var updateModeratorsTerms= function(ui,context) {
 
 
 var fromModeratorsToOthers = function(ui,context) {
-    console.log("from moderators to others");
+    log("from moderators to others");
     var mediators = context.cloneArray(ui.mediators.value(),[]);
     var moderatorsTerms = context.cloneArray(ui.moderatorsTerms.value(),[]);
     var mediatorsTerms = context.cloneArray(ui.mediatorsTerms.value(),[]);

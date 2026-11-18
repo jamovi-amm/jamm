@@ -10,10 +10,17 @@ refs:
     lavaan:
         type: article
         author: Rosseel, Y.
-        year: 2019
+        year: 2012
         title: 'lavaan: An R Package for Structural Equation Modeling'
         publisher: Journal of Statistical Software, 48(2), 1-36
-        url: http://www.jstatsoft.org/v48/i02/
+        url: https://doi.org/10.18637/jss.v048.i02
+    semplot:
+        type: article
+        author: Epskamp, S.
+        year: 2015
+        title: 'semPlot: Unified visualizations of structural equation models'
+        publisher: Structural Equation Modeling, 22(3), 474-483
+        url: https://doi.org/10.1080/10705511.2014.937847
     diagram:
         type: software
         year: 2019

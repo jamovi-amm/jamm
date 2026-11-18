@@ -103,7 +103,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                 min=50,
                 max=99.9,
                 default=95)
-            private$..bootN <- jmvcore::OptionNumber$new(
+            private$..bootN <- jmvcore::OptionInteger$new(
                 "bootN",
                 bootN,
                 min=50,
@@ -151,6 +151,7 @@ jammGLMOptions <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
             private$..cvalue <- jmvcore::OptionNumber$new(
                 "cvalue",
                 cvalue,
+                min=0.1,
                 default=1)
             private$..percvalue <- jmvcore::OptionNumber$new(
                 "percvalue",
@@ -476,7 +477,7 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                             columns=list(
                                 list(
                                     `name`="lhs", 
-                                    `title`="Pred.Variable", 
+                                    `title`="Variable",
                                     `type`="text"),
                                 list(
                                     `name`="r2", 
@@ -775,7 +776,7 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                         self$add(jmvcore::Array$new(
                             options=options,
                             name="mediator_regressions",
-                            title="Mediator(s) Model",
+                            title="Mediator Models",
                             clearWith=list(
                                 "dep",
                                 "contrasts",
@@ -791,7 +792,7 @@ jammGLMResults <- if (requireNamespace("jmvcore", quietly=TRUE)) R6::R6Class(
                                         super$initialize(
                                             options=options,
                                             name="undefined",
-                                            title="Regression model for ",
+                                            title="Regression model for",
                                             clearWith=list())
                                         self$add(jmvcore::Table$new(
                                             options=options,

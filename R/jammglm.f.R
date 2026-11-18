@@ -13,46 +13,58 @@
 #' @param ciType Choose the confidence interval type
 #' @param ciWidth a number between 50 and 99.9 (default: 95) specifying the
 #'   confidence interval width for the parameter estimates
-#' @param bootN number of bootstrap samples for estimating confidence
-#'   intervals
+#' @param bootN integer number of bootstrap samples (at least 50) for estimating
+#'   confidence intervals
 #' @param contrasts a list of lists specifying the factor and type of contrast
-#'   to use, one of \code{'deviation'}, \code{'simple'}, \code{'difference'},
+#'   to use, one of \code{'simple'}, \code{'deviation'}, \code{'dummy'}, \code{'difference'},
 #'   \code{'helmert'}, \code{'repeated'} or \code{'polynomial'}
-#' @param showRealNames \code{TRUE} or \code{FALSE} (default), provide raw
-#'   names of the contrasts variables
+#' @param showRealNames \code{TRUE} (default) or \code{FALSE}; show the original
+#'   variable names in contrast estimates.
 #' @param showContrastCode \code{TRUE} or \code{FALSE} (default), provide
 #'   contrast coefficients tables
-#' @param simpleScale \code{'mean_sd'} (default), \code{'custom'} , or
-#'   \code{'custom_percent'}. Use to condition the covariates (if any)
-#' @param cvalue offset value for conditioning
-#' @param percvalue offset value for conditioning
-#' @param simpleScaleLabels .
+#' @param simpleScale \code{'mean_sd'} (default) uses the mean and offsets of
+#'   \code{cvalue} standard deviations; \code{'percent'} uses the median and
+#'   percentile offsets of \code{percvalue} for continuous moderators.
+#' @param cvalue standard-deviation offset for conditioning (at least 0.1)
+#' @param percvalue percentile offset from the median, between 5 and 50 (default: 25).
+#' @param simpleScaleLabels moderator setting labels: \code{'labels'} (default),
+#'   \code{'values'}, or \code{'values_labels'}.
 #' @param scaling a list of lists specifying the covariates scaling, one of
-#'   \code{'centered to the mean'}, \code{'standardized'}, or \code{'none'}.
+#'   \code{'centered'}, \code{'standardized'}, or \code{'none'}.
 #'   \code{'none'} leaves the variable as it is
-#' @param tableOptions .
-#' @param pathOptions .
-#' @param mediatorsTerms a list of lists specifying the models for with the
+#' @param tableOptions optional table content: \code{'beta'} and \code{'component'}
+#'   (both selected by default), and \code{'regression'}.
+#' @param pathOptions include \code{'suggested'} (default) to show suggested
+#'   paths in the conceptual model diagram without changing the fitted model.
+#' @param mediatorsTerms a list of lists specifying the models with the
 #'   mediators as dependent variables.
-#' @param moderatorsTerms a list of lists specifying the the IV which
-#'   moderatorate each mediated effect.
+#' @param moderatorsTerms a list of lists specifying the variables that
+#'   moderate each mediated effect.
 #'   Categorical moderators include each factor level and an Average setting
 #'   at the equal-level contrast centroid (zero for centered factor coding).
 #'   Indirect effects at Average are products of the centered-factor slopes,
 #'   not averages of the level-specific indirect effects.
-#' @param meddiagram \code{TRUE} or \code{FALSE} (default), produce a path
-#'   diagram
-#' @param diagram \code{TRUE} or \code{FALSE} (default), produce a path
-#'   diagram
-#' @param diag_paths Choose the diagram labels
-#' @param diag_resid \code{TRUE} or \code{FALSE} (default), produce a path
-#'   diagram
-#' @param diag_labsize Choose the diagram labels
-#' @param diag_rotate Choose the diagram labels
-#' @param diag_type Choose the path diagram layout, including a mediation-like
-#'   layout
-#' @param diag_shape Choose the diagram labels
-#' @param diag_abbrev Choose the diagram labels
+#' @param meddiagram \code{TRUE} (default) or \code{FALSE}; show the conceptual
+#'   model diagram based on the specified regression terms.
+#' @param diagram \code{TRUE} or \code{FALSE} (default); show the statistical
+#'   path diagram based on the fitted model.
+#' @param diag_paths statistical path labels: \code{'est'} (default) for
+#'   coefficients, \code{'stand'} for standardized coefficients, \code{'name'}
+#'   for parameter labels, or \code{'hide'} for no labels.
+#' @param diag_resid \code{TRUE} or \code{FALSE} (default); show residuals in
+#'   the statistical path diagram.
+#' @param diag_labsize statistical diagram node size: \code{'small'},
+#'   \code{'medium'} (default), \code{'large'}, or \code{'vlarge'}.
+#' @param diag_rotate exogenous-node position in the statistical diagram:
+#'   \code{'1'} (top, default), \code{'2'} (left), \code{'3'} (bottom), or
+#'   \code{'4'} (right). The mediation-like layout uses fixed positions.
+#' @param diag_type statistical diagram layout: \code{'mediation'} (default),
+#'   \code{'circle'}, \code{'circle2'}, \code{'tree2'}, \code{'tree'}, or \code{'spring'}.
+#' @param diag_shape statistical diagram node shape: \code{'rectangle'} (default),
+#'   \code{'square'}, \code{'circle'}, \code{'ellipse'}, or \code{'diamond'}.
+#' @param diag_abbrev minimum abbreviation length for statistical diagram node
+#'   labels: \code{'0'} (default, no abbreviation), \code{'5'}, \code{'10'},
+#'   \code{'15'}, \code{'20'}, or \code{'25'}.
 #' @param formula (optional) the formula to use, see the examples
 #' @return A results object containing:
 #' \tabular{llllll}{
@@ -108,7 +120,7 @@ jammGLM <- function(
                 list()),
     moderatorsTerms = list(
                 list()),
-    meddiagram = FALSE,
+    meddiagram = TRUE,
     diagram = FALSE,
     diag_paths = "est",
     diag_resid = FALSE,

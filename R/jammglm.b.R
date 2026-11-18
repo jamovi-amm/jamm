@@ -15,7 +15,7 @@ jammGLMClass <- R6::R6Class(
             private$.ready <- readiness(self$options)
             if (!private$.ready$ready) {
                 if (private$.ready$report) {
-                    self$results$infotab$addRow("info", list(info = "Setup", specs = private$.ready$reason))
+                    self$results$infotab$addRow("info", list(info = "Setup", value = private$.ready$reason))
                 }
                 return()
             }
@@ -38,6 +38,7 @@ jammGLMClass <- R6::R6Class(
             # Interactions start hidden and are activated when table data exist.
             aSmartObj <- SmartTable$new(self$results$models$interactions, runner_machine)
             aSmartObj$activateOnData <- TRUE
+            aSmartObj$spaceBy<- "lhs"
             aSmartObj$ci("", self$options$ciWidth)
             ladd(private$.smartObjs) <- aSmartObj
 
@@ -59,9 +60,9 @@ jammGLMClass <- R6::R6Class(
             ladd(private$.smartObjs) <- aSmartObj
 
             if ("regression" %in% self$options$tableOptions) {
-                self$results$regressions$setTitle("Regressions Results")
+                self$results$regressions$setTitle("Regression Results")
                 if (length(self$options$mediators) > 1) {
-                    self$results$regressions$mediator_regressions$setTitle("Mediators Models")
+                    self$results$regressions$mediator_regressions$setTitle("Mediator Models")
                 }
 
                 # Total-effects ANOVA and regression tables.
@@ -84,7 +85,7 @@ jammGLMClass <- R6::R6Class(
                 ladd(private$.smartObjs) <- aSmartObj
 
                 aSmartObj <- SmartTable$new(self$results$regressions$full$regression, runner_machine)
-                aSmartObj$title <- paste("Full model predicting", self$options$dep)
+                aSmartObj$title <- paste("Full model predicting:", self$options$dep)
                 aSmartObj$ci("", self$options$ciWidth)
                 ladd(private$.smartObjs) <- aSmartObj
             }

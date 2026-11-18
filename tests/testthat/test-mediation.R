@@ -11,6 +11,11 @@ test_that("simple mediation matches independent regression path products", {
         tableOptions = c("beta", "component", "regression")
     )
     effects <- result$models$coefficients$asDF
+    information <- result$infotab$asDF
+    expect_equal(information$value[match("Estimation Method", information$info)], "ML")
+    expect_equal(information$value[match("Converged", information$info)], "TRUE")
+    expect_equal(information$value[match("Number of observations", information$info)],
+                 as.character(nrow(dataset)))
     indirect <- unname(stats::coef(first)["cprime"] * stats::coef(outcome)["EXP"])
     direct <- unname(stats::coef(outcome)["cprime"])
 

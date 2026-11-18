@@ -40,7 +40,6 @@ items:
         - factors
         - covs
         - modelTerms
-        - fixedIntercept
         - moderatorsTerms
     refs: jamm
 
@@ -71,7 +70,7 @@ items:
 
             columns:
                     - name: lhs
-                      title: "Pred.Variable"
+                      title: "Variable"
                       type: text
                     - name: r2
                       title: R²
@@ -96,7 +95,6 @@ items:
                      - dep
                      - modelTerms
                      - contrasts
-                     - fixedIntercept
                      - simpleScale
             columns:
                     - name: lhs
@@ -141,7 +139,6 @@ items:
                      - dep
                      - modelTerms
                      - contrasts
-                     - fixedIntercept
                      - simpleScale
                      - ciType
                      - mediatorsTerms
@@ -242,7 +239,7 @@ items:
         
     items:
           - name: overall
-            title: Total effects 
+            title: Total effects
             type: Group
             visible: (tableOptions:regression)
 
@@ -253,7 +250,7 @@ items:
 
             items:
                - name: anova
-                 title: ANOVA Table 
+                 title: ANOVA Table
                  type: Table
                  visible: (tableOptions:regression)
                  columns:
@@ -277,7 +274,7 @@ items:
                       type: number
                       format: zto,pvalue
                - name: regression
-                 title: Regression Table 
+                 title: Regression Table
                  type: Table
                  visible: (tableOptions:regression)
 
@@ -320,7 +317,7 @@ items:
 
 
           - name: mediator_regressions
-            title: Mediator(s) Model
+            title: Mediator Models
             type: Array
             description: an array of regressions for the mediators
             clearWith: 
@@ -330,7 +327,7 @@ items:
 
             template:
                 clearWith: []
-                title:  "Regression model for "
+                title:  "Regression model for"
                 type: Group
                 items:
                    - name: anova
@@ -398,7 +395,7 @@ items:
                            format: zto,pvalue
 
           - name: full
-            title: Full model effects 
+            title: Full model effects
             type: Group
             visible: (tableOptions:regression)
             clearWith: 
@@ -407,7 +404,7 @@ items:
                      - scaling
             items:
                - name: anova
-                 title: ANOVA Table 
+                 title: ANOVA Table
                  type: Table
                  visible: (tableOptions:regression)
                  columns:
@@ -432,7 +429,7 @@ items:
                       type: number
                       format: zto,pvalue
                - name: regression
-                 title: Regression Table 
+                 title: Regression Table
                  visible: (tableOptions:regression)
                  type: Table
                  columns:

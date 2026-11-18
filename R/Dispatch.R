@@ -60,11 +60,6 @@ Dispatch <- R6::R6Class(
                 return()
             }
             if (is.null(obj$topic)) stop("SCAFFOLD:  a message should have a topic (a table path)")
-            path <- stringr::str_split(obj$topic, "_")[[1]]
-
-            table <- private$.find_table(path)
-            if (!is.something(table)) stop("SCAFFOLD: a message was sent to a non-existing result object: ", obj$topic)
-            state <- as.list(table$state)
             if (!hasName(obj, "key")) obj$key <- jmvcore::toB64(obj$message)
 
             obj$message <- self$translate(obj$message)
@@ -74,6 +69,15 @@ Dispatch <- R6::R6Class(
             }
 
             if (exists("fromb64")) obj$message <- fromb64(obj$message)
+
+            if (identical(obj$topic, "jamovi")) {
+                private$.jamovi_warning(obj)
+                return()
+            }
+
+            path <- stringr::str_split(obj$topic, "_")[[1]]
+            table <- private$.find_table(path)
+            if (!is.something(table)) stop("SCAFFOLD: a message was sent to a non-existing result object: ", obj$topic)
 
             if (inherits(table, "Html")) {
                 if (self$interface == "R") {
@@ -153,6 +157,30 @@ Dispatch <- R6::R6Class(
     private = list(
         .warnings = list(),
         .errors = list(),
+        .jamovi_warning = function(obj) {
+            if (self$interface == "R") {
+                warning(obj$message, call. = FALSE)
+                return()
+            }
+            notice <- self$tables$get(".estWarning")
+            if (is.null(notice)) {
+                notice <- jmvcore::Notice$new(
+                    self$tables$options, name = ".estWarning",
+                    type = jmvcore::NoticeType$WARNING, content = obj$message
+                )
+                if (length(self$tables$items) == 0)
+                    self$tables$add(notice)
+                else
+                    self$tables$insert(1, notice)
+            }
+            messages <- notice$state$messages
+            messages[[obj$key]] <- obj$message
+            state <- as.list(notice$state)
+            state$messages <- messages
+            notice$setState(state)
+            notice$setContent(paste(unique(unlist(messages, use.names = FALSE)), collapse = "\n\n"))
+            notice$setVisible(TRUE)
+        },
         .process_html = function(content, obj) {
             style <- ""
             title <- ""

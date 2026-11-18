@@ -47,7 +47,7 @@ children:
             events:
               change: ./jamm.events::onChange_covariates
   - type: CollapseBox
-    label: Mediators Models
+    label: Mediator Models
     collapsed: true
     stretchFactor: 1
     children:
@@ -176,7 +176,7 @@ children:
                           template:
                             type: TermLabel
   - type: CollapseBox
-    label: Factors Coding
+    label: Factor Coding
     collapsed: true
     stretchFactor: 1
     children:
@@ -203,7 +203,7 @@ children:
       - type: CheckBox
         name: showContrastCode
   - type: CollapseBox
-    label: Covariates Scaling
+    label: Covariate Scaling
     collapsed: true
     stretchFactor: 1
     children:
@@ -230,7 +230,7 @@ children:
         style: inline
         children:
           - type: Label
-            label: Covariates conditioning
+            label: Covariate Conditioning
             children:
               - type: LayoutBox
                 margin: large
@@ -243,6 +243,7 @@ children:
                     children:
                       - type: TextBox
                         name: cvalue
+                        label: null
                         format: number
                   - name: simpleScale_percent
                     type: RadioButton
@@ -256,7 +257,7 @@ children:
                         format: number
                         enable: (simpleScale_percent)
           - type: Label
-            label: Covariates labeling
+            label: Covariate Labeling
             children:
               - type: LayoutBox
                 margin: large
@@ -274,7 +275,7 @@ children:
                     optionName: simpleScaleLabels
                     optionPart: values_labels
   - type: CollapseBox
-    label: Mediation options
+    label: Mediation Options
     collapsed: true
     stretchFactor: 1
     children:
@@ -316,7 +317,7 @@ children:
                 name: bootN
                 format: number
           - type: Label
-            label: Display in tables
+            label: Display in Tables
             margin: large
             style: list
             children:

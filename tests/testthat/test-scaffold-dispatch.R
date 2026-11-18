@@ -33,6 +33,26 @@ test_that("model classes use Scaffold and dispatch warnings to result tables", {
     expect_equal(results$pathgroup$notes$notes[[1]]$note, "Diagram warning")
 })
 
+test_that("lavaan fixed-predictor warnings retain their original wording", {
+    dataset <- coopmedmod_data(c("cprime", "EXP", "BEH"))
+    options <- jammGLMOptions$new(
+        dep = "BEH", mediators = "EXP", covs = "cprime",
+        mediatorsTerms = list(list("cprime")), modelTerms = list("EXP", "cprime")
+    )
+    results <- jammGLMResults$new(options)
+    analysis <- list(options = options, results = results, data = dataset)
+    syntax <- Syntax$new(analysis, Datamatic$new(analysis))
+    messages <- c(
+        "lavaan warning: switching to fixed.x=FALSE",
+        "lavaan warning: switching to fixed.x = FALSE",
+        "lavaan warning: switching to fixed_x = FALSE"
+    )
+    for (message in messages)
+        syntax$warning <- list(topic = "infotab", message = message)
+    notes <- vapply(results$infotab$notes, function(note) note$note, character(1))
+    expect_identical(unname(notes), messages)
+})
+
 test_that("Base64 decoding preserves prose and still decodes variable identifiers", {
     for (message in c("Ordinary warning text", "Model cannot be estimated: no variance",
                       "X is a variable", "Warning: café", "", "X%%%", "X_w")) {

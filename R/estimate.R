@@ -30,9 +30,9 @@ Estimate <- R6::R6Class("Estimate",
                             
                             # fit indices
                             alist<-list()
-                            alist[[length(alist)+1]]<-c(info="Estimation Method",value=self$model@Options$estimator)
+                            alist[[length(alist)+1]]<-c(info="Estimation Method",value=lavaan::lavInspect(self$model,"options")$estimator)
                             alist[[length(alist)+1]]<-c(info="Number of observations",value=lavaan::lavInspect(self$model,"ntotal")) 
-                            alist[[length(alist)+1]]<-c(info="Converged",value=self$model@Fit@converged) 
+                            alist[[length(alist)+1]]<-c(info="Converged",value=lavaan::lavInspect(self$model,"converged"))
                             alist[[length(alist)+1]]<-c(info="",value="")
                             
                             self$tab_info<-alist
@@ -53,7 +53,7 @@ Estimate <- R6::R6Class("Estimate",
                              for (i in seq_along(end$r2)) 
                                     if (end$r2[[i]]>1 | end$r2[[i]]<0)  {
                                       end$r2[[i]]<-NA
-                                      self$warning<-list(topic="models_r2",message="Some R-square indexex cannot be computed for this model")
+                                      self$warning<-list(topic="models_r2",message="Some R-squared indices cannot be computed for this model.")
                                     }
                             
                               ### https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3821705/
@@ -110,27 +110,40 @@ Estimate <- R6::R6Class("Estimate",
                            )
                            
                            ## estimate the models
-                           results<-try_hard({do.call(lavaan::lavaan,lavoptions)  })
+                           results<-try_hard({
+                             model<-do.call(lavaan::lavaan,lavoptions)
+                             parameters<-lavaan::parameterestimates(
+                               model,
+                               ci=ci,
+                               standardized = TRUE,
+                               level = self$ciwidth,
+                               boot.ci.type = bootci
+                             )
+                             list(model=model,parameters=parameters)
+                           })
                            
                            
                            
-                           self$warning<-list(topic="infotab",message=results$warning)
+                           self$warning<-list(topic="jamovi",message=results$warning)
                            if (!isFALSE(results$error)) {
                              details<-fromb64(results$error,ref=self$vars)
                              if (grepl("infinite or missing",details,fixed=TRUE))
                                details<-paste(ERRS[["noluck"]],details)
+                             if (!isFALSE(results$warning)) {
+                               warnings<-unique(fromb64(
+                                 unlist(results$warning,use.names=FALSE),ref=self$vars
+                               ))
+                               details<-paste(
+                                 paste(warnings,collapse="\n"),
+                                 paste("Final error:",details),sep="\n"
+                               )
+                             }
                              self$stop(paste("Model cannot be estimated:",details))
                            }
                            
                            ## ask for the paramters estimates
-                           self$model<-results$obj
-                           .lav_params<-lavaan::parameterestimates(
-                             self$model,
-                             ci=ci,
-                             standardized = T,
-                             level = self$ciwidth,
-                             boot.ci.type = bootci
-                           )
+                           self$model<-results$obj$model
+                           .lav_params<-results$obj$parameters
                            
                            ## we need some info initialized by Syntax regarding the parameters properties
                            private$.lav_structure<-.lav_params

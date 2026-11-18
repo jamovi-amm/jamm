@@ -139,8 +139,6 @@ Syntax <- R6::R6Class(
                  return()
              obj$message<-lapply(obj$message,function(message) {
                if (isFALSE(message)) return(FALSE)
-               if (grepl("fixed.x=FALSE",message,fixed=TRUE))
-                 message<-WARNS[["usercov"]]
                fromb64(message,ref=self$vars)
              })
                
@@ -200,7 +198,7 @@ Syntax <- R6::R6Class(
               results<-try_hard({
                 do.call(lavaan::lavaanify, lavoptions)
               })
-              self$warning<-list(topic="infotab",message=results$warning)
+              self$warning<-list(topic="jamovi",message=results$warning)
               if (!isFALSE(results$error))
                 stop(fromb64(results$error,ref=self$vars),call.=FALSE)
               
@@ -353,7 +351,7 @@ Syntax <- R6::R6Class(
 
                             noscale<-unlist(sapply(self$options$scaling , function(a) if (a$type=="none") return(a$var)))
                             res<-lapply(seq_along(self$endogenousTerms), function(i) {
-                                    sapply(self$endogenousTerms[[1]],function(term) {
+                                    sapply(self$endogenousTerms[[i]],function(term) {
                                           if (length(term)>1)
                                                 return(intersect(term,noscale))
                                           else return(NULL)
@@ -443,7 +441,7 @@ Syntax <- R6::R6Class(
               deps<-unique(setdiff(tab$lhs,tab$rhs))
 
               if (length(deps)==0) {
-                self$warning<-list(topic="infotab",message=WARNS[["noindirect"]])
+                self$warning<-list(topic="jamovi",message=WARNS[["noindirect"]])
                 return()
               }
               tabs<-list()
@@ -457,15 +455,18 @@ Syntax <- R6::R6Class(
                   for (tt in terms)
                     .doit(tabs[[i]],term=tt)
                 })
+                self$warning<-list(topic="infotab",message=.results$warning)
                 if (.results$error!=FALSE)
-                    self$warning<-list(topic="infotab",message=WARNS[["noindirect"]])
+                    self$warning<-list(topic="jamovi",message=WARNS[["noindirect"]])
                 results[[i]]<-.results
               }
               # we moltiply the parameters labs to compose the indirect effect
               pars<-sapply(labslist,paste,collapse="*")
               
-              if (!is.something(pars))
+              if (!is.something(pars)) {
+                self$warning<-list(topic="jamovi",message=WARNS[["noindirect"]])
                 return()
+              }
               # labels for the new parameter for lavaaan
               plabs<-paste0("IE",1:length(pars))
               # collapse into lavaan syntax
@@ -490,6 +491,8 @@ Syntax <- R6::R6Class(
               direct_names<-list()
               inds<-private$.indirect_names
               inames<-names(self$indirect_names)
+              if (length(inds)==0)
+                return()
               
               for (i in seq_along(inds)) {
                 ind<-inds[[i]]

@@ -52,11 +52,7 @@ Datamatic <- R6::R6Class(
         for (int in interactions) {
           int<-trimws(int)
           terms<-strsplit(int,INTERACTION_SYMBOL,fixed = T)[[1]]
-          terms<-paste0("data64$",trimws(terms))
-          head<-paste0("data64$",int,"<-")
-          op<-paste(terms,collapse = " * ")
-          synt<-paste0(head,op)
-          eval(parse(text=synt))
+          data64[[int]]<-Reduce(`*`,data64[trimws(terms)])
         }
         
       data64<-as.data.frame(data64)     

@@ -55,7 +55,7 @@ model_diagram_data <- function(options) {
   if (suggested && any(paths == "S"))
     diagram$notes <- c(diagram$notes, "Green paths indicate suggested coefficients")
   if (length(moderators) > 0)
-    diagram$notes <- c(diagram$notes, "Moderators main effects are not shown")
+    diagram$notes <- c(diagram$notes, "Moderators' main effects are not shown.")
   if (length(independents) > 1)
     diagram$notes <- c(diagram$notes, "Covariances among IV are estimated but not shown")
   if (any(options$factors %in% unlist(c(options$mediatorsTerms, options$modelTerms))))
