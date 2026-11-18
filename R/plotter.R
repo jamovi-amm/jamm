@@ -14,15 +14,15 @@ Plotter <- R6::R6Class(
       },
 
       initPlots=function() {
-           if (!self$options$diagram)
+           if (!self$options$path_diagram)
                return()
             private$.plotgroup$diagrams$addItem("0")
             private$.plotgroup$diagrams$get(key = "0")$setTitle("")
       },
       preparePlots=function() {
-        if (self$options$meddiagram)
+        if (self$options$model_diagram)
           private$.prepareModelDiagram()
-        if (!self$options$diagram)
+        if (!self$options$path_diagram)
           return()
 
         notes <- private$.plotgroup$notes

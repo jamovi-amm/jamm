@@ -2,7 +2,7 @@ test_that("a moderator cannot consume the last independent variable", {
     options <- list(
         dep = "BEH", mediators = "EXP", covs = "cprime",
         mediatorsTerms = list(list("cprime")), modelTerms = list("EXP", "cprime"),
-        moderatorsTerms = list(list("cprime"))
+        mod_terms = list(list("cprime"))
     )
     status <- readiness(options)
     expect_false(status$ready)
@@ -11,7 +11,7 @@ test_that("a moderator cannot consume the last independent variable", {
 
     options$covs <- c("cprime", "SVO")
     expect_true(readiness(options)$ready)
-    options$moderatorsTerms <- list(list("cprime"), list("SVO"))
+    options$mod_terms <- list(list("cprime"), list("SVO"))
     expect_false(readiness(options)$ready)
     options$factors <- "prime"
     expect_true(readiness(options)$ready)

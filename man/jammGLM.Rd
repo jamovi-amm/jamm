@@ -5,6 +5,7 @@
 \title{GLM Mediation Model}
 \usage{
 jammGLM(
+  formula,
   data,
   dep = NULL,
   mediators = NULL,
@@ -25,20 +26,22 @@ jammGLM(
   tableOptions = list("beta", "component"),
   pathOptions = list("suggested"),
   mediatorsTerms = list(list()),
-  moderatorsTerms = list(list()),
-  meddiagram = TRUE,
-  diagram = FALSE,
+  mod_terms = list(list()),
+  model_diagram = TRUE,
+  path_diagram = FALSE,
   diag_paths = "est",
   diag_resid = FALSE,
   diag_labsize = "medium",
   diag_rotate = "1",
   diag_type = "mediation",
   diag_shape = "rectangle",
-  diag_abbrev = "0",
-  formula
+  diag_abbrev = "0"
 )
 }
 \arguments{
+\item{formula}{a single string of equations separated by semicolons or newlines,
+or a list containing one equation per element as a string or formula object.}
+
 \item{data}{the data as a data frame}
 
 \item{dep}{a string naming the dependent variable from \code{data},
@@ -96,17 +99,17 @@ paths in the conceptual model diagram without changing the fitted model.}
 \item{mediatorsTerms}{a list of lists specifying the models with the
 mediators as dependent variables.}
 
-\item{moderatorsTerms}{a list of lists specifying the variables that
+\item{mod_terms}{a list of lists specifying the variables that
 moderate each mediated effect.
 Categorical moderators include each factor level and an Average setting
 at the equal-level contrast centroid (zero for centered factor coding).
 Indirect effects at Average are products of the centered-factor slopes,
 not averages of the level-specific indirect effects.}
 
-\item{meddiagram}{\code{TRUE} (default) or \code{FALSE}; show the conceptual
+\item{model_diagram}{\code{TRUE} (default) or \code{FALSE}; show the conceptual
 model diagram based on the specified regression terms.}
 
-\item{diagram}{\code{TRUE} or \code{FALSE} (default); show the statistical
+\item{path_diagram}{\code{TRUE} or \code{FALSE} (default); show the statistical
 path diagram based on the fitted model.}
 
 \item{diag_paths}{statistical path labels: \code{'est'} (default) for
@@ -132,8 +135,6 @@ the statistical path diagram.}
 \item{diag_abbrev}{minimum abbreviation length for statistical diagram node
 labels: \code{'0'} (default, no abbreviation), \code{'5'}, \code{'10'},
 \code{'15'}, \code{'20'}, or \code{'25'}.}
-
-\item{formula}{(optional) the formula to use, see the examples}
 }
 \value{
 A results object containing:

@@ -4,7 +4,7 @@ test_that("failed moderated fits report the fitting error, not a NULL slot error
         dep = "BEH", mediators = "EXP", covs = c("cprime", "SVO"),
         mediatorsTerms = list(list("cprime", "SVO", c("cprime", "SVO"))),
         modelTerms = list("EXP", "cprime", "SVO", c("EXP", "SVO"), c("cprime", "SVO")),
-        moderatorsTerms = list(list("SVO"))
+        mod_terms = list(list("SVO"))
     )
 
     # Cover both an initial failure and failure after a successful fit.

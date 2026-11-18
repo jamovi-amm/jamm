@@ -21,7 +21,7 @@ test_that("categorical moderation includes coding-invariant centered-factor effe
             scaling = list(list(var = "SVO", type = "centered"), list(var = "EXP", type = "centered")),
             mediatorsTerms = list(list("SVO", "prime", c("SVO", "prime"))),
             modelTerms = list("EXP", "SVO", "prime", c("EXP", "prime"), c("SVO", "prime")),
-            moderatorsTerms = list(list("prime"))
+            mod_terms = list(list("prime"))
         )
         effects <- result$models$coefficients$asDF
         centered <- effects[effects$condition == "prime = Average", ]

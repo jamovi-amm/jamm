@@ -39,7 +39,7 @@ test_that("every table and template has explicit valid clearing dependencies", {
 test_that("all fitted-model tables invalidate on estimation and display changes", {
     schema <- clear_with_schema()
     required <- c("data", "dep", "mediators", "factors", "covs", "modelTerms", "mediatorsTerms",
-                  "moderatorsTerms", "contrasts", "scaling", "ciType", "ciWidth", "bootN",
+                  "mod_terms", "contrasts", "scaling", "ciType", "ciWidth", "bootN",
                   "simpleScale", "cvalue", "percvalue", "simpleScaleLabels", "tableOptions", "showRealNames")
     paths <- c("infotab", "models/r2", "models/interactions", "models/coefficients",
                "regressions/overall/anova", "regressions/overall/regression",
@@ -60,6 +60,6 @@ test_that("contrast tables and diagram notes track their underlying output", {
                      elements[["pathgroup/pathmodel"]]$clearWith)
     expect_identical(elements[["pathgroup/notes"]]$clearWith,
                      elements[["pathgroup/diagrams/template"]]$clearWith)
-    expect_true(all(c("data", "contrasts", "scaling", "ciWidth", "bootN", "moderatorsTerms",
+    expect_true(all(c("data", "contrasts", "scaling", "ciWidth", "bootN", "mod_terms",
                       "diag_type", "diag_rotate") %in% unlist(elements[["pathgroup/notes"]]$clearWith)))
 })

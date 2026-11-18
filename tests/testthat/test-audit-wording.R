@@ -33,7 +33,7 @@ test_that("model diagram notes use grammatical moderator wording", {
     options <- jammGLMOptions$new(
         dep = "BEH", mediators = "EXP", covs = c("cprime", "SVO"),
         mediatorsTerms = list(list("cprime", "SVO", c("cprime", "SVO"))),
-        modelTerms = list("EXP", "cprime", "SVO"), moderatorsTerms = list(list("SVO"))
+        modelTerms = list("EXP", "cprime", "SVO"), mod_terms = list(list("SVO"))
     )
     diagram <- model_diagram_data(options)
     expect_true("Moderators' main effects are not shown." %in% diagram$notes)

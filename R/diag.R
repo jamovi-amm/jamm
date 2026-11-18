@@ -3,7 +3,7 @@
 model_diagram_data <- function(options) {
   mediators <- jmvcore::toB64(options$mediators)
   dependent <- jmvcore::toB64(options$dep)
-  moderators <- unique(jmvcore::toB64(unlist(options$moderatorsTerms)))
+  moderators <- unique(jmvcore::toB64(unlist(options$mod_terms)))
   outcomes <- c(mediators, dependent)
   equations <- c(options$mediatorsTerms, list(options$modelTerms))
   sources <- vector("list", length(outcomes))

@@ -12,7 +12,7 @@ test_that("incomplete models display the readiness reason in the setup value col
              reason = "Predictors are not specified for 1 mediator variable."),
         list(changes = list(mediators = c("EXP", "SVO"), mediatorsTerms = list()),
              reason = "Predictors are not specified for 2 mediator variables."),
-        list(changes = list(moderatorsTerms = list(list("cprime"))),
+        list(changes = list(mod_terms = list(list("cprime"))),
              reason = "At least one independent variable must remain outside the moderators."),
         list(changes = list(modelTerms = list()), reason = "The full model is not specified.")
     )

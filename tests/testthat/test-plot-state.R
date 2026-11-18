@@ -21,7 +21,7 @@ path_diagram_fixture <- function(...) {
     options <- jammGLMOptions$new(
         dep = "BEH", mediators = "EXP", covs = "cprime",
         mediatorsTerms = list(list("cprime")), modelTerms = list("EXP", "cprime"),
-        diagram = TRUE, ...)
+        path_diagram = TRUE, ...)
     analysis <- jammGLMClass$new(options = options, data = dataset)
     analysis$run()
     analysis
@@ -45,7 +45,7 @@ test_that("path diagrams render restored state without initialization or estimat
     fresh <- jammGLMClass$new(options = jammGLMOptions$new(), data = data.frame())
     private <- fresh$.__enclos_env__$private
     expect_null(private$.plotter_machine)
-    expect_false(fresh$options$diagram)
+    expect_false(fresh$options$path_diagram)
     output <- tempfile(fileext = ".pdf")
     grDevices::pdf(output)
     on.exit({ grDevices::dev.off(); unlink(output) }, add = TRUE)

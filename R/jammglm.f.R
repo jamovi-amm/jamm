@@ -1,6 +1,8 @@
 #' GLM Mediation Model
 #'
 #' GLM mediation model
+#' @param formula a single string of equations separated by semicolons or newlines,
+#'   or a list containing one equation per element as a string or formula object.
 #' @param data the data as a data frame
 #' @param dep a string naming the dependent variable from \code{data},
 #'   variable must be numeric
@@ -38,15 +40,15 @@
 #'   paths in the conceptual model diagram without changing the fitted model.
 #' @param mediatorsTerms a list of lists specifying the models with the
 #'   mediators as dependent variables.
-#' @param moderatorsTerms a list of lists specifying the variables that
+#' @param mod_terms a list of lists specifying the variables that
 #'   moderate each mediated effect.
 #'   Categorical moderators include each factor level and an Average setting
 #'   at the equal-level contrast centroid (zero for centered factor coding).
 #'   Indirect effects at Average are products of the centered-factor slopes,
 #'   not averages of the level-specific indirect effects.
-#' @param meddiagram \code{TRUE} (default) or \code{FALSE}; show the conceptual
+#' @param model_diagram \code{TRUE} (default) or \code{FALSE}; show the conceptual
 #'   model diagram based on the specified regression terms.
-#' @param diagram \code{TRUE} or \code{FALSE} (default); show the statistical
+#' @param path_diagram \code{TRUE} or \code{FALSE} (default); show the statistical
 #'   path diagram based on the fitted model.
 #' @param diag_paths statistical path labels: \code{'est'} (default) for
 #'   coefficients, \code{'stand'} for standardized coefficients, \code{'name'}
@@ -65,7 +67,7 @@
 #' @param diag_abbrev minimum abbreviation length for statistical diagram node
 #'   labels: \code{'0'} (default, no abbreviation), \code{'5'}, \code{'10'},
 #'   \code{'15'}, \code{'20'}, or \code{'25'}.
-#' @param formula (optional) the formula to use, see the examples
+
 #' @return A results object containing:
 #' \tabular{llllll}{
 #'   \code{results$model} \tab \tab \tab \tab \tab The underlying \code{lavaan} object \cr
@@ -94,6 +96,7 @@
 #'
 #' @export
 jammGLM <- function(
+    formula,
     data,
     dep = NULL,
     mediators = NULL,
@@ -118,23 +121,42 @@ jammGLM <- function(
                 "suggested"),
     mediatorsTerms = list(
                 list()),
-    moderatorsTerms = list(
+    mod_terms = list(
                 list()),
-    meddiagram = TRUE,
-    diagram = FALSE,
+    model_diagram = TRUE,
+    path_diagram = FALSE,
     diag_paths = "est",
     diag_resid = FALSE,
     diag_labsize = "medium",
     diag_rotate = "1",
     diag_type = "mediation",
     diag_shape = "rectangle",
-    diag_abbrev = "0",
-    formula) {
+    diag_abbrev = "0"
+    ) {
 
     if ( ! requireNamespace("jmvcore", quietly=TRUE))
         stop("jammGLM requires jmvcore to be installed (restart may be required)")
 
+
     if ( ! missing(formula)) {
+
+        if (is.character(formula)) {
+          if (length(formula) != 1 || is.na(formula))
+            stop("'formula' must be a single non-missing string, or a list with one equation per element.", call. = FALSE)
+          formula <- stringr::str_split(formula, "[;\r\n]+")[[1]]
+          formula <- stringr::str_trim(formula)
+          formula <- as.list(formula[nzchar(formula)])
+        }
+        if (!is.list(formula) || inherits(formula, "formula"))
+          stop("'formula' must be a string of equations or a list with one equation per element.", call. = FALSE)
+        if (length(formula) == 0)
+          stop("'formula' must contain at least one equation.", call. = FALSE)
+        formula <- lapply(seq_along(formula), function(index) {
+          tryCatch(expand.formula(formula[[index]]), error = function(error) {
+            stop(paste0("Invalid formula entry ", index, ": ", conditionMessage(error)), call. = FALSE)
+          })
+        })
+
         if (missing(dep))
             dep <- jammGLMClass$private_methods$.marshalFormula(
                 formula=formula,
@@ -165,11 +187,11 @@ jammGLM <- function(
                 formula=formula,
                 data=`if`( ! missing(data), data, NULL),
                 name="modelTerms")
-        if (missing(moderatorsTerms))
-            moderatorsTerms <- jammGLMClass$private_methods$.marshalFormula(
+        if (missing(mod_terms))
+            mod_terms <- jammGLMClass$private_methods$.marshalFormula(
                 formula=formula,
                 data=`if`( ! missing(data), data, NULL),
-                name="moderatorsTerms")
+                name="mod_terms")
         if (missing(simpleScale))
             simpleScale <- jammGLMClass$private_methods$.marshalFormula(
                 formula=formula,
@@ -212,9 +234,9 @@ jammGLM <- function(
         tableOptions = tableOptions,
         pathOptions = pathOptions,
         mediatorsTerms = mediatorsTerms,
-        moderatorsTerms = moderatorsTerms,
-        meddiagram = meddiagram,
-        diagram = diagram,
+        mod_terms = mod_terms,
+        model_diagram = model_diagram,
+        path_diagram = path_diagram,
         diag_paths = diag_paths,
         diag_resid = diag_resid,
         diag_labsize = diag_labsize,

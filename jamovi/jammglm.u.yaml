@@ -146,7 +146,7 @@ children:
                 transferAction: interactions
                 children:
                   - type: ListBox
-                    name: moderatorsTerms
+                    name: mod_terms
                     height: large
                     events:
                       change: ./jamm.events::onEvent_moderatorChanged
@@ -350,7 +350,7 @@ children:
             style: inline
             children:
               - type: CheckBox
-                name: meddiagram
+                name: model_diagram
               - type: Label
                 label: Diagram Options
                 margin: large
@@ -360,14 +360,14 @@ children:
                     type: CheckBox
                     optionPart: suggested
                     optionName: pathOptions
-                    enable: (meddiagram)
+                    enable: (model_diagram)
           - type: LayoutBox
             margin: large
             stretchFactor: 1
             style: inline
             children:
               - type: CheckBox
-                name: diagram
+                name: path_diagram
               - type: Label
                 label: Paths
                 margin: large
@@ -377,22 +377,22 @@ children:
                     name: diag_paths_est
                     optionName: diag_paths
                     optionPart: est
-                    enable: (diagram)
+                    enable: (path_diagram)
                   - type: RadioButton
                     name: diag_paths_stand
                     optionName: diag_paths
                     optionPart: stand
-                    enable: (diagram)
+                    enable: (path_diagram)
                   - type: RadioButton
                     name: diag_paths_name
                     optionName: diag_paths
                     optionPart: name
-                    enable: (diagram)
+                    enable: (path_diagram)
                   - type: RadioButton
                     name: diag_paths_hide
                     optionName: diag_paths
                     optionPart: hide
-                    enable: (diagram)
+                    enable: (path_diagram)
               - type: Label
                 label: Show
                 margin: large
@@ -400,7 +400,7 @@ children:
                 children:
                   - type: CheckBox
                     name: diag_resid
-                    enable: (diagram)
+                    enable: (path_diagram)
           - type: LayoutBox
             margin: large
             stretchFactor: 1
@@ -413,10 +413,10 @@ children:
                 children:
                   - type: ComboBox
                     name: diag_type
-                    enable: (diagram)
+                    enable: (path_diagram)
                   - type: ComboBox
                     name: diag_rotate
-                    enable: (diagram && !diag_type:mediation)
+                    enable: (path_diagram && !diag_type:mediation)
               - type: Label
                 label: Nodes
                 margin: large
@@ -424,10 +424,10 @@ children:
                 children:
                   - type: ComboBox
                     name: diag_labsize
-                    enable: (diagram)
+                    enable: (path_diagram)
                   - type: ComboBox
                     name: diag_shape
-                    enable: (diagram)
+                    enable: (path_diagram)
                   - type: ComboBox
                     name: diag_abbrev
-                    enable: (diagram)
+                    enable: (path_diagram)

@@ -36,7 +36,7 @@ readiness <- function(options) {
 
   # UI restoration or direct R calls must not bypass the predictor-role rule.
   predictors <- unique(c(options$factors, options$covs))
-  moderators <- unique(unlist(options$moderatorsTerms))
+  moderators <- unique(unlist(options$mod_terms))
   if (length(setdiff(predictors, moderators)) == 0) {
     result$ready <- FALSE
     result$report <- TRUE

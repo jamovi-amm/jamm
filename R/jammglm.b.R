@@ -43,7 +43,7 @@ jammGLMClass <- R6::R6Class(
             ladd(private$.smartObjs) <- aSmartObj
 
             # Indirect and total effects.
-            self$results$models$coefficients$getColumn("condition")$setVisible(length(unlist(self$options$moderatorsTerms)) > 0)
+            self$results$models$coefficients$getColumn("condition")$setVisible(length(unlist(self$options$mod_terms)) > 0)
             aSmartObj <- SmartTable$new(self$results$models$coefficients, runner_machine)
             aSmartObj$ci("", self$options$ciWidth)
             aSmartObj$spaceBy <- "condition"
@@ -213,8 +213,8 @@ jammGLMClass <- R6::R6Class(
             name <- option$name
             value <- option$value
            
-          ## moderatorsTerms is weired, hanlde it here
-           if (option$name=="moderatorsTerms") {
+          ## mod_terms is weired, hanlde it here
+           if (option$name=="mod_terms") {
              test<-all(sapply(value,function(a) length(a)==0))
              if (test) return('')
              
@@ -227,7 +227,7 @@ jammGLMClass <- R6::R6Class(
                }
              }
              
-             mods <- paste0("moderatorsTerms = list(", paste(mods, collapse = ", "), ")")
+             mods <- paste0("mod_terms = list(", paste(mods, collapse = ", "), ")")
              return(mods)
            }
 

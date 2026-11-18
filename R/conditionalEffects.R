@@ -1,7 +1,7 @@
 # Moderator settings use the same transformed columns and contrast coding as
 # the fitted model, rather than assuming that every moderator is centered.
 moderator_settings <- function(options, datamatic, data = NULL) {
-    moderators <- unique(unlist(options$moderatorsTerms))
+    moderators <- unique(unlist(options$mod_terms))
     settings <- lapply(moderators, function(moderator) {
         if (moderator %in% options$factors) {
             levels <- datamatic$factors_levels[[moderator]]

@@ -45,7 +45,7 @@ items:
         - covs
         - modelTerms
         - mediatorsTerms
-        - moderatorsTerms
+        - mod_terms
         - contrasts
         - scaling
         - ciType
@@ -461,7 +461,7 @@ items:
   - name: pathgroup
     type: Group
     title: Path Model
-    visible: (diagram | meddiagram)
+    visible: (path_diagram | model_diagram)
     clearWith: &pathDiagramDependencies
                   - data
                   - dep
@@ -470,7 +470,7 @@ items:
                   - covs
                   - mediatorsTerms
                   - modelTerms
-                  - moderatorsTerms
+                  - mod_terms
                   - contrasts
                   - scaling
                   - ciType
@@ -481,8 +481,8 @@ items:
                   - percvalue
                   - simpleScaleLabels
                   - pathOptions
-                  - meddiagram
-                  - diagram
+                  - model_diagram
+                  - path_diagram
                   - diag_paths
                   - diag_resid
                   - diag_labsize
@@ -494,7 +494,7 @@ items:
     items:
             - name: pathmodel
               title: Model Diagram
-              visible: (meddiagram)
+              visible: (model_diagram)
               type: Image
               description: a model diagram
               width: 600
@@ -508,9 +508,9 @@ items:
                   - covs
                   - mediatorsTerms
                   - modelTerms
-                  - moderatorsTerms
+                  - mod_terms
                   - pathOptions
-                  - meddiagram
+                  - model_diagram
               refs: diagram    
             - name: pathnotes
               type: Table
@@ -526,7 +526,7 @@ items:
               title: Path Diagrams
               type: Array
               description: an array of path diagrams
-              visible: (diagram)
+              visible: (path_diagram)
               clearWith: *pathDiagramDependencies
               template:
                    title: $key

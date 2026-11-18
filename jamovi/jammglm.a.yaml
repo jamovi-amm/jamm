@@ -26,7 +26,7 @@ formula:
      custom: true
    modelTerms:
      custom: true
-   moderatorsTerms:
+   mod_terms:
      custom: true
    simpleScale:
      custom: true
@@ -295,7 +295,7 @@ options:
           R: >
             a list of lists specifying the models with the mediators as dependent variables.
 
-    - name: moderatorsTerms
+    - name: mod_terms
       title: Moderator Effects
       type: Array
       default: [[]]
@@ -307,7 +307,7 @@ options:
 
 #### path diagram ###
 
-    - name: meddiagram
+    - name: model_diagram
       title: Model diagram
       type: Bool
       default: true
@@ -317,7 +317,7 @@ options:
 
 
 
-    - name: diagram
+    - name: path_diagram
       title: Path diagram
       type: Bool
       default: false

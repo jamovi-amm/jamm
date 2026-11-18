@@ -50,7 +50,7 @@ Syntax <- R6::R6Class(
                 self$vars<-datamatic$vars
                 private$.conditional_datamatic <- datamatic
                 self$contrasts_names<-datamatic$contrasts_names
-                self$moderators<-unlist(options$moderatorsTerms)
+                self$moderators<-unlist(options$mod_terms)
                 
                 # here we force the mediation analysis models to look like a path model
                 

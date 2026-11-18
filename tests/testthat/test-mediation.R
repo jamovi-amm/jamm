@@ -49,7 +49,7 @@ test_that("moderated mediation estimates effects at each moderator level", {
         data = dataset, dep = "BEH", mediators = "EXP", covs = c("cprime", "SVO"),
         mediatorsTerms = list(list("cprime", "SVO", c("cprime", "SVO"))),
         modelTerms = list("EXP", "cprime", "SVO", c("EXP", "SVO"), c("cprime", "SVO")),
-        moderatorsTerms = list(list("SVO")),
+        mod_terms = list(list("SVO")),
         scaling = lapply(continuous, function(variable) list(var = variable, type = "centered")),
         simpleScale = "mean_sd", cvalue = 1, simpleScaleLabels = "labels"
     )
